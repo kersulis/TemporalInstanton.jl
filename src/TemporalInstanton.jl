@@ -2,21 +2,15 @@ module TemporalInstanton
 
 export tmp_inst_Qobj, tmp_inst_A, tmp_inst_b, tmp_inst_Qtheta
 
-function tmp_inst_Qobj(n,T)
+function tmp_inst_Qobj(n,nr,T)
     """ Generate the objective function matrix
     Qobj from the problem dimensions.
     Assume no correlation between wind sites.
     """
-    Qobj = zeros(2*n*T,2*n*T)
-    for t = 1:T
-        start = 2n*(t-1) + 1
-        stop = start + n - 1
-        Qobj[start:stop,start:stop] = eye(n)
-    end
-    return sparse(Qobj)
+    return sparse(diagm(repeat([ones(nr),zeros(n)],outer=[T])))
 end
 
-function tmp_inst_A(n,T,Y,k)
+function tmp_inst_A(n,Ridx,T,Y,k)
     """ Generate the power balance constraint A matrix
     from problem dimensions, admittance matrix,
     and generator participation factors.
@@ -31,19 +25,15 @@ function tmp_inst_A(n,T,Y,k)
     Atemp[end,1:n] = ones(1,n)
     Atemp[1:n-1,n+1:2n-1] = Y
     Atemp[:,2*n] = [-k,1]
-    Atemp = sparse(Atemp)
     
-    A = Atemp
+    # Remove columns corresponding to non-wind nodes:
+    Atemp = sparse(Atemp[:,[Ridx,n+1:2*n]])
     
     # Now we can tile the Atemp matrix to generate A:
+    A = Atemp
     for t = 2:T
         A = blkdiag(A, Atemp)
     end
-#     for t = 1:T
-#         start = (n+1)*(t-1) + 1
-#         stop = start + n
-#         A[start:stop,:] = circshift(Atemp,[0,2*n*(t-1)])
-#     end
     
     return A
 end
@@ -66,13 +56,13 @@ function tmp_inst_b(n,T,G0,D)
     return sparse(b)
 end
 
-function tmp_inst_Qtheta(n,T,tau,line)
+function tmp_inst_Qtheta(n,nr,T,tau,line)
     """ Generate Q_theta in the temperature constraint
     of a temporal instanton problem instance.
     "line" has the form (i,k), where i and k refer to
     the endpoints of the chosen line.
     """
-    Qtheta = zeros(2*n*T,2*n*T)
+    Qtheta = zeros((n+nr)*T,(n+nr)*T)
     i,k = line
     ei = zeros(n-1,1)
     ei[i] = 1
@@ -82,7 +72,7 @@ function tmp_inst_Qtheta(n,T,tau,line)
     Q0 = (ei - ek)*(ei - ek)'
     
     for t = 1:T
-        start = n + 1 + 2*n*(t-1)
+        start = nr + 1 + (nr+n)*(t-1)
         stop = start + n - 2
         Qtheta[start:stop,start:stop] = tau^(T-t)*Q0
     end

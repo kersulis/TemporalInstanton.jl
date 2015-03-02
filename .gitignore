@@ -1,1 +1,3 @@
 *.sublime-project
+.ipynb_checkpoints
+*.sublime-workspace
