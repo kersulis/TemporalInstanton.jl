@@ -1,0 +1,612 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"Float",
+				"float64"
+			],
+			[
+				"theta",
+				"mbfTheta	\\mbfTheta"
+			],
+			[
+				"thet",
+				"theta	\\^theta"
+			]
+		]
+	},
+	"buffers":
+	[
+	],
+	"build_system": "",
+	"command_palette":
+	{
+		"height": 688.0,
+		"selected_items":
+		[
+			[
+				"anfn",
+				"ANF: New File"
+			],
+			[
+				"upgra",
+				"Package Control: Upgrade Package"
+			],
+			[
+				"matl",
+				"Set Syntax: MATLAB"
+			],
+			[
+				"mat",
+				"Set Syntax: MATLAB"
+			],
+			[
+				"anfr",
+				"ANF: Rename File"
+			],
+			[
+				"inde",
+				"Indentation: Convert to Spaces"
+			],
+			[
+				"anfc",
+				"ANF: Copy Current File"
+			],
+			[
+				"ma",
+				"Set Syntax: MATLAB"
+			],
+			[
+				"",
+				"Convert Case: Title Case"
+			],
+			[
+				"julia",
+				"Set Syntax: Julia"
+			],
+			[
+				"juli",
+				"Set Syntax: Julia"
+			],
+			[
+				"inden",
+				"Indentation: Convert to Spaces"
+			],
+			[
+				"inst",
+				"Package Control: Install Package"
+			],
+			[
+				"lines",
+				"Table Editor: Show demo film in new scratch view"
+			],
+			[
+				"matla",
+				"Set Syntax: MATLAB"
+			],
+			[
+				"anf",
+				"ANF: Rename File"
+			],
+			[
+				"ann",
+				"ANF: New File"
+			],
+			[
+				"an",
+				"ANF: Rename File"
+			],
+			[
+				"anr",
+				"ANF: Rename File"
+			],
+			[
+				"anfd",
+				"ANF: Delete Current File"
+			],
+			[
+				"anfnf",
+				"ANF: New File"
+			],
+			[
+				"pkg in",
+				"Package Control: Install Package"
+			],
+			[
+				"packa in",
+				"Package Control: Install Package"
+			],
+			[
+				"table",
+				"Table Editor: Enable for current view"
+			],
+			[
+				"instal",
+				"Package Control: Install Package"
+			],
+			[
+				"insta",
+				"Package Control: Install Package"
+			],
+			[
+				"pack",
+				"Preferences: Browse Packages"
+			],
+			[
+				"fold",
+				"Project: Add Folder"
+			]
+		],
+		"width": 981.0
+	},
+	"console":
+	{
+		"height": 252.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = '7183a2d3e96f11eeadd761d777e62404' + 'e330c659d4bb41d3bdf022e94cab3cd0'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton"
+	],
+	"file_history":
+	[
+		"/home/jkersulis/Documents/kersulis.github.io/_posts/2014-09-04-mhacks-and-the-new-term.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_posts/2014-09-05-mhacks.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_posts/2014-07-29-productivity-breakthrough.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_posts/2014-07-31-end-of-internship.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_posts/2014-07-25-morning-routine.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_posts/2014-07-20-summer-at-los-alamos.md",
+		"/home/jkersulis/Documents/ipython/docs/source/whatsnew/version3_widget_migration.rst",
+		"/home/jkersulis/Documents/kersulis.github.io/_drafts/2014-07-20-pomodoros.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_drafts/2015-02-19-ipython-anew.md",
+		"/home/jkersulis/Documents/Dropbox/Winter 2015/511IOE/hw/ioe511.sublime-project",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/notes/2015-02-06-sustainability.md",
+		"/home/jkersulis/Documents/Dropbox/Winter 2015/511IOE/hw/4hw/code/check.m",
+		"/home/jkersulis/Documents/Dropbox/Winter 2015/511IOE/hw/4hw/code/f.m",
+		"/home/jkersulis/Documents/Dropbox/Winter 2015/511IOE/hw/4hw/code/grad.m",
+		"/home/jkersulis/Documents/Dropbox/Winter 2015/511IOE/hw/4hw/code/backtracking.m",
+		"/home/jkersulis/Documents/Dropbox/Winter 2015/511IOE/hw/4hw/code/bisection.m",
+		"/home/jkersulis/Documents/Dropbox/Winter 2015/511IOE/hw/3hw/solution/bisection.m",
+		"/home/jkersulis/Documents/Dropbox/Winter 2015/511IOE/hw/3hw/solution/backtracking.m",
+		"/home/jkersulis/Documents/Dropbox/Winter 2015/511IOE/hw/4hw/code/hesseval.m",
+		"/home/jkersulis/Documents/Dropbox/Winter 2015/511IOE/hw/4hw/code/hess.m",
+		"/home/jkersulis/Documents/Dropbox/Winter 2015/511IOE/hw/4hw/.ipynb_checkpoints/hessian-checkpoint.ipynb",
+		"/home/jkersulis/Documents/Dropbox/Winter 2015/511IOE/hw/3hw/solution/check.m",
+		"/home/jkersulis/Documents/Dropbox/Winter 2015/511IOE/hw/4hw/code/newtbt.m",
+		"/home/jkersulis/Documents/Dropbox/Winter 2015/511IOE/hw/3hw/solution/f.m",
+		"/home/jkersulis/Documents/Dropbox/Winter 2015/511IOE/hw/3hw/solution/grad.m",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/notes/2015-02-05-meeting-with-Ian.md",
+		"/home/jkersulis/Downloads/Start/index.html",
+		"/home/jkersulis/Documents/sandBox/matpowerProject/System.jl",
+		"/home/jkersulis/Documents/matpower/matpower4.1/opf_args.m",
+		"/home/jkersulis/Documents/matpower/matpower4.1/dcopf.m",
+		"/home/jkersulis/Documents/matpower/matpower4.1/t/soln9_opf_PQcap.mat",
+		"/home/jkersulis/Documents/matpower/matpower4.1/opf.m",
+		"/home/jkersulis/Documents/matpower/matpower4.1/define_constants.m",
+		"/home/jkersulis/Documents/matpower/matpower4.1/rundcopf.m",
+		"/home/jkersulis/Documents/matpower/matpower4.1/remove_userfcn.m",
+		"/home/jkersulis/Documents/matpower/matpower4.1/README",
+		"/home/jkersulis/Documents/matpower/matpower4.1/dcpf.m",
+		"/home/jkersulis/Documents/ipython/build/lib.linux-x86_64-2.7/IPython/html/utils.py",
+		"/home/jkersulis/Documents/ipython/build/lib/IPython/html/utils.py",
+		"/home/jkersulis/Documents/ipython/IPython/html/tests/base/utils.js",
+		"/home/jkersulis/Documents/ipython/IPython/kernel/tests/utils.py",
+		"/home/jkersulis/Documents/ipython/IPython/html/utils.py",
+		"/home/jkersulis/Documents/ipython/IPython/parallel/util.py",
+		"/home/jkersulis/Documents/ipython/docs/source/whatsnew/pr/user-templates.rst",
+		"/home/jkersulis/Documents/ipython/.ipynb_checkpoints/Untitled-checkpoint.ipynb",
+		"/home/jkersulis/Documents/ipython/IPython/html/widgets/widget.py",
+		"/home/jkersulis/Documents/ipython/IPython/html/widgets/widget_image.py",
+		"/home/jkersulis/Documents/ipython/IPython/html/static/components/es6-promise/promise.min.js",
+		"/home/jkersulis/Documents/ipython/build/lib/IPython/html/static/components/es6-promise/promise.js",
+		"/home/jkersulis/Documents/ipython/build/lib.linux-x86_64-2.7/IPython/html/static/components/es6-promise/promise.js",
+		"/home/jkersulis/Documents/ipython/IPython/html/static/components/es6-promise/promise.js",
+		"/home/jkersulis/Documents/ipython/IPython/core/prompts.py",
+		"/home/jkersulis/Documents/ipython/IPython/core/profileapp.py",
+		"/home/jkersulis/Documents/ipython/examples/IPython Kernel/Third Party Rich Output.ipynb",
+		"/home/jkersulis/Documents/ipython/git-hooks/post-checkout",
+		"/home/jkersulis/Documents/ipython/examples/IPython Kernel/ipython-get-history.py",
+		"/home/jkersulis/Documents/ipython/docs/source/whatsnew/github-stats-0.11.rst",
+		"/home/jkersulis/Documents/ipython/docs/resources/generate_icons.sh",
+		"/home/jkersulis/Documents/ipython/IPython/html/static/components/bootstrap/fonts/glyphicons-halflings-regular.woff",
+		"/home/jkersulis/Documents/ipython/IPython/html/static/components/bootstrap/less/responsive-embed.less",
+		"/home/jkersulis/Documents/ipython/README.rst",
+		"/home/jkersulis/Documents/ipython/build/scripts-2.7/ipython",
+		"/home/jkersulis/Documents/ipython/examples/Interactive Widgets/Image Processing.ipynb",
+		"/home/jkersulis/Documents/ipython/build/scripts-2.7/ipcluster",
+		"/home/jkersulis/Documents/kersulis.github.io/_posts/2015-01-15-matpower-in-julia.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_posts/2015-01-16-matpower-in-julia-take-two.md",
+		"/home/jkersulis/Documents/matpowerCases.jl/src/matpowerCases.jl",
+		"/home/jkersulis/Documents/kersulis.github.io/README.md",
+		"/home/jkersulis/Documents/matpowerCases.jl/README.md",
+		"/home/jkersulis/Documents/kersulis.github.io/about.md",
+		"/home/jkersulis/Documents/MatpowerCases.jl/.gitignore",
+		"/home/jkersulis/Documents/Power.jl/README.md",
+		"/home/jkersulis/Documents/kersulis.github.io/2015-01-16-matpower-in-julia-take-two.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_posts/2015-01-16-matpower-in-julia-again.md",
+		"/home/jkersulis/Documents/matpowerCases.jl/REQUIRE",
+		"/home/jkersulis/Documents/Power.jl/src/Power.jl",
+		"/home/jkersulis/Documents/matpowerCases.jl/.gitignore",
+		"/home/jkersulis/Documents/MATPOWERcases/case9Q.m",
+		"/home/jkersulis/.julia/v0.3/Power/src/Power.jl",
+		"/home/jkersulis/Documents/Power.jl/REQUIRE",
+		"/home/jkersulis/Documents/Power.jl/RE",
+		"/home/jkersulis/Documents/kersulis.github.io/_drafts/2015-01-14-cost-of-outage.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_posts/2015-01-14-cost-of-outage.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_config.yml",
+		"/home/jkersulis/Documents/kersulis.github.io/cv.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_posts/2015-01-14-matpower-in-julia.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_drafts/2015-01-14-matpower-in-julia.md",
+		"/home/jkersulis/Documents/updatepip.py",
+		"/home/jkersulis/.ipython/kernels/julia/kernel.json",
+		"/home/jkersulis/Documents/kersulis.github.io/_drafts/8-28-14-Finally Free Chapter 1.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_drafts/Fisher.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_posts/2015-01-14-on-gadgets.md",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/winterPowerSchool/interactiveSession/IV. Exploring a new idea.slides.html",
+		"/home/jkersulis/Documents/kersulis.github.io/_layouts/default.html",
+		"/home/jkersulis/Documents/kersulis.github.io/_includes/head.html",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/winterPowerSchool/interactiveSession/I. Intro to Julia.ipynb",
+		"/home/jkersulis/Documents/kersulis.github.io/_posts/2014-09-04-MHacks-and-the-new-term.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_drafts/2015-01-13-ijulia-wps.md",
+		"/home/jkersulis/Documents/kersulis.github.io/index.html",
+		"/home/jkersulis/Documents/kersulis.github.io/_posts/2014-07-25-Morning-routine.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_posts/2014-09-13-Installing-MATLAB-on-Linux.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_layouts/post.html",
+		"/home/jkersulis/Documents/kersulis.github.io/_drafts/9-05-14-MHacks.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_drafts/7-31-14 End of the internship.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_drafts/7-29-14 Productivity breakthrough",
+		"/home/jkersulis/Documents/kersulis.github.io/_posts/2014-07-20-Summer-at-Los-Alamos.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_drafts/7-25-14 Morning routine",
+		"/home/jkersulis/Documents/kersulis.github.io/_posts/2014-07-23-Important-tools.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_drafts/7-23-14 The most important tools in my life.md",
+		"/home/jkersulis/Documents/kersulis.github.io/2014-07-20-Summer-at-Los-Alamos.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_posts/7-20-14-Summer-at-Los-Alamos.md",
+		"/home/jkersulis/Documents/kersulis.github.io/7-20-14-Summer-at-Los-Alamos.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_posts/7-20-14 First Post.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_drafts/11-08-14-Learning and Creating.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_drafts/11-07-14-Work.md",
+		"/home/jkersulis/Documents/kersulis.github.io/_drafts/7-20-14 First Post.md",
+		"/home/jkersulis/Documents/kersulis.github.io/.gitignore",
+		"/home/jkersulis/Documents/kersulis.github.io/_posts/2014-11-18-Installing-IPython.md",
+		"/home/jkersulis/Documents/poole/includes/twitter.html",
+		"/home/jkersulis/Documents/poole/twitter.html",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/winterPowerSchool/IJulia-WPS/.gitignore",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/winterPowerSchool/IJulia-WPS/Session 1/fixed_mathjax.tpl",
+		"/home/jkersulis/Downloads/IV. Exploring a new idea.v3.slides.html",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/winterPowerSchool/IJulia-WPS/Session 1/slides.tpl",
+		"/home/jkersulis/Downloads/IV. Exploring a new idea.v3.slides (1).html",
+		"/home/jkersulis/Downloads/IV. Exploring a new idea.v3.html",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/winterPowerSchool/1-02-15-Meeting.md",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/winterPowerSchool/interactiveSession/julia-code/instanton.jl"
+	],
+	"find":
+	{
+		"height": 61.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			" ",
+			"Params",
+			"Ts",
+			"*",
+			"#",
+			".",
+			"#",
+			"::Float64",
+			"register",
+			"widgetmodel",
+			"promise",
+			"registry",
+			".mat",
+			"c",
+			"mathjax",
+			"within",
+			"touch",
+			"]",
+			"face",
+			"*",
+			"Step",
+			"step",
+			"kerne",
+			"mathjax",
+			"#",
+			"# ",
+			"       #",
+			"Lines",
+			"       # ",
+			"#",
+			"mosek",
+			")\n"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 40.0
+	},
+	"input":
+	{
+		"height": 56.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"project": "temporal-instanton.sublime-project",
+	"replace":
+	{
+		"height": 114.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+			[
+				"bise",
+				"4hw/code/bisection.m"
+			],
+			[
+				"baa",
+				"3hw/solution/backtracking.m"
+			],
+			[
+				"back",
+				"4hw/code/backtracking.m"
+			],
+			[
+				"newt",
+				"4hw/code/newtbt.m"
+			],
+			[
+				"chec",
+				"4hw/code/check.m"
+			],
+			[
+				"hes",
+				"4hw/code/hess.m"
+			],
+			[
+				"check",
+				"4hw/code/check.m"
+			],
+			[
+				"new",
+				"4hw/code/newtpure.m"
+			],
+			[
+				"grad",
+				"4hw/code/grad.m"
+			],
+			[
+				"f",
+				"4hw/code/f.m"
+			],
+			[
+				"sdb",
+				"4hw/code/sdbisection.m"
+			],
+			[
+				"gra",
+				"4hw/code/grad.m"
+			],
+			[
+				"opf_exe",
+				"opf_execute.m"
+			],
+			[
+				"opf_set",
+				"opf_setup.m"
+			],
+			[
+				"opf",
+				"opf.m"
+			],
+			[
+				"dcop",
+				"dcopf.m"
+			],
+			[
+				"runpf",
+				"runpf.m"
+			],
+			[
+				"dcpf",
+				"dcpf.m"
+			],
+			[
+				"utils",
+				"IPython/html/static/base/js/utils.js"
+			],
+			[
+				"promise",
+				"IPython/html/static/components/es6-promise/promise.js"
+			],
+			[
+				"rea",
+				"README.md"
+			],
+			[
+				"read",
+				"README.md"
+			],
+			[
+				"abou",
+				"about.md"
+			],
+			[
+				"cos",
+				"_posts/2015-01-14-cost-of-outage.md"
+			],
+			[
+				"hea",
+				"_includes/head.html"
+			],
+			[
+				"about",
+				"about.md"
+			],
+			[
+				"mha",
+				"_posts/2014-09-04-MHacks-and-the-new-term.md"
+			],
+			[
+				"scsss",
+				"_sass/_site.scss"
+			],
+			[
+				"scss",
+				"assets/css/main.scss"
+			],
+			[
+				"page",
+				"_sass/_page.scss"
+			],
+			[
+				"main.",
+				"_site/assets/css/main.css"
+			],
+			[
+				"main",
+				"_site/assets/css/main.css"
+			],
+			[
+				"post-in",
+				"_layouts/post-index.html"
+			],
+			[
+				"css",
+				"_sass/_site.scss"
+			],
+			[
+				".css",
+				"_sass/_page.scss"
+			],
+			[
+				"post",
+				"_templates/post"
+			],
+			[
+				"assets",
+				"assets/css/main.scss"
+			],
+			[
+				"tags",
+				"tags/index.html"
+			],
+			[
+				"inde",
+				"index.html"
+			],
+			[
+				"theme",
+				"theme-setup/index.md"
+			],
+			[
+				"confi",
+				"kersulis.github.io/_config.yml"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 1000.0,
+		"selected_items":
+		[
+			[
+				"",
+				"~/Documents/Dropbox/Winter 2015/511IOE/hw/ioe511.sublime-project"
+			]
+		],
+		"width": 760.0
+	},
+	"select_symbol":
+	{
+		"height": 64.0,
+		"selected_items":
+		[
+		],
+		"width": 784.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 349.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}
