@@ -4,6 +4,10 @@
 		"selected_items":
 		[
 			[
+				"psData",
+				"psDataLoad"
+			],
+			[
 				"Float",
 				"float64"
 			],
@@ -19,6 +23,38 @@
 	},
 	"buffers":
 	[
+		{
+			"file": "src/TemporalInstanton.jl",
+			"settings":
+			{
+				"buffer_size": 2363,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/TrustRegionSubproblem.jl",
+			"settings":
+			{
+				"buffer_size": 1085,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/tmp_inst_rts96.jl",
+			"settings":
+			{
+				"buffer_size": 1269,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/readRTS96Data.jl",
+			"settings":
+			{
+				"buffer_size": 4223,
+				"line_ending": "Unix"
+			}
+		}
 	],
 	"build_system": "",
 	"command_palette":
@@ -31,6 +67,18 @@
 				"ANF: New File"
 			],
 			[
+				"anfd",
+				"ANF: Delete Current File"
+			],
+			[
+				"anfr",
+				"ANF: Rename File"
+			],
+			[
+				"pkglist",
+				"Package Control: List Packages"
+			],
+			[
 				"upgra",
 				"Package Control: Upgrade Package"
 			],
@@ -41,10 +89,6 @@
 			[
 				"mat",
 				"Set Syntax: MATLAB"
-			],
-			[
-				"anfr",
-				"ANF: Rename File"
 			],
 			[
 				"inde",
@@ -103,10 +147,6 @@
 				"ANF: Rename File"
 			],
 			[
-				"anfd",
-				"ANF: Delete Current File"
-			],
-			[
 				"anfnf",
 				"ANF: New File"
 			],
@@ -139,7 +179,7 @@
 				"Project: Add Folder"
 			]
 		],
-		"width": 981.0
+		"width": 984.0
 	},
 	"console":
 	{
@@ -160,10 +200,17 @@
 	},
 	"expanded_folders":
 	[
-		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton"
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src"
 	],
 	"file_history":
 	[
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/psDataLoad.jl",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/readRTS96Data.jl",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/instanton.jl",
+		"/home/jkersulis/.config/sublime-text-3/Packages/User/Preferences.sublime-settings",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/TemporalInstanton.jl",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/temporal-instanton.sublime-project",
 		"/home/jkersulis/Documents/kersulis.github.io/_posts/2014-09-04-mhacks-and-the-new-term.md",
 		"/home/jkersulis/Documents/kersulis.github.io/_posts/2014-09-05-mhacks.md",
 		"/home/jkersulis/Documents/kersulis.github.io/_posts/2014-07-29-productivity-breakthrough.md",
@@ -285,13 +332,7 @@
 		"/home/jkersulis/Documents/poole/includes/twitter.html",
 		"/home/jkersulis/Documents/poole/twitter.html",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/winterPowerSchool/IJulia-WPS/.gitignore",
-		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/winterPowerSchool/IJulia-WPS/Session 1/fixed_mathjax.tpl",
-		"/home/jkersulis/Downloads/IV. Exploring a new idea.v3.slides.html",
-		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/winterPowerSchool/IJulia-WPS/Session 1/slides.tpl",
-		"/home/jkersulis/Downloads/IV. Exploring a new idea.v3.slides (1).html",
-		"/home/jkersulis/Downloads/IV. Exploring a new idea.v3.html",
-		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/winterPowerSchool/1-02-15-Meeting.md",
-		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/winterPowerSchool/interactiveSession/julia-code/instanton.jl"
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/winterPowerSchool/IJulia-WPS/Session 1/fixed_mathjax.tpl"
 	],
 	"find":
 	{
@@ -309,6 +350,25 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"tmp_inst",
+			"generate",
+			"Generate",
+			"generate",
+			"Generate",
+			"generate",
+			"Generate",
+			"generate",
+			"Generate",
+			"generate",
+			"Generate",
+			"generate",
+			"Generate",
+			"generate",
+			"Generate",
+			"generate",
+			"generateQobj",
+			"Generate",
+			"generate",
 			" ",
 			"Params",
 			"Ts",
@@ -358,8 +418,135 @@
 	"groups":
 	[
 		{
+			"selected": 0,
 			"sheets":
 			[
+				{
+					"buffer": 0,
+					"file": "src/TemporalInstanton.jl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2363,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2363,
+								2363
+							]
+						],
+						"settings":
+						{
+							"WordCountShouldRun": true,
+							"WordCountSyntax": "julia",
+							"syntax": "Packages/Julia/Julia.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 2310.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "src/TrustRegionSubproblem.jl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1085,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1085,
+								1085
+							]
+						],
+						"settings":
+						{
+							"WordCountShouldRun": true,
+							"WordCountSyntax": "julia",
+							"_anf_new": "",
+							"syntax": "Packages/Julia/Julia.tmLanguage"
+						},
+						"translation.x": -0.0,
+						"translation.y": 525.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "src/tmp_inst_rts96.jl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1269,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1218,
+								1218
+							]
+						],
+						"settings":
+						{
+							"WordCountShouldRun": true,
+							"WordCountSyntax": "plain text",
+							"auto_name": "",
+							"syntax": "Packages/Julia/Julia.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "src/readRTS96Data.jl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4223,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								711,
+								711
+							]
+						],
+						"settings":
+						{
+							"WordCountShouldRun": true,
+							"WordCountSyntax": "julia",
+							"syntax": "Packages/Julia/Julia.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": -0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				}
 			]
 		}
 	],
@@ -603,7 +790,7 @@
 	"show_minimap": true,
 	"show_open_files": false,
 	"show_tabs": true,
-	"side_bar_visible": true,
+	"side_bar_visible": false,
 	"side_bar_width": 349.0,
 	"status_bar_visible": true,
 	"template_settings":
