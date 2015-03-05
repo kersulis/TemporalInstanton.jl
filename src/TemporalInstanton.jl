@@ -38,8 +38,7 @@ function tmp_inst_A(n,Ridx,T,Y,slack,k)
     Atemp = zeros(n+1,2*n)
     Atemp = [[-eye(n) adm -k]; ones(1,n) zeros(1,n-1) 1]
     
-    # Remove columns corresponding to non-wind nodes
-    # and slack node:
+    # Remove columns corresponding to non-wind nodes:
     Atemp = sparse(Atemp[:,[Ridx,n+1:2*n]])
     
     # Now we can tile the Atemp matrix to generate A:

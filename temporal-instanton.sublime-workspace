@@ -27,15 +27,7 @@
 			"file": "src/TemporalInstanton.jl",
 			"settings":
 			{
-				"buffer_size": 2363,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "README.md",
-			"settings":
-			{
-				"buffer_size": 270540,
+				"buffer_size": 2825,
 				"line_ending": "Unix"
 			}
 		},
@@ -67,16 +59,16 @@
 	"build_system": "",
 	"command_palette":
 	{
-		"height": 610.0,
+		"height": 688.0,
 		"selected_items":
 		[
 			[
-				"anfr",
-				"ANF: Rename File"
-			],
-			[
 				"anfn",
 				"ANF: New File"
+			],
+			[
+				"anfr",
+				"ANF: Rename File"
 			],
 			[
 				"anfd",
@@ -187,7 +179,7 @@
 				"Project: Add Folder"
 			]
 		],
-		"width": 984.0
+		"width": 940.0
 	},
 	"console":
 	{
@@ -209,10 +201,16 @@
 	"expanded_folders":
 	[
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton",
-		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src"
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/data",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/data/RTS-96 Data",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/notes"
 	],
 	"file_history":
 	[
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/notes/2015-03-04-meeting-with-Ian.md",
+		"/home/jkersulis/Downloads/CaseData.m",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/README.md",
 		"/home/jkersulis/Downloads/Report, 2015-03-02.html",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/psDataLoad.jl",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/readRTS96Data.jl",
@@ -337,10 +335,7 @@
 		"/home/jkersulis/Documents/kersulis.github.io/_drafts/11-07-14-Work.md",
 		"/home/jkersulis/Documents/kersulis.github.io/_drafts/7-20-14 First Post.md",
 		"/home/jkersulis/Documents/kersulis.github.io/.gitignore",
-		"/home/jkersulis/Documents/kersulis.github.io/_posts/2014-11-18-Installing-IPython.md",
-		"/home/jkersulis/Documents/poole/includes/twitter.html",
-		"/home/jkersulis/Documents/poole/twitter.html",
-		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/winterPowerSchool/IJulia-WPS/.gitignore"
+		"/home/jkersulis/Documents/kersulis.github.io/_posts/2014-11-18-Installing-IPython.md"
 	],
 	"find":
 	{
@@ -426,7 +421,7 @@
 	"groups":
 	[
 		{
-			"selected": 1,
+			"selected": 0,
 			"sheets":
 			[
 				{
@@ -435,15 +430,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2363,
+						"buffer_size": 2825,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								2363,
-								2363
+								1219,
+								1219
 							]
 						],
 						"settings":
@@ -455,46 +450,14 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 2310.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "README.md",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 270540,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								354,
-								354
-							]
-						],
-						"settings":
-						{
-							"WordCountShouldRun": true,
-							"WordCountSyntax": "markdown",
-							"syntax": "Packages/Markdown/Markdown.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 560.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
 					"type": "text"
 				},
 				{
-					"buffer": 2,
+					"buffer": 1,
 					"file": "src/TrustRegionSubproblem.jl",
 					"semi_transient": false,
 					"settings":
@@ -512,19 +475,22 @@
 						],
 						"settings":
 						{
+							"WordCountShouldRun": true,
 							"WordCountSyntax": "julia",
 							"_anf_new": "",
-							"syntax": "Packages/Julia/Julia.tmLanguage"
+							"syntax": "Packages/Julia/Julia.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
 						},
-						"translation.x": -0.0,
-						"translation.y": 525.0,
+						"translation.x": 0.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 1,
 					"type": "text"
 				},
 				{
-					"buffer": 3,
+					"buffer": 2,
 					"file": "src/tmp_inst_rts96.jl",
 					"semi_transient": false,
 					"settings":
@@ -542,19 +508,22 @@
 						],
 						"settings":
 						{
-							"WordCountSyntax": "plain text",
+							"WordCountShouldRun": true,
+							"WordCountSyntax": "julia",
 							"auto_name": "",
-							"syntax": "Packages/Julia/Julia.tmLanguage"
+							"syntax": "Packages/Julia/Julia.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 3,
+					"stack_index": 2,
 					"type": "text"
 				},
 				{
-					"buffer": 4,
+					"buffer": 3,
 					"file": "src/readRTS96Data.jl",
 					"semi_transient": false,
 					"settings":
@@ -572,6 +541,7 @@
 						],
 						"settings":
 						{
+							"WordCountShouldRun": true,
 							"WordCountSyntax": "julia",
 							"syntax": "Packages/Julia/Julia.tmLanguage",
 							"tab_size": 4,
@@ -581,7 +551,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 4,
+					"stack_index": 3,
 					"type": "text"
 				}
 			]
@@ -827,8 +797,8 @@
 	"show_minimap": true,
 	"show_open_files": false,
 	"show_tabs": true,
-	"side_bar_visible": true,
-	"side_bar_width": 349.0,
+	"side_bar_visible": false,
+	"side_bar_width": 405.0,
 	"status_bar_visible": true,
 	"template_settings":
 	{
