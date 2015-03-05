@@ -69,7 +69,7 @@ function tmp_inst_b(n,T,G0,D)
     return sparse(b)
 end
 
-function tmp_inst_Qtheta(n,nr,T,tau,line)
+function tmp_inst_Qtheta(n,nr,T,tau,line,slack)
     """ Generate Q_theta in the temperature constraint
     of a temporal instanton problem instance.
     "line" has the form (i,k), where i and k refer to
@@ -77,12 +77,15 @@ function tmp_inst_Qtheta(n,nr,T,tau,line)
     """
     Qtheta = zeros((n+nr)*T,(n+nr)*T)
     i,k = line
-    ei = zeros(n-1,1)
+    ei = zeros(n,1)
     ei[i] = 1
-    ek = zeros(n-1,1)
+    ek = zeros(n,1)
     ek[k] = 1
     
     Q0 = (ei - ek)*(ei - ek)'
+    
+    Q0 = Q0[:,setdiff(1:n,slack)]
+    Q0 = Q0[setdiff(1:n,slack),:]
     
     for t = 1:T
         start = nr + 1 + (nr+n)*(t-1)
