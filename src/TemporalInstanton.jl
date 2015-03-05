@@ -10,23 +10,36 @@ function tmp_inst_Qobj(n,nr,T)
     return sparse(diagm(repeat([ones(nr),zeros(n)],outer=[T])))
 end
 
-function tmp_inst_A(n,Ridx,T,Y,k)
+function tmp_inst_A(n,Ridx,T,Y,slack,k)
     """ Generate the power balance constraint A matrix
     from problem dimensions, admittance matrix,
     and generator participation factors.
-    Assumes the admittance matrix is (n-1)-by-(n-1).
+    Assumes the admittance matrix is n-by-n.
+    
+    Returns A, which is (n+1)*T-by-(n+nr)*T
+    
+    * n is the number of nodes in the network
+    * Ridx is a vector indicating wind nodes
+    * T is the number of time steps
+    * Y is the admittance matrix (n-by-n)
+    * slack is the index of the slack bus
+    * k is the vector of generator participation factors
     """
-    # A = zeros((n+1)*T,2*n*T)
+    
+    # zero out slack row of Y:
+    adm = deepcopy(Y)
+    adm[slack,:] = zeros(n)
+    
+    # remove slack column of Y:
+    adm = adm[:,setdiff(1:n,slack)]
     
     # A has a block diagonal pattern where each
     # block is Atemp:
-    Atemp = zeros((n+1),2*n)
-    Atemp[1:n,1:n] = -eye(n)
-    Atemp[end,1:n] = ones(1,n)
-    Atemp[1:n-1,n+1:2n-1] = Y
-    Atemp[:,2*n] = [-k,1]
+    Atemp = zeros(n+1,2*n)
+    Atemp = [[-eye(n) adm -k]; ones(1,n) zeros(1,n-1) 1]
     
-    # Remove columns corresponding to non-wind nodes:
+    # Remove columns corresponding to non-wind nodes
+    # and slack node:
     Atemp = sparse(Atemp[:,[Ridx,n+1:2*n]])
     
     # Now we can tile the Atemp matrix to generate A:
