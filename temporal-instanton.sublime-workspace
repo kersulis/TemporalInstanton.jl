@@ -59,7 +59,7 @@
 			"file": "src/TrustRegionSubproblem.jl",
 			"settings":
 			{
-				"buffer_size": 1261,
+				"buffer_size": 2641,
 				"line_ending": "Unix"
 			}
 		},
@@ -445,7 +445,7 @@
 	"groups":
 	[
 		{
-			"selected": 0,
+			"selected": 2,
 			"sheets":
 			[
 				{
@@ -467,7 +467,6 @@
 						],
 						"settings":
 						{
-							"WordCountShouldRun": true,
 							"WordCountSyntax": "julia",
 							"syntax": "Packages/Julia/Julia.tmLanguage",
 							"tab_size": 4,
@@ -477,7 +476,7 @@
 						"translation.y": 4515.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 0,
+					"stack_index": 1,
 					"type": "text"
 				},
 				{
@@ -499,7 +498,6 @@
 						],
 						"settings":
 						{
-							"WordCountShouldRun": true,
 							"WordCountSyntax": "matlab",
 							"syntax": "Packages/Matlab/Matlab.tmLanguage",
 							"tab_size": 2,
@@ -518,15 +516,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1261,
+						"buffer_size": 2641,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								969,
-								969
+								131,
+								131
 							]
 						],
 						"settings":
@@ -538,11 +536,11 @@
 							"tab_size": 4,
 							"translate_tabs_to_spaces": true
 						},
-						"translation.x": -0.0,
-						"translation.y": 315.0,
+						"translation.x": 505.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 0,
 					"type": "text"
 				},
 				{
@@ -564,7 +562,6 @@
 						],
 						"settings":
 						{
-							"WordCountShouldRun": true,
 							"WordCountSyntax": "julia",
 							"auto_name": "",
 							"syntax": "Packages/Julia/Julia.tmLanguage",
@@ -597,7 +594,6 @@
 						],
 						"settings":
 						{
-							"WordCountShouldRun": true,
 							"WordCountSyntax": "julia",
 							"syntax": "Packages/Julia/Julia.tmLanguage",
 							"tab_size": 4,
