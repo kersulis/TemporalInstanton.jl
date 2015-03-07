@@ -1,16 +1,18 @@
 module TemporalInstanton
 
-export tmp_inst_Qobj, tmp_inst_A, tmp_inst_b, tmp_inst_Qtheta
+export tmp_inst_Qobj, tmp_inst_A, tmp_inst_b, tmp_inst_Qtheta, tmp_inst_A_scale, tmp_inst_pad_b, tmp_inst_pad_Q, temporalInstanton
 
 function tmp_inst_Qobj(n,nr,T)
     """ Generate the objective function matrix
     Qobj from the problem dimensions.
     Assume no correlation between wind sites.
     """
-    return sparse(diagm(repeat([ones(nr),zeros(n)],outer=[T])))
+    Qobj = sparse(diagm(repeat([ones(nr),zeros(n)],outer=[T])))
+    Qobj = tmp_inst_pad_Q(Qobj,T)
+    return Qobj
 end
 
-function tmp_inst_A(n,Ridx,T,Y,slack,k)
+function tmp_inst_A(n,Ridx,T,Y,slack,k,tau,line)
     """ Generate the power balance constraint A matrix
     from problem dimensions, admittance matrix,
     and generator participation factors.
@@ -46,6 +48,13 @@ function tmp_inst_A(n,Ridx,T,Y,slack,k)
     for t = 2:T
         A = blkdiag(A, Atemp)
     end
+
+    # These rows relate auxiliary angle variables to
+    # original angle variables:
+    A2 = tmp_inst_A_scale(n,Ridx,T,tau,slack,line)
+
+    # Augment A with new rows:
+    A = [[full(A) zeros((n+1)*T,T)]; A2]
     
     return A
 end
@@ -65,7 +74,11 @@ function tmp_inst_b(n,T,G0,D)
         append!(b,netGen[start:stop])
         push!(b,mismatch)
     end
-    return sparse(b)
+
+    # Extend b with T additional zeroes:
+    tmp_inst_pad_b(b,T)
+
+    return b
 end
 
 function tmp_inst_Qtheta(n,nr,T,tau)
@@ -79,32 +92,6 @@ function tmp_inst_Qtheta(n,nr,T,tau)
     Qtheta[end-T+1:end,end-T+1:end] = eye(T)
     return sparse(Qtheta)
 end
-
-# function tmp_inst_Qtheta(n,nr,T,tau,line,slack)
-#     """ Generate Q_theta in the temperature constraint
-#     of a temporal instanton problem instance.
-#     "line" has the form (i,k), where i and k refer to
-#     the endpoints of the chosen line.
-#     """
-#     Qtheta = zeros((n+nr)*T,(n+nr)*T)
-#     i,k = line
-#     ei = zeros(n,1)
-#     ei[i] = 1
-#     ek = zeros(n,1)
-#     ek[k] = 1
-    
-#     Q0 = (ei - ek)*(ei - ek)'
-    
-#     Q0 = Q0[:,setdiff(1:n,slack)]
-#     Q0 = Q0[setdiff(1:n,slack),:]
-    
-#     for t = 1:T
-#         start = nr + 1 + (nr+n)*(t-1)
-#         stop = start + n - 2
-#         Qtheta[start:stop,start:stop] = tau^(T-t)*Q0
-#     end
-#     return sparse(Qtheta)
-# end
 
 function tmp_inst_A_scale(n,Ridx,T,tau,slack,line)
     """ Augment A with T additional rows relating
@@ -147,7 +134,7 @@ function tmp_inst_pad_b(b,T)
     append!(b,zeros(T))
 end
 
-function tmp_isnt_pad_Q(Q,T)
+function tmp_inst_pad_Q(Q,T)
     """ Add T rows and T columns of zeros
     to matrix Q
     """
@@ -155,13 +142,18 @@ function tmp_isnt_pad_Q(Q,T)
     return [[Q zeros(m,T)]; zeros(T,n+T)]
 end
 
-function temporalInstanton(n,t,tau,Y,k,G0,D,line)
+function temporalInstanton(Ridx,Y,slack,k,tau,line,G0,D)
 	""" Return an instance of the temporal instanton
 	problem.
 	"""
-    Qobj = tmp_inst_Qobj(n,T)
-    A = tmp_inst_A(n,T,Y,k)
+    n = size(Y,1)
+    T = int(length(G0)/n)
+    nr = length(Ridx)
+    Qobj = tmp_inst_Qobj(n,nr,T)
+    A = tmp_inst_A(n,Ridx,T,Y,slack,k,tau,line)
     b = tmp_inst_b(n,T,G0,D)
-    Qtheta = tmp_inst_Qtheta(n,T,tau,line)
+    Qtheta = tmp_inst_Qtheta(n,nr,T,tau)
     return Qobj, A, b, Qtheta
+end
+
 end
