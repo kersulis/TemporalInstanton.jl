@@ -90,7 +90,7 @@ function tr_kernel_rotate(G_of_x,A)
     """
     G,g,kg = G_of_x
     R = kernel_rotation(A)
-    return (R*G*R',R*g,kg)
+    return (R*G*R',R*g,kg),R
 end
 
 function tr_diag_rotate(G_of_x)
@@ -98,8 +98,8 @@ function tr_diag_rotate(G_of_x)
     whose quadratic part is diagonal.
     """
     G,g,kg = G_of_x
-    D,V = eig(G)
-    return (diagm(D),V'*g,kg)
+    D,U = eig(G)
+    return (diagm(D),U'*g,kg),U'
 end
 
 end
