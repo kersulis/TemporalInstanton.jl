@@ -83,11 +83,14 @@ end
 
 function tr_kernel_rotate(G_of_x,A)
     """ Rotate quadratic G_of_x to eliminate all
-    but first k variables. Returns quadratic H_of_z
+    but first k variables. Returns quadratic H_of_z.
+
+    Note: equivalent to change of variables from x 
+    to z=R*x
     """
     G,g,kg = G_of_x
-    rotation = kernel_rotation(A)
-    return (rotation*G,rotation*g,kg)
+    R = kernel_rotation(A)
+    return (R*G*R',R*g,kg)
 end
 
 function tr_diag_rotate(G_of_x)
