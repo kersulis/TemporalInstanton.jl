@@ -59,7 +59,7 @@
 			"file": "src/TrustRegionSubproblem.jl",
 			"settings":
 			{
-				"buffer_size": 2641,
+				"buffer_size": 2695,
 				"line_ending": "Unix"
 			}
 		},
@@ -377,6 +377,7 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"rotation",
 			"tmp_inst",
 			"generate",
 			"Generate",
@@ -516,15 +517,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2641,
+						"buffer_size": 2695,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								131,
-								131
+								2686,
+								2686
 							]
 						],
 						"settings":
@@ -536,8 +537,8 @@
 							"tab_size": 4,
 							"translate_tabs_to_spaces": true
 						},
-						"translation.x": 505.0,
-						"translation.y": 0.0,
+						"translation.x": 0.0,
+						"translation.y": 2100.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
