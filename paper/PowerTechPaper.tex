@@ -103,7 +103,7 @@ In this paper we bring instanton analysis into the temporal setting. We consider
 
 %If the relationship between generation and heat input was linear, we would have a linear optimal control problem.
 
-\section{Formulation}
+\section{Problem formulation}
 
 Though most of the modeling and detail of previous instanton work carries over to time-coupled analysis, there is one significant complication:  the nonlinearity of Ohmic heating (power loss) on a line. Heat input into a line is proportional to the square of the line's current. Thus, heat-constrained, time-coupled instanton analysis is a quadratically-constrained quadratic program (QCQP). QCQPs are NP-hard in general; reasonable solutions may exist, but unless the quadratic constraint matrices are positive-definite there is no solution guarantee (see \cite{mehanna2014}). Because system operators must be able to reliably obtain reasonable output from the analysis, ``no solution found'' is an unacceptable output. With this criterion in mind, we proceed to develop models for line losses, line temperature, and instanton optimization that keep integer variables to a minimum.
 %We then relax this constraint to avoid introducing integer variables into the formulation, as described in \cite{almassalkhi2014}. The resulting optimization problem is convex and easily solved.
@@ -250,24 +250,22 @@ The temperature dynamics described in this section are used in the following dev
 In the preceding discussion we have shown how to calculate losses with \eqref{LL:activeLoss} and use this information to find line temperature changes with \eqref{TD:euler}-\eqref{TD:sample} and ultimately \eqref{TD:vectors}. All that remains is to describe the instanton optimization itself.
 
 The following equations describe an optimization problem that minimizes deviation from the wind forecast while heating a certain line to an unacceptable temperature by the last time step:
-\begin{subequations}
-\label{I:all}
+\begin{subequations}\label{I:all}
 \begin{align}
-\label{I:obj}\min & \sum_{t=1}^{t_\text{end}} \frac{1}{2}\left( \rho_t - \rho_{0,t} \right)^\top  \left( \rho_t - \rho_{0t} \right) \\
+\label{I:obj}\min & \sum_{t=1}^{t_\text{end}} x_t^\top Q_x x_t \\
 \nonumber& \text{subject to:} \\
-\label{I:flow} \sum_k Y_{ik} \theta_{ik,t} & = G_{i,t} + \rho_{i,t} - D_{i,t} ~ \forall i \in \mathcal{N},~t\in 1... t_\text{end} \\
-\label{I:conv} G_t &= G_{0,t} + k\alpha_t \quad \forall t\in 1\ldots t_\text{end} \\
-\label{I:slack} \theta_{k,t} & = 0 \quad \forall t\in 1\ldots t_\text{end} \\
-\label{I:lim} \Delta T_{ik}[t_\text{end}] &= \Delta T_{ik}^\text{lim}\quad \text{for some }(i,k)\in \mathcal{G}
-%\label{I:plim} \theta_{i,t} - \theta_{k,t} & = x_{ik} P_{lim,ik} \quad \text{for each } (i,k) \in G \\
+\label{I:flow} \sum_k Y_{ik} \theta_{ik,t} & = G_{i,t} + \rho_{i,t} + x_{i,t} - D_{i,t} ~ \forall i \in \mathcal{N},~t\in 1... T \\
+\label{I:conv} G_t &= G_{0,t} + k\alpha_t \quad \forall t\in 1\ldots T \\
+\label{I:slack} \theta_{k,t} & = 0 \quad \forall t\in 1\ldots T \\
+\label{I:lim} \Delta T_{ik}[T] &= \Delta T_{ik}^\text{lim}\quad \text{for some }(i,k)\in \mathcal{G}
 \end{align}
 \end{subequations}
 together with \eqref{LL:activeLoss} and \eqref{TD:euler}, where:
 \begin{itemize}
 \itemsep1pt\parskip0pt\parsep0pt
-\item $\rho_{i,t}$ is renewable generation at bus $i$ and time $t$ in per unit (thus, $\rho_t$
-  is the vector of decision variables at time $t$).
-\item $\rho_{0,t}$ is the renewable generation forecast vector at time $t$.
+\item $x_{i,t}$ is the difference between actual output and forecast output at wind farm $i$ and time $t$. Thus, $x$ is a vector of wind forecast deviations.
+\item $Q_x$ may be set to the identity matrix or used to encode correlation between wind sites.
+\item $\rho_{i,t}$ is renewable generation forecast at bus $i$ and time $t$ in per unit 
 \item $Y_{ik}$ is the $(i,k)$-th element of the admittance matrix $Y$, which
   assumes resistances throughout the network are zero.
 \item $\theta_{ik,t}$ is the difference between the bus $i$ phase angle and the bus $k$ phase angle at time $t$.
@@ -306,49 +304,159 @@ The case where $k_i=1$ corresponds to generator $i$ taking up all
 
 Equation \eqref{I:obj} expresses the desire to find wind patterns that remain close to the wind forecast. The first constraint equation \eqref{I:flow} enforces DC power balance. The next constraint \eqref{I:conv} models conventional active power generation as a sum of
 scheduled generation and droop response (where generators share the task of compensating for mismatch between total generation and total load). The system angle reference is established by \eqref{I:slack}. Last is \eqref{I:lim}, which constrains the temperature of a particular line to be equal to its limit at the final time $t_\text{end}$. By \eqref{TD:vectors}, we can express \eqref{I:lim} as
-\begin{align}
-\Delta T_{ik}[t_\text{end}] - \delta_{ik} \boldsymbol{\tau}_{ik}^\top \boldsymbol{\Delta d}_{ik}  &= \frac{\rho_{ik}r_{ik}}{x_{ik}^2} \boldsymbol{\tau}_{ik}^\top \boldsymbol{\theta}_{ik}~.
+\begin{align}\label{temp}
+\Delta T_{ik}[T] - \delta_{ik} \boldsymbol{\tau}_{ik}^\top \boldsymbol{\Delta d}_{ik}  &= \frac{\rho_{ik}r_{ik}}{x_{ik}^2} \boldsymbol{\tau}_{ik}^\top \boldsymbol{\theta}_{ik}~.
 \end{align}
 Because the slack bus is specified to be bus $k$ in \eqref{I:slack}, \eqref{I:lim} may be viewed as an equality constraint on the vector of squared angle variables $\theta_i[t]^2$, $t\in \{0,1,\ldots,t_\text{end}\}$. Thus, \eqref{I:all} has a quadratic objective function, a set of linear constraints, and a single quadratic constraint.
 
 By solving \eqref{I:all} for each line $(i,k)\in\mathcal G$, we obtain a set of instanton candidate wind patterns, each of which will heat a particular line to its thermal limit. Of these candidates, the one that deviates least from the wind forecast (across all time steps) is the instanton wind pattern.
 
-\section{Optimization formulation}
+\section{Conversion to optimization problem}
 
-The temporal instanton problem may be formulated as a quadratically-constrained quadratic program (QCQP) of the following form:
+If we arrange all variables into a single vector, \eqref{I:all} may be viewed as a quadratically-constrained quadratic program (QCQP) of the following form:
 
-\begin{subequations}\label{III:opt}
-\begin{align*}
-(P)& & \min z^\top Q_{obj} z &\\
-&& s.t.&\\
-&& Az &= b \\
-&& z^\top Q_{\theta}z &= c
-\end{align*}
+\begin{subequations}\label{opt}
+\begin{align}
+\label{opt:obj} (P)& & \min z^\top Q_{obj} z &\\
+\nonumber && s.t.&\\
+\label{opt:lin} && Az &= b \\
+\label{opt:quad} && z^\top Q_{\theta}z &= c
+\end{align}
 \end{subequations}
 
-There are $(n+n_r+1)T$ variables --where $n$ is the number of nodes, $n_r$ is the number of nodes with wind farms, and $T$ is the number of time steps.
+The objective \eqref{opt:obj} is equivalent to \eqref{I:obj}, the linear equality constraints \eqref{opt:lin} represent \eqref{I:flow}-\eqref{I:slack}, and the quadratic equality constraint \eqref{opt:quad} is equivalent to \eqref{I:lim}. $z$ consists of $(n+n_r+1)t^*$ variables, where $n$ is the number of nodes, $n_r$ is the number of nodes with wind farms, and $t^*$ is the number of time steps.
 \begin{itemize}
-	\item $n_rT$ of these are deviation variables,
-    \item $(n-1)T$ are angle variables,
-    \item $T$ are mismatch variables, and
-    \item $T$ are angle difference variables used to convert the quadratic constraint into a norm constraint.
+	\item $n_rt^*$ of these are deviation variables,
+    \item $(n-1)t^*$ are angle variables,
+    \item $t^*$ are mismatch variables (one per time step), and
+    \item $t^*$ are angle difference variables $\hat{\theta}_{ik}$ representing the difference between $\theta_i$ and $\theta_k$ at each time step. These variables are used to convert the quadratic constraint into a norm constraint.
 \end{itemize}
 
-The first $n+n_r)T$ variables may be viewed as one group of $(n+n_r)$ variables per time step $t$: $\begin{bmatrix} x^{(t)\top} & \theta^{(t)\top} & \alpha^{(t)} \end{bmatrix}$. The $x^{(t)}$ variables represent deviations from forecast at all wind nodes; there are $n_r$ of them. $\theta^{(t)}$ is the column of $n-1$ independent angle variables in the system. $\alpha^{(t)}$ is the mismatch between generation and demand at time $t$.
-
-The four components of the problem, $Q_{obj}$, $A$, $b$, and $Q_{\theta}$, are described next.
+Thus, the vector $z$ consists of $t^*$ groups of $(n+n_r)$ variables stacked together (one for each time step), with a set of $t^*$ angle difference variables at the end. At a particular time step $t$, the group of variables is $\begin{bmatrix} x_t^\top & \theta_t^\top & \alpha_t \end{bmatrix}^\top$. $x_t$ represents deviations from forecast at the $n_r$ wind nodes, $\theta_t$ is the column of $n-1$ independent angle variables at time $t$, and $\alpha_t$ is the mismatch between generation and demand at time $t$. With the temporal instanton problem defined in terms of $Q_{obj}$, $A$, $b$, and $Q_{\theta}$, we now give a description of each part.
 
 \subsection{Objective function and $Q_{obj}$}
 
-The objective function weights only the deviation variables $x$, making it sparse. For two time steps, we have:
+The objective function depends solely on deviation variables $x$, so $Q_{obj}$ is a matrix that weights only the $x$ variables in $z$. If there are two time steps, for example, the vector of variables would be $z = \begin{bmatrix}x_t^\top & \theta_1^\top & \alpha_1 & x_2^\top & \theta_2^\top & \alpha_2 & \hat{\theta}\end{bmatrix}^\top$, and $Q_{obj}$ would be
+
+\begin{align*}
+Q_{obj} = \begin{bmatrix} Q_x & 0 & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0 \\ 0 & 0  & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & Q_x & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0\end{bmatrix}~,
+\end{align*}
+where $Q_x$ represents the correlation between wind farms (if any). In our RTS-96 analysis later on, we will assume $Q_x=I$, the identity matrix.
+
+\subsection{Linear constraints: $A$ and $b$}
+
+All constraints except the temperature limit may be grouped into a single linear equation $Az=b$. Setting aside the $\hat{\theta}_{ik}$ angle difference variables for the moment, the $A$ matrix has a block diagonal structure where each block consists of $(n+1)$ rows and $(n_r+n)$ columns. The first $n$ rows describe power balance and distributed slack behavior. We have the following equation for a non-slack node with a wind farm (with all variables on the left-hand side and constants on the right):
+
+\begin{align*}
+-x_{i,t} + \sum\limits_{k\neq s} Y_{ik}\theta_{k,t} - k_i\alpha_{i,t} &= G_{i,t}^0 + \rho_{i,t} - D_{i,t}~,
+\end{align*}
+where the slack node is node $s$. Rearranging, we see that this equation is simply power balance in disguise:
+\begin{align}\label{pbal}
+\sum\limits_{k\neq s} Y_{ik}\theta_{k,t}  &= (G_{i,t}^0 + k_i\alpha_t) + (\rho_{i,t} + x_{i,t}) - D_{i,t}
+\end{align}
+The first pair of terms on the right-hand side of \eqref{pbal} represents conventional generation with distributed slack -- generator $i$ is taking a portion $k_i$ of the mismatch $\alpha_t$. The second pair of terms is renewable generation: forecast $\rho_{i,t}$ plus deviation $x_{i,t}$. The final term is demand at node $i$ and time $t$. For a non-slack node with a wind farm, the equation is \eqref{pbal} without the renewable generation terms. For a slack node, we have \eqref{pbal} with the left-hand side equal to 0 (keeping track of distributed slack only). In addition to the $n$ rows corresponding to \eqref{pbal} at the $n$ nodes, there is one additional equation used to fix $\alpha_t$ (again, with variables on the left and constants on the right):
+
+\begin{align*}
+\sum_i x_{i,t} + \alpha_t &= \sum_i (D_{i,t} - G_{i,t}^0 - \rho_{i,t})
+\end{align*}
+Rearranging, we see that this simply fixes $\alpha_t$ to the difference between generation and demand at time $t$:
+
+\begin{align}\label{mismatch}
+ \alpha_t &= \sum_i \left(D_{i,t} - G_{i,t}^0 - (\rho_{i,t} + x_{i,t})\right)
+\end{align}
+From \eqref{mismatch} we see that $\alpha_t$ is positive when demand exceeds generation. This causes conventional generators to increase their output according to \eqref{I:conv}.
+
+The previously described $(n+1)$ rows of $Az=b$ pertain to a single time step block. The $T$ total blocks are arranged diagonally to form $(n+1)T$ rows of $A$. There is one additional block of $A$ used to relate angle difference variables $\hat{\theta}_{ik}$ to angle variables $\theta_i$ and $\theta_k$. This block contains one row for each time step. At time $t$, we have:
+
+\begin{align}\label{thetahat}
+\hat{\theta}_{ik,t} &= \tau^{\frac{t^*-t}{2}}(\theta_{i,t} - \theta_{k,t})
+\end{align}
+Equivalence of this relationship to \eqref{temp} is discussed in the next subsection.
+
+\subsection{Quadratic constraint: $Q_{\hat{\theta}}$ and $c$}
+
+Recall that \eqref{temp} describes the temperature constraint on a chosen line $(i,k)$. The only variable component of the relationship is $\boldsymbol{\theta_{ik}}$, so we can express \eqref{temp} with a constant on the right-hand side that represents known ambient conditions and line parameters:
+
+\begin{align}\label{temp2}
+\sum_{t=1}^{t^*} \tau_{ik}^{t^*-t} (\theta_{i,t} - \theta_{k,t})^2 &=  \frac{x_{ik}^2}{\rho_{ik} r_{ik}} \left(\Delta T_{ik}^{lim} - \delta_{ik} \boldsymbol{\tau}_{ik}^\top \boldsymbol{\Delta d}_{ik}\right)
+\end{align}
+From the definition of $\hat{\theta}_{ik,t}$ in \eqref{thetahat}, we see that \eqref{temp2} may be expressed as:
 
 \begin{align}
-\min & \begin{bmatrix} x^{(1)\top} & \theta^{(1)\top} & \alpha^{(1)} & x^{(2)\top} & \theta^{(2)\top} & \alpha^{(2)} \end{bmatrix}
-\underbrace{
-\begin{bmatrix} Q_x & 0 & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0 \\ 0 & 0  & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & Q_x & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0\end{bmatrix}}_{Q_{obj}}
-\begin{bmatrix} x^{(1)} \\ \theta^{(1)} \\ \alpha^{(1)} \\ x^{(2)} \\ \theta^{(2)} \\ \alpha^{(2)} \end{bmatrix} \\
-&= \sum_{t=1}^{T} x^{(t)\top}Q_xx^{(t)}
+\sum_{t=1}^{t^*} \hat{\theta}_{ik,t}^2 &=  \frac{x_{ik}^2}{\rho_{ik} r_{ik}} \left(\Delta T_{ik}^{lim} - \delta_{ik} \boldsymbol{\tau}_{ik}^\top \boldsymbol{\Delta d}_{ik}\right)
 \end{align}
+With $\hat{\theta}_{ik}$ as the last $t^*$ elements of $z$, we see that the matrix $Q_{\theta}$ in \eqref{opt:quad} is a matrix of zeros with a $t^*$-by-$t^*$ identity matrix in the lower-right corner. In other words, our temperature constraint becomes
+
+\begin{align*}
+\lVert \hat{\theta}_{ik}\rVert^2 &= c^2~,
+\end{align*}
+where $$c = \frac{x_{ik}^2}{\rho_{ik} r_{ik}} \left(\Delta T_{ik}^{lim} - \delta_{ik} \boldsymbol{\tau}_{ik}^\top \boldsymbol{\Delta d}_{ik}\right)~. $$
+
+\section{Solution of optimization problem}
+
+The structure of \eqref{opt} is similar to that of the well-known trust-region subproblem. Here we describe a four-step solution method based in part on work from \cite{bienstock2014}.
+
+\subsection{Translation}
+
+The first step is to translate the problem by $z^*$, the point in the set $\{z:Az=b\}$ closest to the origin. One way to find $z^*$ is to perform a QR factorization of $A$ with a rank estimate based on its R factor. The translation itself is a change of variables from $z$ to $\bar{z}=z - z^*$. This results in the following problem:
+
+\begin{subequations}\label{opt2}
+\begin{align}
+\label{opt2:obj} (P)& & \min \bar{z}^\top Q_{obj}\bar{z} + 2\bar{z}^\top Q_{obj}z^* &\\
+\nonumber && s.t.&\\
+\label{opt2:lin} && A\bar{z} &= 0 \\
+\label{opt2:quad} &&\bar{z}^\top Q_{\theta}\bar{z} + z^{*\top}Q_\theta z^* - c &= 0 
+\end{align}
+\end{subequations}
+The form of $Q_\theta$ does not change because it is a norm constraint, but the constant is adjusted.
+
+\subsection{Nullspace rotation}
+
+The form of the new linear constraints suggests an intuitive explanation: any solution to \eqref{opt2} must lie in the nullspace (kernel) of $A$. If $\dim \mathcal{N}(A) =k$ is the dimension of this nullspace, we can rotate the problem so that the first $k$ coordinates lie in $\mathcal{N}(A)$, thereby eliminating the remaining variables. The first $k$ columns of the appropriate rotation matrix $R$ span $\mathcal{N}(A)$, and remaining columns are chosen to complete the basis. After changing variables from $\bar{z}$ to $y= R\bar{z}$, we obtain the following problem:
+
+\begin{subequations}\label{opt3}
+\begin{align}
+\label{opt3:obj} (P)& & \min y^\top (RQ_{obj}R^\top) y + 2y^\top R(Q_{obj}z^*) &\\
+\nonumber && s.t.&\\
+\label{opt3:quad} && y^\top Q_{\theta} y + z^{*\top}Q_\theta z^* - c &= 0
+\end{align}
+\end{subequations}
+Note that $RQ_\theta R^\top = Q_\theta$, because the only non-zero part of $Q_\theta$ is an identity matrix. (In other words, the norm constraint is rotation invariant.)
+
+\subsection{Diagonalizing rotation}
+
+The third step is to perform a change of variables so that the quadratic part of the objective is diagonal. To do this, we write the Eigen-decomposition $$RQ_{obj}R^\top = VDV^\top~,$$ where $D$ is a diagonal matrix of Eigenvalues and $V$ is a matrix whose columns are Eigenvectors. All quantities will be real owing to the symmetry of $Q_{obj}$. Changing variables from $y$ to $w=V^\top y$, we obtain the following optimization problem:
+
+\begin{subequations}\label{opt4}
+\begin{align}
+\label{opt4:obj} (P)& & \min w^\top D w + 2w^\top V^\top (RQ_{obj}z^*) &\\
+\nonumber && s.t.&\\
+\label{opt4:quad} && w^\top Q_{\theta} w + z^{*\top}Q_\theta z^* - c &= 0
+\end{align}
+\end{subequations}
+Here again we used the fact that $Q_\theta$ is rotation invariant. The objective \eqref{opt4:obj} is now a diagonalized quadratic, and \eqref{opt4:quad} is a ball constraint.
+
+\subsection{Solution via enumeration}
+ 
+The first-order optimality conditions for \eqref{opt4} include a single Lagrange multiplier $\mu$:
+
+\begin{align}\label{fonc}
+2w^\top D + 2(V^\top R Q_{obj}z^*) &= 2\mu w^\top Q_\theta \\
+\iff w^\top D + d &= \mu w^\top Q_\theta~,
+\end{align}
+where $d = V^\top R Q_{obj}z^*$. We would like to solve \eqref{fonc} subject to $w^\top Q_\theta w = \bar{c}$, where $\bar{c} = c -  z^{*\top}Q_\theta z^*$. We will solve this system via enumeration, beginning with $\mu=0$ and checking $\mu=D_i$ for each diagonal element of $D$. Once these possibilities are exhausted, we write the ``secular equation'' (see \cite{bienstock2014}), setting it equal to $\bar{c}^2$:
+
+\begin{align}\label{secular}
+s(\mu) = \sum_{i:Q{_\theta,i}\neq 0} \left(\frac{d_i}{\mu - D_i}\right)^2 &= \bar{c}^2
+\end{align}
+This equation has a number of solutions, each corresponding to some value of $w$, which must be checked for feasibility.
+
+\begin{figure}
+\centering
+\includegraphics[width=0.9\linewidth]{../images/secular}
+\caption{Plot of secular equation with three poles (all values made up to emphasize shape). Note that the function approaches infinity at the poles.}
+\label{fig:secular}
+\end{figure}
 
 
 % The remainder of this paper expands and applies the ideas described
@@ -362,7 +470,7 @@ The objective function weights only the deviation variables $x$, making it spars
 
 %\section*{References}
 
-% can use a bibliography generated by BibTeX as a .bbl file
+% can use a bibliography generated by  as a .bbl file
 % BibTeX documentation can be easily obtained at:
 % http://www.ctan.org/tex-archive/biblio/bibtex/contrib/doc/
 % The IEEEtran BibTeX style support page is at:

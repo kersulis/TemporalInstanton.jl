@@ -4,6 +4,10 @@
 		"selected_items":
 		[
 			[
+				"tr_tran",
+				"tr_trans_rotate"
+			],
+			[
 				"temporal",
 				"temporalInstanton"
 			],
@@ -59,7 +63,7 @@
 			"file": "src/TrustRegionSubproblem.jl",
 			"settings":
 			{
-				"buffer_size": 2695,
+				"buffer_size": 3099,
 				"line_ending": "Unix"
 			}
 		},
@@ -462,8 +466,8 @@
 						"selection":
 						[
 							[
-								3878,
-								3878
+								2672,
+								2672
 							]
 						],
 						"settings":
@@ -474,7 +478,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 4515.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 1,
@@ -517,15 +521,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2695,
+						"buffer_size": 3099,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								2686,
-								2686
+								161,
+								161
 							]
 						],
 						"settings":
@@ -537,8 +541,8 @@
 							"tab_size": 4,
 							"translate_tabs_to_spaces": true
 						},
-						"translation.x": 0.0,
-						"translation.y": 2100.0,
+						"translation.x": 1045.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,

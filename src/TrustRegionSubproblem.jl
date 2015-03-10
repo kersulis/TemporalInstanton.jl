@@ -1,6 +1,6 @@
 module TrustRegionSubproblem
 
-export min_norm, translate_quadratic, kernel_rotation, tr_translate, tr_kernel_rotate, tr_diag_rotate
+export min_norm, translate_quadratic, kernel_rotation, tr_translate, tr_kernel_rotate, tr_diag_rotate, tr_map_back, tr_trans_rotate
 
 # function min_norm(A::Array{Float64,2},b::Array{Float64,1})
 function min_norm(A,b)
@@ -36,8 +36,8 @@ function translate_quadratic(
         g = zeros(size(G,1),1)
     end
     H = G
-    h = g - 2*G*x_star
-    kh = kg - x_star'*G*x_star - g'*x_star
+    h = g + 2*G*x_star
+    kh = kg + x_star'   *G*x_star + g'*x_star
     return (H,h,kh[1])
 end
 
@@ -78,7 +78,7 @@ function tr_translate(G_of_x,Q_of_x,A,b)
     H_of_x = translate_quadratic(G_of_x,x_star)
     R_of_x = translate_quadratic(Q_of_x,x_star)
     
-    return H_of_x,R_of_x
+    return H_of_x,R_of_x,x_star
 end
 
 function tr_kernel_rotate(G_of_x,A)
@@ -100,6 +100,19 @@ function tr_diag_rotate(G_of_x)
     G,g,kg = G_of_x
     D,U = eig(G)
     return (diagm(D),U'*g,kg),U'
+end
+
+function tr_map_back(w,Rkernel,Reigvec)
+    return Rkernel'*Reigvec*w
+end
+
+function tr_trans_rotate(G_of_x,Q_of_x,A,b)
+    H_of_x,R_of_x,x_star = tr_translate(G_of_x,Q_of_x,A,b)
+    # R_of_x is rotation invariant.
+    J_of_z,Rkernel = tr_kernel_rotate(H_of_x,A)
+    K_of_w,Reigvec = tr_diag_rotate(J_of_z)
+    
+    return K_of_w,R_of_x,x_star,Rkernel,Reigvec
 end
 
 end
