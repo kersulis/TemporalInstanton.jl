@@ -59,14 +59,14 @@ function tmp_inst_A(n,Ridx,T,Y,slack,k,tau,line)
     return A
 end
 
-function tmp_inst_b(n,T,G0,D)
+function tmp_inst_b(n,T,G0,P0,D)
     """ Generate the vector b of power balance constraints.
     Assumes G0 and D are nT-by-1 vectors.
     """
     b = FloatingPoint[]
     
     # b = zeros((n+1)*T,1)
-    netGen = G0 - D
+    netGen = G0 + P0 - D
     for t = 1:T
         start = (t-1)*n + 1
         stop = start + n - 1
@@ -142,7 +142,7 @@ function tmp_inst_pad_Q(Q,T)
     return [[Q zeros(m,T)]; zeros(T,n+T)]
 end
 
-function temporalInstanton(Ridx,Y,slack,k,tau,line,G0,D)
+function temporalInstanton(Ridx,Y,slack,k,tau,line,G0,P0,D)
 	""" Return an instance of the temporal instanton
 	problem.
 	"""
@@ -151,7 +151,7 @@ function temporalInstanton(Ridx,Y,slack,k,tau,line,G0,D)
     nr = length(Ridx)
     Qobj = tmp_inst_Qobj(n,nr,T)
     A = tmp_inst_A(n,Ridx,T,Y,slack,k,tau,line)
-    b = tmp_inst_b(n,T,G0,D)
+    b = tmp_inst_b(n,T,G0,P0,D)
     Qtheta = tmp_inst_Qtheta(n,nr,T,tau)
     return Qobj, A, b, Qtheta
 end

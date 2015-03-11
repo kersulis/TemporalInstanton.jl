@@ -332,7 +332,7 @@ The objective \eqref{opt:obj} is equivalent to \eqref{I:obj}, the linear equalit
     \item $t^*$ are angle difference variables $\hat{\theta}_{ik}$ representing the difference between $\theta_i$ and $\theta_k$ at each time step. These variables are used to convert the quadratic constraint into a norm constraint.
 \end{itemize}
 
-Thus, the vector $z$ consists of $t^*$ groups of $(n+n_r)$ variables stacked together (one for each time step), with a set of $t^*$ angle difference variables at the end. At a particular time step $t$, the group of variables is $\begin{bmatrix} x_t^\top & \theta_t^\top & \alpha_t \end{bmatrix}^\top$. $x_t$ represents deviations from forecast at the $n_r$ wind nodes, $\theta_t$ is the column of $n-1$ independent angle variables at time $t$, and $\alpha_t$ is the mismatch between generation and demand at time $t$. With the temporal instanton problem defined in terms of $Q_{obj}$, $A$, $b$, and $Q_{\theta}$, we now give a description of each part.
+Thus, the vector $z$ consists of $t^*$ groups of $(n+n_r)$ variables stacked together (one for each time step), with a set of $t^*$ angle difference variables at the end. At a particular time step $t$, the group of variables is $\begin{bmatrix} x_t^\top & \theta_t^\top & \alpha_t \end{bmatrix}^\top$. $x_t$ represents deviations from forecast at the $n_r$ wind nodes, $\theta_t$ is the column of $n-1$ independent angle variables at time $t$, and $\alpha_t$ is the mismatch between generation and demand at time $t$. An instance of the temporal instanton problem is characterized by $Q_{obj}$, $A$, $b$, and $Q_{\theta}$. Following is a description of each part.
 
 \subsection{Objective function and $Q_{obj}$}
 
