@@ -58,6 +58,7 @@ function kernel_rotation(A)
     # dim_N = n - m
     q = qr(A'; thin=false)[1]
     R = circshift(q,(0,dim_N))
+    return R
 end
 
 # Functions added 2015-03-07
@@ -106,8 +107,8 @@ function tr_diag_rotate(G_of_x)
     return (diagm(D),U'*g,kg),U'
 end
 
-function tr_map_back(w,Rkernel,Reigvec)
-    return Rkernel'*Reigvec*w
+function tr_map_back(w,Rkernel,Reigvec,z_star)
+    return Rkernel'*Reigvec*w + z_star
 end
 
 function tr_trans_rotate(G_of_x,Q_of_x,A,b)
@@ -120,8 +121,25 @@ function tr_trans_rotate(G_of_x,Q_of_x,A,b)
 end
 
 function find_w(mu,D,d,Qtheta)
-    # Evaluate secular equation
-    w = float([d[i]/(mu*Qtheta[i,i] - D[i,i]) for i in 1:length(d)])
+    # Find w that satisfies Lagrange condition.
+
+    # Assume anything smaller than 1e-8 is 0,
+    # and that the first group of equations is
+    # just 0 = 0.
+    w = zeros(length(d))
+    Dr = round(D,10)
+    dr = round(d,10)
+    for i = 1:length(d)
+        if Dr[i,i] == 0.0 && dr[i] == 0.0
+            w[i] = 0
+        else
+            w[i] = float( dr[i]/(mu*Qtheta[i,i] - Dr[i,i]) )
+        end
+    end
+    return w
+
+    # old version:
+    #w = float([d[i]/(mu*Qtheta[i,i] - D[i,i]) for i in 1:length(d)])
 end
 
 function tr_check_diag(D,d,Qtheta,c)
@@ -152,13 +170,18 @@ function tr_solve_secular(D,d,Qtheta,c)
     """
     eps = 1e-8
     solutions = Float64[]
-    poles = sort(diag(D*Qtheta))
+    vectors = Array(Vector{Float64},0)
+    # poles = sort(diag(D*Qtheta))
+    poles = [D[i,i]*Qtheta[i,i] for i in setdiff(1:size(D,1),find(diag(Qtheta).==0))]
+    poles = unique(round(poles,10))
     # Each diagonal element is a pole.
     for i in 1:length(poles)
         
         # Head left first:
         high = poles[i]
-        if i == 1
+        if length(poles) == 1
+            low = high - high
+        elseif i == 1
             low = high - abs(poles[i] - poles[i+1])
         else
             low = high - abs(poles[i] - poles[i-1])/2
@@ -187,11 +210,14 @@ function tr_solve_secular(D,d,Qtheta,c)
         end
         if !stall
             push!(solutions,mu)
+            push!(vectors,w)
         end
         
         # Now head right:
         high = poles[i]
-        if i == length(poles)
+        if length(poles) == 1
+            low = high + high
+        elseif i == length(poles)
             low = high + abs(poles[i] - poles[i-1])
         else
             low = high + abs(poles[i] - poles[i+1])/2
@@ -219,9 +245,10 @@ function tr_solve_secular(D,d,Qtheta,c)
         end
         if !stall
             push!(solutions,mu)
+            push!(vectors,w)
         end
     end
-    return solutions
+    return solutions,vectors
 end
 
 end

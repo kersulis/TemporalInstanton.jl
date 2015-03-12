@@ -115,8 +115,8 @@ function tmp_inst_A_scale(n,Ridx,T,tau,slack,line)
     A = zeros(T,(nr+n+2)*T)
     
     for t = 1:T
-        i_pos = (nr+n+1)*(t-1) + n + i
-        k_pos = (nr+n+1)*(t-1) + n + k
+        i_pos = (nr+n+1)*(t-1) + nr + i
+        k_pos = (nr+n+1)*(t-1) + nr + k
         coef = tau^((1/2)*(T-t))
         A[t,i_pos] = -coef
         A[t,k_pos] = coef

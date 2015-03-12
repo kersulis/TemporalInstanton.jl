@@ -47,23 +47,15 @@
 			"file": "src/TemporalInstanton.jl",
 			"settings":
 			{
-				"buffer_size": 4303,
+				"buffer_size": 4319,
 				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "data/RTS-96 Data/ARPA_to_MATPOWER.m",
-			"settings":
-			{
-				"buffer_size": 4419,
-				"line_ending": "Windows"
 			}
 		},
 		{
 			"file": "src/TrustRegionSubproblem.jl",
 			"settings":
 			{
-				"buffer_size": 3099,
+				"buffer_size": 6537,
 				"line_ending": "Unix"
 			}
 		},
@@ -229,13 +221,12 @@
 	"expanded_folders":
 	[
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton",
-		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/data",
-		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/data/RTS-96 Data",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/notes"
 	],
 	"file_history":
 	[
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/data/RTS-96 Data/CaseData.m",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/notes/2015-03-04-meeting-with-Ian.md",
 		"/home/jkersulis/Downloads/CaseData.m",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/README.md",
@@ -362,8 +353,7 @@
 		"/home/jkersulis/Documents/kersulis.github.io/_drafts/11-08-14-Learning and Creating.md",
 		"/home/jkersulis/Documents/kersulis.github.io/_drafts/11-07-14-Work.md",
 		"/home/jkersulis/Documents/kersulis.github.io/_drafts/7-20-14 First Post.md",
-		"/home/jkersulis/Documents/kersulis.github.io/.gitignore",
-		"/home/jkersulis/Documents/kersulis.github.io/_posts/2014-11-18-Installing-IPython.md"
+		"/home/jkersulis/Documents/kersulis.github.io/.gitignore"
 	],
 	"find":
 	{
@@ -381,6 +371,7 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"push",
 			"rotation",
 			"tmp_inst",
 			"generate",
@@ -450,7 +441,7 @@
 	"groups":
 	[
 		{
-			"selected": 2,
+			"selected": 0,
 			"sheets":
 			[
 				{
@@ -459,77 +450,47 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 4303,
+						"buffer_size": 4319,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								2672,
-								2672
+								2044,
+								2049
 							]
 						],
 						"settings":
 						{
+							"WordCountShouldRun": true,
 							"WordCountSyntax": "julia",
 							"syntax": "Packages/Julia/Julia.tmLanguage",
 							"tab_size": 4,
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 1543.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 0,
 					"type": "text"
 				},
 				{
 					"buffer": 1,
-					"file": "data/RTS-96 Data/ARPA_to_MATPOWER.m",
-					"semi_transient": true,
-					"settings":
-					{
-						"buffer_size": 4419,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1193,
-								1193
-							]
-						],
-						"settings":
-						{
-							"WordCountSyntax": "matlab",
-							"syntax": "Packages/Matlab/Matlab.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 1575.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 2,
-					"type": "text"
-				},
-				{
-					"buffer": 2,
 					"file": "src/TrustRegionSubproblem.jl",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 3099,
+						"buffer_size": 6537,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								161,
-								161
+								1685,
+								1685
 							]
 						],
 						"settings":
@@ -541,15 +502,15 @@
 							"tab_size": 4,
 							"translate_tabs_to_spaces": true
 						},
-						"translation.x": 1045.0,
-						"translation.y": 0.0,
+						"translation.x": 0.0,
+						"translation.y": 1503.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 0,
+					"stack_index": 1,
 					"type": "text"
 				},
 				{
-					"buffer": 3,
+					"buffer": 2,
 					"file": "src/tmp_inst_rts96.jl",
 					"semi_transient": false,
 					"settings":
@@ -581,7 +542,7 @@
 					"type": "text"
 				},
 				{
-					"buffer": 4,
+					"buffer": 3,
 					"file": "src/readRTS96Data.jl",
 					"semi_transient": false,
 					"settings":
@@ -608,7 +569,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 4,
+					"stack_index": 2,
 					"type": "text"
 				}
 			]
@@ -854,7 +815,7 @@
 	"show_minimap": true,
 	"show_open_files": false,
 	"show_tabs": true,
-	"side_bar_visible": false,
+	"side_bar_visible": true,
 	"side_bar_width": 405.0,
 	"status_bar_visible": true,
 	"template_settings":
