@@ -45,14 +45,23 @@ Identifying Vulnerability in Transmission Networks}
 \author{%
 
 \IEEEauthorblockN{Jonas Kersulis,\\ Ian Hiskens}
-\IEEEauthorblockA{Electrical Engineering and Computer Science\\
+%\IEEEauthorblockA{Electrical Engineering and Computer Science\\
+\IEEEauthorblockA{Elec. Eng. and Computer Science \\
 University of Michigan\\
 Ann Arbor, MI, United States\\}
 \and
-\IEEEauthorblockN{Michael Chertkov,\\Scott Backhaus, Russell Bent}
+\IEEEauthorblockN{Michael Chertkov,\\Scott Backhaus}
+%\IEEEauthorblockA{Center for Nonlinear Studies\\
 \IEEEauthorblockA{Center for Nonlinear Studies\\
 Los Alamos National Laboratory\\
-Los Alamos, New Mexico, United States\\
+Los Alamos, NM, United States\\
+}
+\and
+\IEEEauthorblockN{Daniel Bienstock\\ \hspace{1pt} }
+%\IEEEauthorblockA{Industrial Engineering and Operations Research\\
+\IEEEauthorblockA{Ind. Eng. and Operations Research\\
+Columbia University\\
+New York, NY, United States\\
 }
 
 % use \thanks{} to gain access to the first footnote area
@@ -317,10 +326,9 @@ If we arrange all variables into a single vector, \eqref{I:all} may be viewed as
 
 \begin{subequations}\label{opt}
 \begin{align}
-\label{opt:obj} (P)& & \min z^\top Q_{obj} z &\\
-\nonumber && s.t.&\\
-\label{opt:lin} && Az &= b \\
-\label{opt:quad} && z^\top Q_{\theta}z &= c
+\label{opt:obj}  &&  \min z^\top Q_{obj} z &\\
+\label{opt:lin} & s.t. & Az &= b  \\
+\label{opt:quad} &&  z^\top Q_{\theta}z &= c 
 \end{align}
 \end{subequations}
 
@@ -392,7 +400,7 @@ With $\hat{\theta}_{ik}$ as the last $t^*$ elements of $z$, we see that the matr
 \end{align*}
 where $$c = \frac{x_{ik}^2}{\rho_{ik} r_{ik}} \left(\Delta T_{ik}^{lim} - \delta_{ik} \boldsymbol{\tau}_{ik}^\top \boldsymbol{\Delta d}_{ik}\right)~. $$
 
-\section{Solution of optimization problem}
+\section{Solution}
 
 The structure of \eqref{opt} is similar to that of the well-known trust-region subproblem. Here we describe a four-step solution method based in part on work from \cite{bienstock2014}.
 
@@ -402,13 +410,12 @@ The first step is to translate the problem by $z^*$, the point in the set $\{z:A
 
 \begin{subequations}\label{opt2}
 \begin{align}
-\label{opt2:obj} (P)& & \min \bar{z}^\top Q_{obj}\bar{z} + 2\bar{z}^\top Q_{obj}z^* &\\
-\nonumber && s.t.&\\
-\label{opt2:lin} && A\bar{z} &= 0 \\
-\label{opt2:quad} &&\bar{z}^\top Q_{\theta}\bar{z} + z^{*\top}Q_\theta z^* - c &= 0 
+\label{opt2:obj} && \min \bar{z}^\top Q_{obj}\bar{z} + 2\bar{z}^\top Q_{obj}z^* &\\
+\label{opt2:lin} & s.t. & A\bar{z} &= 0 \\
+\label{opt2:quad} && \bar{z}^\top Q_{\theta}\bar{z} + z^{*\top}Q_\theta z^* - c &= 0 
 \end{align}
 \end{subequations}
-The form of $Q_\theta$ does not change because it is a norm constraint, but the constant is adjusted.
+Because of how $z^*$ was chosen, the linear term introduced into the quadratic constraint by translation cancels to zero; only the constant changes.
 
 \subsection{Nullspace rotation}
 
@@ -416,9 +423,8 @@ The form of the new linear constraints suggests an intuitive explanation: any so
 
 \begin{subequations}\label{opt3}
 \begin{align}
-\label{opt3:obj} (P)& & \min y^\top (RQ_{obj}R^\top) y + 2y^\top R(Q_{obj}z^*) &\\
-\nonumber && s.t.&\\
-\label{opt3:quad} && y^\top Q_{\theta} y + z^{*\top}Q_\theta z^* - c &= 0
+\label{opt3:obj} && \min y^\top (RQ_{obj}R^\top) y + 2y^\top R(Q_{obj}z^*) &\\
+\label{opt3:quad} & s.t. & y^\top Q_{\theta} y + z^{*\top}Q_\theta z^* - c &= 0
 \end{align}
 \end{subequations}
 Note that $RQ_\theta R^\top = Q_\theta$, because the only non-zero part of $Q_\theta$ is an identity matrix. (In other words, the norm constraint is rotation invariant.)
@@ -429,9 +435,8 @@ The third step is to perform a change of variables so that the quadratic part of
 
 \begin{subequations}\label{opt4}
 \begin{align}
-\label{opt4:obj} (P)& & \min w^\top D w + 2w^\top V^\top (RQ_{obj}z^*) &\\
-\nonumber && s.t.&\\
-\label{opt4:quad} && w^\top Q_{\theta} w + z^{*\top}Q_\theta z^* - c &= 0
+\label{opt4:obj} && \min w^\top D w + 2w^\top V^\top (RQ_{obj}z^*) &\\
+\label{opt4:quad} & s.t. & w^\top Q_{\theta} w + z^{*\top}Q_\theta z^* - c &= 0
 \end{align}
 \end{subequations}
 Here again we used the fact that $Q_\theta$ is rotation invariant. The objective \eqref{opt4:obj} is now a diagonalized quadratic, and \eqref{opt4:quad} is a ball constraint.
