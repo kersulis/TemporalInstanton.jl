@@ -34,6 +34,8 @@ function translate_quadratic(
     Arguments
     G_of_x consists of matrix G, vector g, constant kg.
     x_star is translation.
+
+    Assume x_star is min-norm solution of Ax=b.
     """
     G,g,kg = G_of_x
     if g == 0
@@ -41,7 +43,7 @@ function translate_quadratic(
     end
     H = G
     h = g + 2*G*x_star
-    kh = kg + x_star'   *G*x_star + g'*x_star
+    kh = kg + x_star'*G*x_star + g'*x_star
     return (H,h,kh[1])
 end
 
@@ -108,7 +110,7 @@ function tr_diag_rotate(G_of_x)
 end
 
 function tr_map_back(w,Rkernel,Reigvec,z_star)
-    return Rkernel'*Reigvec*w + z_star
+    return Rkernel'*Reigvec'*w + z_star
 end
 
 function tr_trans_rotate(G_of_x,Q_of_x,A,b)
@@ -190,7 +192,7 @@ function tr_solve_secular(D,d,Qtheta,c)
         # Initialize mu:
         mu = (high + low)/2
         w = find_w(mu,D,d,Qtheta)
-        diff = (w'*w)[1] - c^2
+        diff = (w'*Qtheta*w)[1] - c^2
         diff_old = 0
         stall = false
         while abs(diff) > eps
@@ -206,7 +208,7 @@ function tr_solve_secular(D,d,Qtheta,c)
             mu = (high + low)/2
             w = find_w(mu,D,d,Qtheta)
             diff_old = diff
-            diff = (w'*w)[1] - c^2
+            diff = (w'*Qtheta*w)[1] - c^2
         end
         if !stall
             push!(solutions,mu)
@@ -225,10 +227,10 @@ function tr_solve_secular(D,d,Qtheta,c)
         
         mu = (high + low)/2
         w = find_w(mu,D,d,Qtheta)
-        diff = (w'*w)[1] - c^2
+        diff = (w'*Qtheta*w)[1] - c^2
         diff_old = 0
         stall = false
-        while abs((w'*w)[1] - c^2) > eps
+        while abs(diff) > eps
             if diff == diff_old
                 stall = true
                 break
@@ -241,7 +243,7 @@ function tr_solve_secular(D,d,Qtheta,c)
             mu = (high + low)/2
             w = find_w(mu,D,d,Qtheta)
             diff_old = diff
-            diff = (w'*w)[1] - c^2
+            diff = (w'*Qtheta*w)[1] - c^2
         end
         if !stall
             push!(solutions,mu)

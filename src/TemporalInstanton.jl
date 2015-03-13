@@ -1,6 +1,9 @@
 module TemporalInstanton
 
-export tmp_inst_Qobj, tmp_inst_A, tmp_inst_b, tmp_inst_Qtheta, tmp_inst_A_scale, tmp_inst_pad_b, tmp_inst_pad_Q, temporalInstanton
+export 
+    tmp_inst_Qobj, tmp_inst_A, tmp_inst_b, tmp_inst_Qtheta, 
+    tmp_inst_A_scale, tmp_inst_pad_b, tmp_inst_pad_Q,
+    temporalInstanton
 
 function tmp_inst_Qobj(n,nr,T)
     """ Generate the objective function matrix
@@ -8,7 +11,7 @@ function tmp_inst_Qobj(n,nr,T)
     Assume no correlation between wind sites.
     """
     Qobj = sparse(diagm(repeat([ones(nr),zeros(n)],outer=[T])))
-    Qobj = tmp_inst_pad_Q(Qobj,T)
+    Qobj = tmp_inst_pad_Q(full(Qobj),T)
     return Qobj
 end
 
@@ -90,7 +93,7 @@ function tmp_inst_Qtheta(n,nr,T,tau)
     Qtheta = zeros((nr+n+1)*T,(nr+n+1)*T)
     
     Qtheta[end-T+1:end,end-T+1:end] = eye(T)
-    return sparse(Qtheta)
+    return Qtheta
 end
 
 function tmp_inst_A_scale(n,Ridx,T,tau,slack,line)
