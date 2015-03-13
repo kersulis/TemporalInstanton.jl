@@ -119,10 +119,10 @@ function tr_trans_rotate(G_of_x,Q_of_x,A,b)
     J_of_z,Rkernel = tr_kernel_rotate(H_of_x,A)
     K_of_w,Reigvec = tr_diag_rotate(J_of_z)
     
-    return K_of_w,R_of_x,x_star,Rkernel,Reigvec
+    return J_of_z,K_of_w,R_of_x,x_star,Rkernel,Reigvec
 end
 
-function find_w(mu,D,d,Qtheta)
+function find_w(mu,D,d,d2,Qtheta)
     # Find w that satisfies Lagrange condition.
 
     # Assume anything smaller than 1e-8 is 0,
@@ -131,20 +131,21 @@ function find_w(mu,D,d,Qtheta)
     w = zeros(length(d))
     Dr = round(D,10)
     dr = round(d,10)
-    for i = 1:length(d)
-        if Dr[i,i] == 0.0 && dr[i] == 0.0
-            w[i] = 0
-        else
-            w[i] = float( dr[i]/(mu*Qtheta[i,i] - Dr[i,i]) )
-        end
+    d2r = round(d2,10)
+
+    # remove indices where denominator is zero
+    denom = [mu*Qtheta[i,i] - Dr[i,i] for i in 1:length(d)]
+    for i in setdiff(1:length(d),find(denom.==0.0))
+            w[i] = float( (dr[i] - mu*d2r[i])/denom[i] )
     end
+
     return w
 
     # old version:
     #w = float([d[i]/(mu*Qtheta[i,i] - D[i,i]) for i in 1:length(d)])
 end
 
-function tr_check_diag(D,d,Qtheta,c)
+function tr_check_diag(D,d,d2,Qtheta,c)
     eps = 1e-8
     check = Bool[]
     w_vals = Array(Vector{Float64},0)
@@ -152,14 +153,14 @@ function tr_check_diag(D,d,Qtheta,c)
 
     # Check zero:
     mu = 0
-    w = find_w(mu,D,d,Qtheta)
+    w = find_w(mu,D,d,d2,Qtheta)
     append!(check, [abs((w'*w)[1] - c^2) < eps])
     push!(w_vals,w)
     append!(mu_vals,[mu])
 
     for i = 1:size(D,1)
         mu = D[i,i]
-        w = find_w(mu,D,d,Qtheta)
+        w = find_w(mu,D,d,d2,Qtheta)
         append!(check, [abs((w'*w)[1] - c^2) < eps])
         push!(w_vals,w)
         append!(mu_vals,[mu])
@@ -167,7 +168,7 @@ function tr_check_diag(D,d,Qtheta,c)
     return mu_vals,w_vals,check
 end
 
-function tr_solve_secular(D,d,Qtheta,c)
+function tr_solve_secular(D,d,d2,Qtheta,c)
     """ Solve the secular equation via binary search.
     """
     eps = 1e-8
@@ -191,7 +192,7 @@ function tr_solve_secular(D,d,Qtheta,c)
         
         # Initialize mu:
         mu = (high + low)/2
-        w = find_w(mu,D,d,Qtheta)
+        w = find_w(mu,D,d,d2,Qtheta)
         diff = (w'*Qtheta*w)[1] - c^2
         diff_old = 0
         stall = false
@@ -206,7 +207,7 @@ function tr_solve_secular(D,d,Qtheta,c)
                 low = mu
             end
             mu = (high + low)/2
-            w = find_w(mu,D,d,Qtheta)
+            w = find_w(mu,D,d,d2,Qtheta)
             diff_old = diff
             diff = (w'*Qtheta*w)[1] - c^2
         end
@@ -226,7 +227,7 @@ function tr_solve_secular(D,d,Qtheta,c)
         end
         
         mu = (high + low)/2
-        w = find_w(mu,D,d,Qtheta)
+        w = find_w(mu,D,d,d2,Qtheta)
         diff = (w'*Qtheta*w)[1] - c^2
         diff_old = 0
         stall = false
@@ -241,7 +242,7 @@ function tr_solve_secular(D,d,Qtheta,c)
                 low = mu
             end
             mu = (high + low)/2
-            w = find_w(mu,D,d,Qtheta)
+            w = find_w(mu,D,d,d2,Qtheta)
             diff_old = diff
             diff = (w'*Qtheta*w)[1] - c^2
         end
