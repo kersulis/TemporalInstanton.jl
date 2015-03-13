@@ -90,7 +90,7 @@ function tmp_inst_Qtheta(n,nr,T)#,tau)
     "line" has the form (i,k), where i and k refer to
     the endpoints of the chosen line.
     """
-    Qtheta = zeros((nr+n+2)*T,(nr+n+1)*T)
+    Qtheta = zeros((nr+n+2)*T,(nr+n+2)*T)
     
     Qtheta[end-T+1:end,end-T+1:end] = eye(T)
     return Qtheta
@@ -100,7 +100,7 @@ function tmp_inst_A_scale(n,Ridx,T,tau,ref,line)
     """ Augment A with T additional rows relating
     angle difference variables to angle variables.
     
-    Returns a T-by-(n+nr+1)*T matrix that may be
+    Returns a T-by-(n+nr+2)*T matrix that may be
     concatenated with the output of temp_inst_A
     
     Arguments:    
@@ -115,7 +115,7 @@ function tmp_inst_A_scale(n,Ridx,T,tau,ref,line)
     (i,k) = line
     nr = length(Ridx)
     
-    A = zeros(T,(nr+n+1)*T)
+    A = zeros(T,(nr+n+2)*T)
     
     for t = 1:T
         i_pos = (nr+n+1)*(t-1) + nr + i
@@ -129,6 +129,7 @@ function tmp_inst_A_scale(n,Ridx,T,tau,ref,line)
     
     # remove slack columns:
     #return sparse(A[:,setdiff(1:(n+nr+2)*T,ref_cols)])
+    return A
 end
 
 function tmp_inst_pad_b(b,T)
@@ -161,6 +162,10 @@ function temporalInstanton(Ridx,Y,ref,k,tau,line,G0,P0,D)
     A2 = tmp_inst_A_scale(n,Ridx,T,tau,ref,line)
     # Augment A with new rows:
     A = [[full(A) zeros((n+1)*T,T)]; A2]
+
+    # A is (n+1)*T by (nr+n+1)*T.
+    # Top row is thus (n+1)*T by (nr+n+2)*T
+    # Bottom row is T by (nr+n+2)*T
 
     b = tmp_inst_b(n,T,G0,P0,D)
     # Augment b with new elements:
