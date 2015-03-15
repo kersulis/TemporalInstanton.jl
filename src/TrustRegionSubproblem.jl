@@ -7,15 +7,38 @@ export
     tr_solve_secular, find_w
 
 # function min_norm(A::Array{Float64,2},b::Array{Float64,1})
-function min_norm(A,b)
+function min_norm(A,b,Q=nothing)
     """ Find the point x* in the set Ax=b which is
     closest to the origin in the 2-norm sense.
+
+    If optional diagonal Q is specified, partition problem 
+    into x1 and x2, where x1 corresponds to zeros in Q, and
+    x2 has remaining variables.
     """
     m,n = size(A)
     if m < n
         x_star = \(A,b)
     else
         println("need m < n")
+        return nothing
+    end
+    if Q != nothing
+        p2 = find(diag(Q))
+        p1 = setdiff(1:size(Q,1),p2)
+        A1 = A[:,p1]
+        # A2*A2' is not invertible if A2 is tall.
+        # In this case, use only enough rows to
+        # make A2 full rank.
+        A2 = A[:,p2]
+        r = rank(A2)
+        A2inv= A2[end-r+1:end,:]
+        x1_star = x_star[p1]
+        
+        x2_star = A2inv'*((A2inv*A2inv')\((b-A1*x1_star)[end-r+1:end]))
+        
+        return [x1_star,x2_star],A1,A2
+    else
+        return x_star
     end
 end
 
@@ -64,7 +87,7 @@ function kernel_rotation(A)
 end
 
 # Functions added 2015-03-07
-function tr_translate(G_of_x,Q_of_x,A,b)
+function tr_translate(G_of_x,Q_of_x,A,b,Q)
     """ Starting with min G(x) s.t. ||x||=c, Ax=b,
     translate problem by x_star, the point in 
     {x:Ax=b} closest to the origin. The problem
@@ -80,12 +103,12 @@ function tr_translate(G_of_x,Q_of_x,A,b)
     Q_of_x is entered similarly.
     A and b define the Ax=b relationship.
     """
-    x_star = min_norm(A,b)
+    x_star,A1,A2 = min_norm(A,b,Q)
     
     H_of_x = translate_quadratic(G_of_x,x_star)
     R_of_x = translate_quadratic(Q_of_x,x_star)
     
-    return H_of_x,R_of_x,x_star
+    return H_of_x,R_of_x,x_star,A1,A2
 end
 
 function tr_kernel_rotate(G_of_x,A)
@@ -113,24 +136,28 @@ function tr_map_back(w,Rkernel,Reigvec,z_star)
     return Rkernel'*Reigvec'*w + z_star
 end
 
-function tr_trans_rotate(G_of_x,Q_of_x,A,b)
-    H_of_x,R_of_x,x_star = tr_translate(G_of_x,Q_of_x,A,b)
+function tr_trans_rotate(G_of_x,Q_of_x,A,b,Q)
+    H_of_x,R_of_x,x_star,A1,A2 = tr_translate(G_of_x,Q_of_x,A,b,Q)
     # R_of_x is rotation invariant.
     J_of_z,Rkernel = tr_kernel_rotate(H_of_x,A)
     K_of_w,Reigvec = tr_diag_rotate(J_of_z)
     
-    return J_of_z,K_of_w,R_of_x,x_star,Rkernel,Reigvec
+    return H_of_x,J_of_z,K_of_w,R_of_x,x_star,Rkernel,Reigvec,A1,A2
 end
 
 function find_w(mu,D,d,d2,Qtheta)
     # Find w that satisfies Lagrange condition.
 
-    # Assume anything smaller than 1e-8 is 0,
+    # Assume anything smaller than 1e-10 is 0,
     # and that the first group of equations is
     # just 0 = 0.
     w = zeros(length(d))
     Dr = round(D,10)
     dr = round(d,10)
+    Qtheta = round(Qtheta,10)
+    if d2 == 0
+        d2 = zeros(length(d))
+    end
     d2r = round(d2,10)
 
     # remove indices where denominator is zero

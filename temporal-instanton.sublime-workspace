@@ -47,7 +47,7 @@
 			"file": "src/TemporalInstanton.jl",
 			"settings":
 			{
-				"buffer_size": 4331,
+				"buffer_size": 4716,
 				"line_ending": "Unix"
 			}
 		},
@@ -55,7 +55,7 @@
 			"file": "src/TrustRegionSubproblem.jl",
 			"settings":
 			{
-				"buffer_size": 6703,
+				"buffer_size": 7516,
 				"line_ending": "Unix"
 			}
 		},
@@ -226,6 +226,7 @@
 	],
 	"file_history":
 	[
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TrustRegionSubproblem.jl",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/data/RTS-96 Data/CaseData.m",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/notes/2015-03-04-meeting-with-Ian.md",
 		"/home/jkersulis/Downloads/CaseData.m",
@@ -352,8 +353,7 @@
 		"/home/jkersulis/Documents/kersulis.github.io/_posts/7-20-14 First Post.md",
 		"/home/jkersulis/Documents/kersulis.github.io/_drafts/11-08-14-Learning and Creating.md",
 		"/home/jkersulis/Documents/kersulis.github.io/_drafts/11-07-14-Work.md",
-		"/home/jkersulis/Documents/kersulis.github.io/_drafts/7-20-14 First Post.md",
-		"/home/jkersulis/Documents/kersulis.github.io/.gitignore"
+		"/home/jkersulis/Documents/kersulis.github.io/_drafts/7-20-14 First Post.md"
 	],
 	"find":
 	{
@@ -371,6 +371,9 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"part",
+			"trans_rotat",
+			"min_norm",
 			"find_w",
 			"sparse",
 			"start",
@@ -453,15 +456,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 4331,
+						"buffer_size": 4716,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1665,
-								1665
+								4711,
+								4711
 							]
 						],
 						"settings":
@@ -473,7 +476,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 1151.0,
+						"translation.y": 5705.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 1,
@@ -485,28 +488,27 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 6703,
+						"buffer_size": 7516,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								3153,
-								3153
+								0,
+								0
 							]
 						],
 						"settings":
 						{
 							"WordCountShouldRun": true,
 							"WordCountSyntax": "julia",
-							"_anf_new": "",
 							"syntax": "Packages/Julia/Julia.tmLanguage",
 							"tab_size": 4,
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 3267.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
@@ -531,7 +533,6 @@
 						],
 						"settings":
 						{
-							"WordCountShouldRun": true,
 							"WordCountSyntax": "julia",
 							"auto_name": "",
 							"syntax": "Packages/Julia/Julia.tmLanguage",
