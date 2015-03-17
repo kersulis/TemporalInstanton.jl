@@ -452,7 +452,7 @@ The first-order optimality conditions for \eqref{opt4} include a single Lagrange
 where $d = V^\top R Q_{obj}z^*$. We would like to solve \eqref{fonc} subject to $w^\top Q_\theta w = \bar{c}$, where $\bar{c} = c -  z^{*\top}Q_\theta z^*$. We will solve this system via enumeration, beginning with $\mu=0$ and checking $\mu=D_i$ for each diagonal element of $D$. Once these possibilities are exhausted, we write the ``secular equation'' (see \cite{bienstock2014}), setting it equal to $\bar{c}^2$:
 
 \begin{align}\label{secular}
-s(\mu) = \sum_{i:Q{_\theta,i}\neq 0} \left(\frac{d_i}{\mu - D_i}\right)^2 &= \bar{c}^2
+s(\mu) = \sum_{i:Q{_\theta,i}\neq 0} \left(\frac{d_i}{\mu - D_i}\right)^2 &= \bar{c}
 \end{align}
 This equation has a number of solutions, each corresponding to some value of $w$, which must be checked for feasibility.
 
