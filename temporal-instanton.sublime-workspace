@@ -508,7 +508,6 @@
 						],
 						"settings":
 						{
-							"WordCountShouldRun": true,
 							"WordCountSyntax": "julia",
 							"syntax": "Packages/Julia/Julia.tmLanguage",
 							"tab_size": 4,
@@ -534,8 +533,8 @@
 						"selection":
 						[
 							[
-								1335,
-								1335
+								1189,
+								1189
 							]
 						],
 						"settings":
