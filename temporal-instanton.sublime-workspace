@@ -52,18 +52,10 @@
 			}
 		},
 		{
-			"file": "src/TrustRegionSubproblem.jl",
+			"file": "src/maxTemp.jl",
 			"settings":
 			{
-				"buffer_size": 7516,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "notes/Quals2Abstract.md",
-			"settings":
-			{
-				"buffer_size": 1335,
+				"buffer_size": 2997,
 				"line_ending": "Unix"
 			}
 		},
@@ -74,22 +66,18 @@
 				"buffer_size": 1269,
 				"line_ending": "Unix"
 			}
-		},
-		{
-			"file": "src/readRTS96Data.jl",
-			"settings":
-			{
-				"buffer_size": 4223,
-				"line_ending": "Unix"
-			}
 		}
 	],
 	"build_system": "",
 	"command_palette":
 	{
-		"height": 688.0,
+		"height": 220.0,
 		"selected_items":
 		[
+			[
+				"anfnf",
+				"ANF: New File"
+			],
 			[
 				"anfn",
 				"ANF: New File"
@@ -175,10 +163,6 @@
 				"ANF: Rename File"
 			],
 			[
-				"anfnf",
-				"ANF: New File"
-			],
-			[
 				"pkg in",
 				"Package Control: Install Package"
 			],
@@ -207,7 +191,7 @@
 				"Project: Add Folder"
 			]
 		],
-		"width": 940.0
+		"width": 1204.0
 	},
 	"console":
 	{
@@ -234,14 +218,16 @@
 	],
 	"file_history":
 	[
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/readRTS96Data.jl",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TrustRegionSubproblem.jl",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton.jl",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/notes/Quals2Abstract.md",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/data/RTS-96 Data/CaseData.m",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/notes/2015-03-04-meeting-with-Ian.md",
 		"/home/jkersulis/Downloads/CaseData.m",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/README.md",
 		"/home/jkersulis/Downloads/Report, 2015-03-02.html",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/psDataLoad.jl",
-		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/readRTS96Data.jl",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/instanton.jl",
 		"/home/jkersulis/.config/sublime-text-3/Packages/User/Preferences.sublime-settings",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/TemporalInstanton.jl",
@@ -359,9 +345,7 @@
 		"/home/jkersulis/Documents/kersulis.github.io/_posts/7-20-14-Summer-at-Los-Alamos.md",
 		"/home/jkersulis/Documents/kersulis.github.io/7-20-14-Summer-at-Los-Alamos.md",
 		"/home/jkersulis/Documents/kersulis.github.io/_posts/7-20-14 First Post.md",
-		"/home/jkersulis/Documents/kersulis.github.io/_drafts/11-08-14-Learning and Creating.md",
-		"/home/jkersulis/Documents/kersulis.github.io/_drafts/11-07-14-Work.md",
-		"/home/jkersulis/Documents/kersulis.github.io/_drafts/7-20-14 First Post.md"
+		"/home/jkersulis/Documents/kersulis.github.io/_drafts/11-08-14-Learning and Creating.md"
 	],
 	"find":
 	{
@@ -455,7 +439,7 @@
 	"groups":
 	[
 		{
-			"selected": 2,
+			"selected": 1,
 			"sheets":
 			[
 				{
@@ -471,87 +455,58 @@
 						"selection":
 						[
 							[
-								4711,
-								4711
+								356,
+								356
 							]
 						],
 						"settings":
 						{
+							"WordCountShouldRun": true,
 							"WordCountSyntax": "julia",
 							"syntax": "Packages/Julia/Julia.tmLanguage",
 							"tab_size": 4,
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 5705.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 2,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "src/TrustRegionSubproblem.jl",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 7516,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								315,
-								315
-							]
-						],
-						"settings":
-						{
-							"WordCountSyntax": "julia",
-							"syntax": "Packages/Julia/Julia.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": -0.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 1,
 					"type": "text"
 				},
 				{
-					"buffer": 2,
-					"file": "notes/Quals2Abstract.md",
+					"buffer": 1,
+					"file": "src/maxTemp.jl",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1335,
+						"buffer_size": 2997,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1189,
-								1189
+								2346,
+								2346
 							]
 						],
 						"settings":
 						{
 							"WordCountShouldRun": true,
-							"WordCountSyntax": "markdown",
-							"syntax": "Packages/Markdown/Markdown.tmLanguage"
+							"WordCountSyntax": "julia",
+							"_anf_new": "",
+							"syntax": "Packages/Julia/Julia.tmLanguage"
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 2894.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
 					"type": "text"
 				},
 				{
-					"buffer": 3,
+					"buffer": 2,
 					"file": "src/tmp_inst_rts96.jl",
 					"semi_transient": false,
 					"settings":
@@ -569,6 +524,7 @@
 						],
 						"settings":
 						{
+							"WordCountShouldRun": true,
 							"WordCountSyntax": "julia",
 							"auto_name": "",
 							"syntax": "Packages/Julia/Julia.tmLanguage",
@@ -579,38 +535,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 3,
-					"type": "text"
-				},
-				{
-					"buffer": 4,
-					"file": "src/readRTS96Data.jl",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 4223,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1163,
-								1163
-							]
-						],
-						"settings":
-						{
-							"WordCountSyntax": "julia",
-							"syntax": "Packages/Julia/Julia.tmLanguage",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 4,
+					"stack_index": 2,
 					"type": "text"
 				}
 			]
@@ -860,7 +785,7 @@
 	"show_minimap": true,
 	"show_open_files": false,
 	"show_tabs": true,
-	"side_bar_visible": false,
+	"side_bar_visible": true,
 	"side_bar_width": 405.0,
 	"status_bar_visible": true,
 	"template_settings":
