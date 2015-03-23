@@ -5,7 +5,7 @@ export
 
 ####### IMPORTS: JULIA PACKAGES ########
 using JuMP
-using Ipopt
+using Ipopt,Mosek
 
 push!(LOAD_PATH, dirname(@__FILE__))
 using TemporalInstanton

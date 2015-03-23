@@ -55,7 +55,7 @@
 			"file": "src/maxTemp.jl",
 			"settings":
 			{
-				"buffer_size": 2997,
+				"buffer_size": 3004,
 				"line_ending": "Unix"
 			}
 		},
@@ -461,14 +461,13 @@
 						],
 						"settings":
 						{
-							"WordCountShouldRun": true,
 							"WordCountSyntax": "julia",
 							"syntax": "Packages/Julia/Julia.tmLanguage",
 							"tab_size": 4,
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": -0.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 1,
@@ -480,15 +479,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2997,
+						"buffer_size": 3004,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								2346,
-								2346
+								1197,
+								1197
 							]
 						],
 						"settings":
@@ -499,7 +498,7 @@
 							"syntax": "Packages/Julia/Julia.tmLanguage"
 						},
 						"translation.x": 0.0,
-						"translation.y": 2894.0,
+						"translation.y": 1365.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
@@ -524,7 +523,6 @@
 						],
 						"settings":
 						{
-							"WordCountShouldRun": true,
 							"WordCountSyntax": "julia",
 							"auto_name": "",
 							"syntax": "Packages/Julia/Julia.tmLanguage",
@@ -785,7 +783,7 @@
 	"show_minimap": true,
 	"show_open_files": false,
 	"show_tabs": true,
-	"side_bar_visible": true,
+	"side_bar_visible": false,
 	"side_bar_width": 405.0,
 	"status_bar_visible": true,
 	"template_settings":
