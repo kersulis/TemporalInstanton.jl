@@ -55,15 +55,7 @@
 			"file": "src/maxTemp.jl",
 			"settings":
 			{
-				"buffer_size": 3004,
-				"line_ending": "Unix"
-			}
-		},
-		{
-			"file": "src/tmp_inst_rts96.jl",
-			"settings":
-			{
-				"buffer_size": 1269,
+				"buffer_size": 3003,
 				"line_ending": "Unix"
 			}
 		}
@@ -218,6 +210,7 @@
 	],
 	"file_history":
 	[
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/tmp_inst_rts96.jl",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/readRTS96Data.jl",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TrustRegionSubproblem.jl",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton.jl",
@@ -344,8 +337,7 @@
 		"/home/jkersulis/Documents/kersulis.github.io/2014-07-20-Summer-at-Los-Alamos.md",
 		"/home/jkersulis/Documents/kersulis.github.io/_posts/7-20-14-Summer-at-Los-Alamos.md",
 		"/home/jkersulis/Documents/kersulis.github.io/7-20-14-Summer-at-Los-Alamos.md",
-		"/home/jkersulis/Documents/kersulis.github.io/_posts/7-20-14 First Post.md",
-		"/home/jkersulis/Documents/kersulis.github.io/_drafts/11-08-14-Learning and Creating.md"
+		"/home/jkersulis/Documents/kersulis.github.io/_posts/7-20-14 First Post.md"
 	],
 	"find":
 	{
@@ -363,6 +355,7 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"solver",
 			"part",
 			"trans_rotat",
 			"min_norm",
@@ -479,15 +472,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 3004,
+						"buffer_size": 3003,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1197,
-								1197
+								2568,
+								2568
 							]
 						],
 						"settings":
@@ -495,45 +488,15 @@
 							"WordCountShouldRun": true,
 							"WordCountSyntax": "julia",
 							"_anf_new": "",
-							"syntax": "Packages/Julia/Julia.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 1365.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 0,
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "src/tmp_inst_rts96.jl",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 1269,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1218,
-								1218
-							]
-						],
-						"settings":
-						{
-							"WordCountSyntax": "julia",
-							"auto_name": "",
 							"syntax": "Packages/Julia/Julia.tmLanguage",
 							"tab_size": 4,
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 0.0,
+						"translation.y": 2562.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 0,
 					"type": "text"
 				}
 			]
