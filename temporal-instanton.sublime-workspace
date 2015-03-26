@@ -472,7 +472,6 @@
 						],
 						"settings":
 						{
-							"WordCountShouldRun": true,
 							"WordCountSyntax": "julia",
 							"syntax": "Packages/Julia/Julia.tmLanguage",
 							"tab_size": 4,
@@ -498,8 +497,8 @@
 						"selection":
 						[
 							[
-								2158,
-								2158
+								3005,
+								3005
 							]
 						],
 						"settings":
@@ -511,7 +510,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 1341.0,
+						"translation.y": 2465.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
@@ -536,7 +535,6 @@
 						],
 						"settings":
 						{
-							"WordCountShouldRun": true,
 							"WordCountSyntax": "julia",
 							"_anf_new": "",
 							"syntax": "Packages/Julia/Julia.tmLanguage",
