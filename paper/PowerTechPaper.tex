@@ -114,7 +114,7 @@ In this paper we bring instanton analysis into the temporal setting. We consider
 
 \section{Problem formulation}
 
-Though most of the modeling and detail of previous instanton work carries over to time-coupled analysis, there is one significant complication:  the nonlinearity of Ohmic heating (power loss) on a line. Heat input into a line is proportional to the square of the line's current. Thus, heat-constrained, time-coupled instanton analysis is a quadratically-constrained quadratic program (QCQP). QCQPs are NP-hard in general; reasonable solutions may exist, but unless the quadratic constraint matrices are positive-definite there is no solution guarantee (see \cite{mehanna2014}). Because system operators must be able to reliably obtain reasonable output from the analysis, ``no solution found'' is an unacceptable output. With this criterion in mind, we proceed to develop models for line losses, line temperature, and instanton optimization that keep integer variables to a minimum.
+Though most of the modeling and detail of previous instanton work carries over to time-coupled analysis, there is one significant complication:  the nonlinearity of Ohmic heating (power loss) on a line. Heat input into a line is proportional to the square of the line's current. Thus, heat-constrained, time-coupled instanton analysis is a quadratically-constrained quadratic program (QCQP). QCQPs are NP-hard in general; reasonable solutions may exist, but unless the quadratic constraint matrices are positive-definite there is no solution guarantee (see \cite{mehanna2014}). Because system operators must be able to reliably obtain reasonable output from the analysis, ``no solution found'' is an unacceptable output. With this criterion in mind, we proceed to develop models for line losses, line temperature, and instanton optimization that keep problem complexity to a minimum.
 %We then relax this constraint to avoid introducing integer variables into the formulation, as described in \cite{almassalkhi2014}. The resulting optimization problem is convex and easily solved.
 
 %The equations governing AC power flow are nonlinear. If we use these equations to balance the power flows in our optimization, the resulting feasible region will be nonconvex. Previous instanton work has addressed this issue by replacing the AC power flow equations with DC equations (the DC power flow equations assume that the network is lossless, with all voltage magnitudes equal to 1 per unit). This substitution renders the feasible region of instanton optimization (in the absence of nonlinear constraints) convex. 
@@ -402,67 +402,182 @@ where $$c = \frac{x_{ik}^2}{\rho_{ik} r_{ik}} \left(\Delta T_{ik}^{lim} - \delta
 
 \section{Solution}
 
-The structure of \eqref{opt} is similar to that of the well-known trust-region subproblem. Here we describe a four-step solution method based in part on work from \cite{bienstock2014}.
+The structure of \eqref{opt} is similar to that of the well-known trust-region subproblem. Here we describe a four-step solution method based in part on work from \cite{bienstock2014}. We begin by considering the vector of variables $z$ as three groups: $z_1\in\mathbb{R}^{N_rT}$ contains wind deviations, $z_2\in\mathbb{R}^{(N+1)T}$ contains angle and mismatch variables, and $z_3\in\mathbb{R}^T$ contains angle difference variables involved in line temperature calculation. With this notation, the problem becomes
+
+\begin{align*}
+&& \min~ & z_1^\top Q_z z_1 \\
+s.t. && Az &= b \\
+&& z_3^\top z_3 &= c
+\end{align*}
+
+where $Q_z$ encodes wind correlation, if any.
 
 \subsection{Translation}
 
-The first step is to translate the problem by $z^*$, the point in the set $\{z:Az=b\}$ closest to the origin. One way to find $z^*$ is to perform a QR factorization of $A$ with a rank estimate based on its R factor. The translation itself is a change of variables from $z$ to $\bar{z}=z - z^*$. This results in the following problem:
+The first step is to translate the problem to change the form of the linear constraints from $Az=b$ to $Ay=0$. This is equivalent to a change of variables where $y=z-z^*$ and $z^*\in\{z:Az=b\}$ is the translation. Because translation must not introduce a linear term into the quadratic constraint, $z_3^*$ must be zero. To satisfy $Az^*=b$, then, $z_1^*$ and $z_2^*$ must satisfy $$ A\begin{bmatrix} z_1^* \\ z_2^* \\ 0 \end{bmatrix} = b ~.$$ It is straightforward to find a min-norm $z^*$ that satisfies this constraint.
+
+After translation, the problem takes the form
 
 \begin{subequations}\label{opt2}
 \begin{align}
-\label{opt2:obj} && \min \bar{z}^\top Q_{obj}\bar{z} + 2\bar{z}^\top Q_{obj}z^* &\\
-\label{opt2:lin} & s.t. & A\bar{z} &= 0 \\
-\label{opt2:quad} && \bar{z}^\top Q_{\theta}\bar{z} + z^{*\top}Q_\theta z^* - c &= 0 
+\label{opt2:obj} && \min~ & y_1^\top Q_z y_1 + 2 y_1^\top Q_z z_1^* \\
+\label{opt2:lin} s.t. && Ay &= 0 \\
+\label{opt2:quad} && y_3^\top y_3 &= c
 \end{align}
 \end{subequations}
-Because of how $z^*$ was chosen, the linear term introduced into the quadratic constraint by translation cancels to zero; only the constant changes.
 
-\subsection{Nullspace rotation}
+\subsection{Kernel mapping}
 
-The form of the new linear constraints suggests an intuitive explanation: any solution to \eqref{opt2} must lie in the nullspace (kernel) of $A$. If $\dim \mathcal{N}(A) =k$ is the dimension of this nullspace, we can rotate the problem so that the first $k$ coordinates lie in $\mathcal{N}(A)$, thereby eliminating the remaining variables. The first $k$ columns of the appropriate rotation matrix $R$ span $\mathcal{N}(A)$, and remaining columns are chosen to complete the basis. After changing variables from $\bar{z}$ to $y= R\bar{z}$, we obtain the following problem:
+The new form of the linear constraints suggests an intuitive explanation: any solution to \eqref{opt2} must lie in the nullspace (kernel) of $A$. If $\dim \mathcal{N}(A) =k$ is the dimension of this nullspace, we can replace $y$ by $Nx$ where $N\in\mathbb{R}^{n\times k}$ spans $\mathcal{N}(A)$. This change of variables is somewhat similar to a rotation, but it reduces the problem dimension to $k$. It also ensures that feasible solutions $x$ to the new problem lie in the nullspace of $A$, as required. After the change of variables, the problem becomes
 
 \begin{subequations}\label{opt3}
 \begin{align}
-\label{opt3:obj} && \min y^\top (RQ_{obj}R^\top) y + 2y^\top R(Q_{obj}z^*) &\\
-\label{opt3:quad} & s.t. & y^\top Q_{\theta} y + z^{*\top}Q_\theta z^* - c &= 0
+\label{opt3:obj} && \min x^\top (N^\top Q_{obj}N) x + 2x^\top N^\top(Q_zz_1^*) &\\
+\label{opt3:quad} & s.t. & x^\top N_3^\top N_3 x &= c~,
 \end{align}
 \end{subequations}
-Note that $RQ_\theta R^\top = Q_\theta$, because the only non-zero part of $Q_\theta$ is an identity matrix. (In other words, the norm constraint is rotation invariant.)
 
-\subsection{Diagonalizing rotation}
+where the linear constraints are implicit.
 
-The third step is to perform a change of variables so that the quadratic part of the objective is diagonal. To do this, we write the Eigen-decomposition $$RQ_{obj}R^\top = VDV^\top~,$$ where $D$ is a diagonal matrix of Eigenvalues and $V$ is a matrix whose columns are Eigenvectors. All quantities will be real owing to the symmetry of $Q_{obj}$. Changing variables from $y$ to $w=V^\top y$, we obtain the following optimization problem:
+\subsection{Obtaining a norm constraint}
+
+After kernel mapping, the quadratic constraint is no longer diagonal. We can fix this by performing an Eigendecomposition $N_3^\top N_3 = UDU^\top$ and letting $\hat{x} = U^\top x$. The constraint becomes diagonal when expressed in terms of $\hat{x}$:
+
+\begin{align}
+\label{opt3:rotquad} x^\top N_3^\top N_3 x &= \hat{x}^\top D\hat{x}
+\end{align}
+
+In this new constraint expression, $D$ is diagonal and has at most $T$ nonzero elements. It will look like this:
+
+\begin{align}
+D &= \begin{bmatrix} 0 & 0 \\ 0 & \hat{D} \end{bmatrix}
+\end{align}
+
+The quadratic constraint \eqref{opt3:rotquad} is diagonal, but one more change of variables can render it a norm constraint. Let $\hat{x}=[\hat{x}_1~\hat{x}_2]^\top$ and $w = [w_1~w_2]^\top$, and relate them as follows:
+
+\begin{align}
+\label{eq:x_to_w} \begin{bmatrix} w_1 \\ w_2 \end{bmatrix} &=
+\begin{bmatrix} I & 0 \\ 0 & \hat{D}^{1/2} \end{bmatrix}
+\begin{bmatrix} \hat{x}_1 \\ \hat{x}_2 \end{bmatrix} = K\hat{x} \\
+\nonumber \implies w &= KU^\top x
+\end{align}
+
+Using \eqref{eq:x_to_w} we can rewrite the constraint in terms of $w$:
+
+\begin{align}
+\hat{x}^\top D\hat{x} &= \hat{x}_2\hat{D}^{1/2}\hat{D}^{1/2}\hat{x}_2 = w_2^\top w_2
+\end{align}
+
+(Note that $z = UK^{-1}w$ because $UU^\top = I$. Changing from $z$ to $w$
+is equivalent to rotating by $(UK^{-1})^\top$.)
+
+This change of variables also influences the cost function. After substitution and simplification, the optimization problem problem becomes
 
 \begin{subequations}\label{opt4}
 \begin{align}
-\label{opt4:obj} && \min w^\top D w + 2w^\top V^\top (RQ_{obj}z^*) &\\
-\label{opt4:quad} & s.t. & w^\top Q_{\theta} w + z^{*\top}Q_\theta z^* - c &= 0
+\label{opt4:obj} && \min~ w^\top Bw + w^\top b \\
+\label{opt4:quad} s.t. && w_2^\top w_2 &= c
 \end{align}
 \end{subequations}
-Here again we used the fact that $Q_\theta$ is rotation invariant. The objective \eqref{opt4:obj} is now a diagonalized quadratic, and \eqref{opt4:quad} is a ball constraint.
+
+where 
+\begin{align*}
+B= K^{-1}U^\top N^\top Q_z NUK^{-1} \text{ and }b=2 K^{-1}U^\top N_1z_1^*.
+\end{align*}
+
+The purpose of this section was to change variables to obtain a norm constraint. The next section eliminates $w_1$ using the KKT conditions of \eqref{opt4}. This will allow us to write the objective in terms of $w_2$ only.
+
+\subsection{Eliminating $w_1$}
+
+Note that $w_1$ is unconstrained in \eqref{opt4}. For a fixed $w_2$, we can use the KKT
+conditions to find $w_1$ such that the objective is minimized. Begin by
+expanding the objective:
+
+\begin{align*} f(w) &=
+\begin{bmatrix} w_1^\top & w_2^\top \end{bmatrix}
+\begin{bmatrix} B_{11} & B_{12} \\ B_{12}^\top & B_{22}\end{bmatrix}
+\begin{bmatrix} w_1 \\ w_2 \end{bmatrix} + 
+\begin{bmatrix} w_1^\top & w_2^\top \end{bmatrix}
+\begin{bmatrix} b_1 \\ b_2\end{bmatrix} \\
+&=
+w_1^\top B_{11}w_1 + 2w_1^\top B_{12}w_2 + w_2^\top B_{22}w_2 + w_1^\top b_1 + w_2^\top b_2
+\end{align*}
+
+Set the partial derivative with respect to $w_1$ equal to zero:
+
+\begin{align}
+\nonumber \frac{\partial f}{\partial w_1} &= 2w_1^\top B_{11} + 2w_2^\top B_{12}^\top + b_1^\top = 0 \\
+\iff w_1 &= -B_{11}^{-1}\left(B_{12}w_2 - \frac{1}{2}b_1 \right)
+\end{align}
+
+After substitution and simplification, the objective depends on $w_2$ only:
+
+\begin{align*}
+f(w_2) &= w_2^\top\left(B_{22} - B_{12}^\top B_{11}^{-1} B_{12}\right)w_2 + 
+w_2^\top (b_2 - B_{12}^\top B_{11}^{-1}b_1) \\
+&\qquad - \frac{1}{4}b_1^\top B_{11}^{-1}b_1
+\end{align*}
+
+(Note that the last term is constant and therefore plays no role in the
+minimization.) The optimization problem in terms of $w_2$ is:
+
+\begin{subequations}\label{opt5}
+\begin{align}
+&& \min~ w_2^\top \hat{B}w_2 + w_2^\top \hat{b} \\
+\label{opt5:quad} s.t. && w_2^\top w_2 &= c
+\end{align}
+\end{subequations}
+
+where
+\begin{align*}
+\hat{B} = B_{22} - B_{12}^\top B_{11}^{-1}B_{12} &\text{ and }\hat{b} = b_2 - B_{12}^\top B_{11}^{-1}b_1~.
+\end{align*}
+
+In \eqref{opt5} the goal is to minimize a $T$-dimensional quadratic objective subject to a $T$-dimensional norm constraint.
+
 
 \subsection{Solution via enumeration}
- 
-The first-order optimality conditions for \eqref{opt4} include a single Lagrange multiplier $\mu$:
 
-\begin{align}\label{fonc}
-2w^\top D + 2(V^\top R Q_{obj}z^*) &= 2\mu w^\top Q_\theta \\
-\iff w^\top D + d &= \mu w^\top Q_\theta~,
-\end{align}
-where $d = V^\top R Q_{obj}z^*$. We would like to solve \eqref{fonc} subject to $w^\top Q_\theta w = \bar{c}$, where $\bar{c} = c -  z^{*\top}Q_\theta z^*$. We will solve this system via enumeration, beginning with $\mu=0$ and checking $\mu=D_i$ for each diagonal element of $D$. Once these possibilities are exhausted, we write the ``secular equation'' (see \cite{bienstock2014}), setting it equal to $\bar{c}^2$:
+Let $v$ be the Lagrange multiplier associated with the constraint. Then the following is a first-order optimality condition for \eqref{opt5}:
 
-\begin{align}\label{secular}
-s(\mu) = \sum_{i:Q{_\theta,i}\neq 0} \left(\frac{d_i}{\mu - D_i}\right)^2 &= \bar{c}
+\begin{align}
+\nonumber \frac{\partial \mathcal{L}(w_2,v)}{\partial w_2} = 2\hat{B}w_2 + \hat{b} - v(2w_2) &= 0 \\
+\label{opt5:kkt} \implies \hat{B}w_2 + \frac{1}{2}\hat{b} &= vw_2
 \end{align}
-This equation has a number of solutions, each corresponding to some value of $w$, which must be checked for feasibility.
+
+The above expression is a linear system that yields each element of $w_2$ when $v$ is fixed:
+
+\begin{align}
+\label{opt5:kkt2}w_{2,i} &= \frac{\hat{b}_i/2}{v - \hat{B}_{i,i}}
+\end{align}
+
+In addition to satisfying \eqref{opt5:kkt2}, an optimal $w_2$ must satisfy the quadratic constraint. Substituting \eqref{opt5:kkt2} into \eqref{opt5:quad} yields the ``secular equation'' (see \cite{bienstock2014}):
+
+\begin{align}
+s(v) = \sum_{i}\left( \frac{\hat{b}_i /2}{v - \hat{B}_{i,i}}\right)^2 &= c
+\end{align}
+
+The secular equation has one pole per unique non-zero diagonal element of $\hat{B}$. There are at most two solutions per pole: one to the left and the other to the right. This is best understood graphically. Below we have a secular equation with one pole, taken from analysis of the RTS-96 network. The horizontal axis is the value of the Lagrange multiplier $v$, and the vertical axis is $s(v)$, the value of the secular equation. The horizontal line is $s(v)=c$. The two intersection points are the two solutions to this secular equation.
+
+\section{Results for RTS-96 network}
+
+We used data from a wind-augmented RTS-96 \ref{refhere} to illustrate temporal instanton analysis. Consider a scenario unfolding over three time steps: in the first time step, the wind forecast is scaled to one-half its value at the second time step. In the third step, the wind forecast is scaled to 1.5 times its value at the second time step. Generator dispatch and demand remain constant during this period. Temporal instanton analysis with $c=0.1$ and $\tau=1$ indicates that the line from bus 56 to bus 57 is most susceptible to excessive heating. In other words, of all dangerous wind patterns (patterns that cause a line to overheat), the most likely to occur is a pattern that overheats the line from bus 56 to bus 57. We call this the instanton wind pattern. The secular equation used to find this pattern is shown in Figure \ref{fig:secular}.
+
+The largest deviation in the instanton pattern is $0.38$ pu, well within the range of wind forecast values (whose maximum is $1.2$ pu). Because instanton analysis finds a set of wind patterns and objective values, sorting provides a powerful way to characterize the potential effects of wind disturbances. Figure \eqref{fig:scores} illustrates a sharp increase in objective value roughly halfway through the set of sorted events (after 60 of the 120 lines).
 
 \begin{figure}
 \centering
-\includegraphics[width=0.9\linewidth]{../images/secular}
-\caption{Plot of secular equation with three poles (all values made up to emphasize shape). Note that the function approaches infinity at the poles.}
+\includegraphics[width=1\linewidth]{../images/secular2}
+\caption{Plot of secular equation for a single line in the RTS-96. Note that $s(v)$ approaches infinity at the pole.}
 \label{fig:secular}
 \end{figure}
 
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{../images/scores}
+\caption{Plot of sorted objective values for 63 lines from RTS-96 temporal instanton analysis.}
+\label{fig:scores}
+\end{figure}
 
 % The remainder of this paper expands and applies the ideas described
 %previously. Implementation issues will be addressed, and a closer

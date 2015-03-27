@@ -4,6 +4,14 @@
 		"selected_items":
 		[
 			[
+				"solve",
+				"solve_temporal_instanton"
+			],
+			[
+				"return_",
+				"return_Bhat"
+			],
+			[
 				"tr_tran",
 				"tr_trans_rotate"
 			],
@@ -60,6 +68,14 @@
 			}
 		},
 		{
+			"file": "src/TemporalInstanton2.jl",
+			"settings":
+			{
+				"buffer_size": 7927,
+				"line_ending": "Unix"
+			}
+		},
+		{
 			"file": "src/maxTemp.jl",
 			"settings":
 			{
@@ -75,10 +91,26 @@
 	"build_varint": "",
 	"command_palette":
 	{
-		"height": 784.0,
-		"last_filter": "packa",
+		"height": 259.0,
+		"last_filter": "user",
 		"selected_items":
 		[
+			[
+				"user",
+				"Preferences: Settings - User"
+			],
+			[
+				"anf",
+				"ANF: New File"
+			],
+			[
+				"pkgi",
+				"Package Control: Install Package"
+			],
+			[
+				"pack",
+				"Preferences: Browse Packages"
+			],
 			[
 				"packa",
 				"Package Control: Upgrade Package"
@@ -156,10 +188,6 @@
 				"Set Syntax: MATLAB"
 			],
 			[
-				"anf",
-				"ANF: Rename File"
-			],
-			[
 				"ann",
 				"ANF: New File"
 			],
@@ -190,10 +218,6 @@
 			[
 				"insta",
 				"Package Control: Install Package"
-			],
-			[
-				"pack",
-				"Preferences: Browse Packages"
 			],
 			[
 				"fold",
@@ -227,6 +251,8 @@
 	],
 	"file_history":
 	[
+		"/home/jkersulis/.config/sublime-text-3/Packages/User/Preferences.sublime-settings",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/maxTemp.jl",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/nbs/TrustRegionSubproblem.ipynb",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/tmp_inst_rts96.jl",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/readRTS96Data.jl",
@@ -240,7 +266,6 @@
 		"/home/jkersulis/Downloads/Report, 2015-03-02.html",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/psDataLoad.jl",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/instanton.jl",
-		"/home/jkersulis/.config/sublime-text-3/Packages/User/Preferences.sublime-settings",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/TemporalInstanton.jl",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/temporal-instanton.sublime-project",
 		"/home/jkersulis/Documents/kersulis.github.io/_posts/2014-09-04-mhacks-and-the-new-term.md",
@@ -353,8 +378,7 @@
 		"/home/jkersulis/Documents/kersulis.github.io/_posts/2014-07-23-Important-tools.md",
 		"/home/jkersulis/Documents/kersulis.github.io/_drafts/7-23-14 The most important tools in my life.md",
 		"/home/jkersulis/Documents/kersulis.github.io/2014-07-20-Summer-at-Los-Alamos.md",
-		"/home/jkersulis/Documents/kersulis.github.io/_posts/7-20-14-Summer-at-Los-Alamos.md",
-		"/home/jkersulis/Documents/kersulis.github.io/7-20-14-Summer-at-Los-Alamos.md"
+		"/home/jkersulis/Documents/kersulis.github.io/_posts/7-20-14-Summer-at-Los-Alamos.md"
 	],
 	"find":
 	{
@@ -372,6 +396,8 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"    \n",
+			"G_of_x",
 			"tmp_inst_A",
 			"solver",
 			"part",
@@ -450,7 +476,7 @@
 	"groups":
 	[
 		{
-			"selected": 1,
+			"selected": 2,
 			"sheets":
 			[
 				{
@@ -466,22 +492,23 @@
 						"selection":
 						[
 							[
-								4241,
-								4241
+								2638,
+								2638
 							]
 						],
 						"settings":
 						{
+							"WordCountShouldRun": true,
 							"WordCountSyntax": "julia",
 							"syntax": "Packages/Julia/Julia.tmLanguage",
 							"tab_size": 4,
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 3864.0,
+						"translation.y": 192.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 2,
 					"type": "text"
 				},
 				{
@@ -497,8 +524,8 @@
 						"selection":
 						[
 							[
-								3005,
-								3005
+								5228,
+								5228
 							]
 						],
 						"settings":
@@ -510,14 +537,45 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 2465.0,
+						"translation.y": 5545.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "src/TemporalInstanton2.jl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 7927,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								6357,
+								6357
+							]
+						],
+						"settings":
+						{
+							"WordCountShouldRun": true,
+							"WordCountSyntax": "julia",
+							"_anf_new": "",
+							"syntax": "Packages/Julia/Julia.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 9177.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
 					"type": "text"
 				},
 				{
-					"buffer": 2,
+					"buffer": 3,
 					"file": "src/maxTemp.jl",
 					"semi_transient": false,
 					"settings":
@@ -529,23 +587,23 @@
 						"selection":
 						[
 							[
-								2434,
-								2434
+								186,
+								186
 							]
 						],
 						"settings":
 						{
+							"WordCountShouldRun": true,
 							"WordCountSyntax": "julia",
-							"_anf_new": "",
 							"syntax": "Packages/Julia/Julia.tmLanguage",
 							"tab_size": 4,
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 2037.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 3,
 					"type": "text"
 				}
 			]
@@ -553,7 +611,7 @@
 	],
 	"incremental_find":
 	{
-		"height": 37.0
+		"height": 40.0
 	},
 	"input":
 	{
@@ -590,7 +648,7 @@
 	"project": "temporal-instanton.sublime-project",
 	"replace":
 	{
-		"height": 70.0
+		"height": 76.0
 	},
 	"save_all_on_build": true,
 	"select_file":
