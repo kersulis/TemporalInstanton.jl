@@ -104,7 +104,7 @@ Previous work has solved several variants of the instanton problem. In 2012 \cit
 
 It is safe to temporarily operate a line above its current limit. Transmission system operators know this and periodically allow lines to operate above their limits to promote smooth operation under heavy load (see the introduction of \cite{banakar2005} for a history of dynamic line rating starting in the 1970s). It takes time for a line to accumulate enough heat to cause it to sag to an unacceptable level (as defined by statute and nearby tree limbs). As long as the line is allowed to cool before reaching this point, no harm will be done. If an operator is comfortable with temporarily overloaded lines, information from today's instanton analysis may be too conservative to aid in decision making.
 
-In this paper we bring instanton analysis into the temporal setting. We consider multiple time steps and replace line current limits with heat constraints. A line's temperature is a function of heat input (primarily Ohmic losses and heat from the sun) and dissipation (convection and radiation, which depend on ambient conditions), and is represented as a differential equation (see Section 3.4 of \cite{ieee2007} for a standard set of equations governing line temperature dynamics). Ohmic loss heating is proportional to the square of current, and dissipation is related primarily to ambient temperature and wind speed. By modeling line temperature over a significant time horizon, the new method discovers multiple-time-step wind patterns that are both likely to occur and sure to induce excessive sagging for at least one line in the network.
+In this paper we bring instanton analysis into the temporal setting. We consider multiple time steps and replace line current limits with heat constraints. A line's temperature is a function of heat input (primarily Ohmic losses and heat from the sun) and dissipation (convection and radiation, which depend on ambient conditions), and is represented as a differential equation (see Section 3.4 of \cite{ieee2007} for a standard set of equations governing line temperature dynamics). Ohmic loss heating is related to power flow analysis via angle difference variables. By modeling line temperature over a significant time horizon, the new method discovers multiple-time-step wind patterns that are both likely to occur and sure to induce excessive sag for at least one line in the network.
 
 The remainder of the paper describes the temporal instanton problem (Section \ref{sec:problem}), translates it into an optimization problem (Section \ref{sec:optimization}), presents a solution method (Section \ref{sec:solution}), and illustrates temporal instanton analysis using a modified RTS-96 network (Section \ref{sec:results}).
 %Instanton analysis may also be viewed as an optimal control problem. The goal is to drive the system to the edge of its feasible operating region while minimizing the ``effort'' of wind variation. We want to find the smallest deviation from a wind forecast that will drive enough current through at least one line to send it to its thermal limit. It is easy to check whether a particular wind forecast will lead to a line exceeding its thermal threshold; instanton analysis provides us with the sensitivity of line overloads to changes in the given forecast.
@@ -248,8 +248,8 @@ The following equations describe an optimization problem that minimizes deviatio
 \begin{align}
 \label{I:obj}\min & \sum_{t=1}^{T} dev_t^\top Q_{dev} dev_t \\
 \nonumber& \text{subject to:} \\
-\label{I:flow} \sum_j Y_{ij} \theta_{ij,t} & = G_{i,t} + R_{i,t} + dev_{i,t} - D_{i,t}\\
-\nonumber &\qquad\qquad\qquad\quad \forall i \in 1... N,~t\in 1... T \\
+\label{I:flow} \sum_j Y_{ij} \theta_{ij,t} & = G_{i,t} + R_{i,t} + dev_{i,t} - D_{i,t}\\[-10pt]
+\nonumber &\qquad\qquad\qquad\quad \forall i \in 1... N,~t\in 1... T \\[6pt]
 \label{I:conv} G_t &= G_{0,t} + k\alpha_t \quad \forall t\in 1\ldots T \\
 \label{I:slack} \theta_{ref,t} & = 0 \quad \forall t\in 1\ldots T \\
 \label{I:lim} \Delta T_{ij}[T] &= \Delta T_{ij}^\text{lim}\quad \text{for some }(i,j)\in \mathcal{G}
@@ -260,23 +260,15 @@ Where:
 \itemsep1pt\parskip0pt\parsep0pt
 \item $dev_{i,t}$ is the difference between actual output and forecast output at wind farm $i$ and time $t$. Thus, $dev_t$ is the vector of wind forecast deviations at time $t$.
 \item $Q_{dev}$ may be set to the identity matrix or used to encode correlation between wind sites.
-\item $R_{i,t}$ is renewable generation forecast at bus $i$ and time $t$ in per unit 
-\item $Y_{ij}$ is the $(i,j)$-th element of the admittance matrix $Y$, which
-  assumes resistances throughout the network are zero.
+\item $R_{i,t}$ is renewable generation forecast at bus $i$ and time $t$.
+\item $Y_{ij}$ is the $(i,j)$-th element of the admittance matrix, which assumes zero resistance.
 \item $\theta_{ij,t}$ is the difference between the bus $i$ phase angle and the bus $k$ phase angle at time $t$.
-\item $G_{i,t}$ is the conventional active power generation at node $i$ and time $t$.
-\item $D_{i,t}$ is the active power demand at bus $i$ and time $t$.
+\item $G_{i,t}$ is conventional active power generation at node $i$ and time $t$, and $G_t$ is a vector including all nodes.
+\item $D_{i,t}$ is active power demand at bus $i$ and time $t$.
 \item $N$ is the number of buses (nodes).
-\item $G_t$ is the vector of conventional active power generation at time $t$.
-\item $G_{0,t}$ is the scheduled conventional active power generation (without droop response).
-\item $k$ is the vector of participation factors for conventional
-  generators, with
-\begin{equation}
-\label{I:part} \sum_i k_i = 1.
-\end{equation}
-The case where $k_i=1$ corresponds to generator $i$ taking up all
-  slack.
-\item $\alpha_t$ is the participation coefficient (mismatch) at time $t$, defined as
+\item $G_{0,t}$ is scheduled conventional active power generation (without droop response).
+\item $k$ is the vector of participation factors for conventional generators, with $\sum_i k_i = 1$. (The case where $k_i=1$ corresponds to generator $i$ taking all slack.)
+\item $\alpha_t$ is the mismatch at time $t$, defined as
 \end{itemize}
 \[\alpha_t:= \sum D_t - \sum \rho_t - \sum G_{0,t} ~.\]
 
@@ -501,7 +493,7 @@ Note that $s(v)$ has one pole per unique nonzero diagonal element of $\hat{B}$. 
 
 \section{Results for RTS-96 network}\label{sec:results}
 
-We used data from the wind-augmented RTS-96 model found in \cite{pandzic} to illustrate temporal instanton analysis. Consider a scenario unfolding over three time steps: in the first time step, the wind forecast is scaled to one-half its value at the second time step. In the third step, the wind forecast is scaled to 1.5 times its value at the second time step. Generator dispatch and demand remain constant during this period. Temporal instanton analysis with $c=0.1$ and $\tau=1$ indicates that the line from bus 56 to bus 57 is most susceptible to excessive heating. In other words, of all dangerous wind patterns (patterns that cause a line to overheat), the most likely to occur is a pattern that overheats the line from bus 56 to bus 57. We call this the instanton wind pattern. The secular equation used to find this pattern is shown in Figure \ref{fig:secular}.
+We used data from \cite{pandzic} to illustrate temporal instanton analysis on a wind-augmented RTS-96 network model. Consider a scenario unfolding over three time steps: in the first time step, the wind forecast is scaled to one-half its value at the second time step. In the third step, the wind forecast is scaled to 1.5 times its value at the second time step. Generator dispatch and demand remain constant during this period. Temporal instanton analysis with $c=0.1$ and $\tau=1$ indicates that the line from bus 56 to bus 57 is most susceptible to excessive heating. In other words, of all dangerous wind patterns (patterns that cause a line to overheat), the most likely to occur is a pattern that overheats the line from bus 56 to bus 57. We call this the instanton wind pattern. The secular equation used to find this pattern is shown in Figure \ref{fig:secular}.
 
 The largest deviation in the instanton pattern is $0.38$ pu, well within the range of wind forecast values (whose maximum is $1.2$ pu). Because instanton analysis finds a set of wind patterns and objective values, sorting provides a powerful way to characterize the potential effects of wind disturbances. Figure \eqref{fig:scores} illustrates a sharp increase in objective value roughly halfway through the set of sorted events (after 60 of the 120 lines).
 
