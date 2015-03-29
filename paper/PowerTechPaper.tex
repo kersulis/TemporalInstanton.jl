@@ -489,26 +489,33 @@ In addition to satisfying \eqref{opt5:kkt2}, an optimal $w_2$ must satisfy the q
 \begin{align}
 s(v) = \sum_{i}\left( \frac{\hat{b}_i /2}{v - \hat{B}_{i,i}}\right)^2 &= c
 \end{align}
-Note that $s(v)$ has one pole per unique nonzero diagonal element of $\hat{B}$. There are at most two solutions per pole, one on each side. This is best understood graphically. Figure \ref{fig:secular} illustrates a secular equation with one pole, taken from analysis of the RTS-96 network. The horizontal axis is the value of the Lagrange multiplier $v$, and the vertical axis is the secular equation value $s(v)$. The two solutions are intersections of $s(v)$ with the horizontal line $s(v)=c$.
+Note that $s(v)$ has one pole per unique nonzero diagonal element of $\hat{B}$. There are at most two solutions per pole, one on each side. This is best understood graphically. Figure \ref{fig:secular} illustrates a secular equation with three poles, taken from analysis of the RTS-96 network. The horizontal axis is the value of the Lagrange multiplier $v$, and the vertical axis is the secular equation value $s(v)$. Solutions are intersections of $s(v)$ with the horizontal line $s(v)=c$. They are computed numerically with a simple binary search algorithm.
 
 \section{Results for RTS-96 network}\label{sec:results}
 
-We used data from \cite{pandzic} to illustrate temporal instanton analysis on a wind-augmented RTS-96 network model. Consider a scenario unfolding over three time steps: in the first time step, the wind forecast is scaled to one-half its value at the second time step. In the third step, the wind forecast is scaled to 1.5 times its value at the second time step. Generator dispatch and demand remain constant during this period. Temporal instanton analysis with $c=0.1$ and $\tau=1$ indicates that the line from bus 56 to bus 57 is most susceptible to excessive heating. In other words, of all dangerous wind patterns (patterns that cause a line to overheat), the most likely to occur is a pattern that overheats the line from bus 56 to bus 57. We call this the instanton wind pattern. The secular equation used to find this pattern is shown in Figure \ref{fig:secular}.
+We used data from \cite{pandzic} to demonstrate temporal instanton analysis on a wind-augmented RTS-96 network model. Consider a scenario unfolding over three time steps: first the wind forecast is 50\% of some nominal value, next it is equal to the nominal value, and finally it is scaled to 150\% of nominal. Throughout this wind ramping, generator dispatch and demand remain constant. Temporal instanton analysis with $c=0.03$ and $\tau=0.5$ indicates that the line between buses 121 and 325 is most susceptible to excessive heating under these conditions. In other words, of all dangerous wind patterns that could occur during the wind ramp, the most likely is a pattern that overheats the line between buses 121 and 325. Figure \ref{fig:secular} illustrates the secular equation used to find this instanton pattern, and Figure \ref{fig:line118} shows the system state at the second time step. The largest deviation in the instanton pattern is $0.73$ pu, well within the range of wind forecast values (whose maximum is $1.2$ pu).
 
-The largest deviation in the instanton pattern is $0.38$ pu, well within the range of wind forecast values (whose maximum is $1.2$ pu). Because instanton analysis finds a set of wind patterns and objective values, sorting provides a powerful way to characterize the potential effects of wind disturbances. Figure \eqref{fig:scores} illustrates a sharp increase in objective value roughly halfway through the set of sorted events (after 60 of the 120 lines).
+There is a great deal of flexibility in the temporal instanton model that has yet to be explored. In future work we plan to include transformers, consider the effects of ambient conditions in greater detail, and test the limits of the algorithm using large networks with many time steps.
 
-\begin{figure}
+\begin{figure}[h]
 \centering
-\includegraphics[width=1\linewidth]{../images/secular2}
-\caption{Plot of secular equation for a single line in the RTS-96. Note that $s(v)$ approaches infinity at the pole.}
+\includegraphics[trim=0in 0in 0.5in 0.5in,clip,width=1\linewidth]{../images/secular}
+\caption{Plot of secular equation for a single line in the RTS-96. Note that $s(v)$ approaches infinity at the three poles, and there could be as many as six solutions if $c$ were large enough.}
 \label{fig:secular}
 \end{figure}
 
+%\begin{figure}
+%\centering
+%\includegraphics[width=1\linewidth]{../images/scores}
+%\caption{Semilogarithmic plot of sorted objective values for RTS-96 temporal instanton analysis. (Note that six lines are missing objective values. The algorithm did not produce solutions for these lines due to numerical instability.)}
+%\label{fig:scores}
+%\end{figure}
+
 \begin{figure}
 \centering
-\includegraphics[width=1\linewidth]{../images/scores}
-\caption{Plot of sorted objective values for 63 lines from RTS-96 temporal instanton analysis.}
-\label{fig:scores}
+\includegraphics[width=1\linewidth]{../images/line118}
+\caption{Graph depiction of RTS-96 system state under instanton conditions at time step 2 of 3. The stressed line is between buses 121 and 325 (top center). Wind farms are indicated by blue, and lines are colored according to how close their flows are to static active power limits.}
+\label{fig:line118}
 \end{figure}
 
 % The paper will close with a discussion of how other
