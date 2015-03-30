@@ -63,6 +63,8 @@ function writeDot(name, busIdx, busInj, renGen, f, t, lineFlow, lineLim, size=(1
 
     busInj = round(busInj,2)
     lineFlow = round(lineFlow,2)
+
+    font = "Helvetica"
     
     # Open the dot file, overwriting anything already there:
     dotfile = open("$(name).dot","w")
@@ -72,17 +74,17 @@ function writeDot(name, busIdx, busInj, renGen, f, t, lineFlow, lineLim, size=(1
 
     # Set graph properties:
     write(dotfile, 
-    "graph [fontname=helvetica, tooltip=\" \", overlap=false, size=\"$(size[1]),$(size[2])\", ratio=fill, orientation=\"portrait\",layout=dot];\n")
+    "graph [fontname=\"$(font)\", tooltip=\" \", overlap=false, size=\"$(size[1]),$(size[2])\", ratio=fill, orientation=\"portrait\",layout=dot];\n")
 
     # Set default node properties:
-    write(dotfile, "node [fontname=helvetica, shape=square, style=filled, fontsize=20, color=\"#bdbdbd\"];\n")
+    write(dotfile, "node [fontname=\"$(font)\", shape=square, style=filled, fontsize=25, color=\"#cccccc\"];\n")
 
     # Set default edge properties:
-    write(dotfile, "edge [fontname=helvetica, style=\"setlinewidth(5)\"];\n")
+    write(dotfile, "edge [fontname=\"$(font)\", penwidth=4, fontsize=25];\n")
 
     # Write bus data to dot file:
     write(dotfile, 
-    "subgraph cluster_a1 {\nlabel=\"Area 1: High Wind\";\nfontcolor=\"#5677fc\";\nfontsize=24;\ncolor=\"#ffffff\";\nlabeljust=\"c\";\n")
+    "subgraph cluster_a1 {\nlabel=\"Area 1: High Wind\";\nfontcolor=\"#000000\";\nfontname=\"$(font)\";\nfontsize=35;\ncolor=\"#ffffff\";\nlabeljust=\"c\";\n")
 
     for i = 1:24
         write(dotfile, 
@@ -90,7 +92,7 @@ function writeDot(name, busIdx, busInj, renGen, f, t, lineFlow, lineLim, size=(1
 
         # Represent renewable nodes with blue circles:
         if union(find(renGen),i) == find(renGen)
-            write(dotfile, ", shape=circle, color=\"#5677fc\"")
+            write(dotfile, ", shape=circle, color=\"#CCE6FF\"")
         end
 
         write(dotfile, "];\n")
@@ -98,7 +100,7 @@ function writeDot(name, busIdx, busInj, renGen, f, t, lineFlow, lineLim, size=(1
     write(dotfile, "}\n")
 
     write(dotfile, 
-    "subgraph cluster_a2 {\nlabel=\"Area 2: Moderate Wind\";\nfontcolor=\"#5677fc\";\nfontsize=24;\ncolor=\"#ffffff\";\nlabeljust=\"l\";\n")
+    "subgraph cluster_a2 {\nlabel=\"Area 2: Moderate Wind\";\nfontcolor=\"#000000\";\nfontname=\"$(font)\";\nfontsize=35;\ncolor=\"#ffffff\";\nlabeljust=\"l\";\n")
 
     for i = 25:48
         write(dotfile, 
@@ -106,7 +108,7 @@ function writeDot(name, busIdx, busInj, renGen, f, t, lineFlow, lineLim, size=(1
 
         # Represent renewable nodes with blue circles:
         if union(find(renGen),i) == find(renGen)
-            write(dotfile, ", shape=circle, color=\"#5677fc\"")
+            write(dotfile, ", shape=circle, color=\"#CCE6FF\"")
         end
 
         write(dotfile, "];\n")
@@ -114,14 +116,14 @@ function writeDot(name, busIdx, busInj, renGen, f, t, lineFlow, lineLim, size=(1
     write(dotfile, "}\n")
 
     write(dotfile, 
-    "subgraph cluster_a3 {\nlabel=\"Area 3: Low Wind\";\nfontcolor=\"#5677fc\";\nfontsize=24;\ncolor=\"#ffffff\";\nlabeljust=\"r\";\n")
+    "subgraph cluster_a3 {\nlabel=\"Area 3: Low Wind\";\nfontcolor=\"#000000\";\nfontname=\"$(font)\";\nfontsize=35;\ncolor=\"#ffffff\";\nlabeljust=\"r\";\n")
     for i = 49:length(busIdx)
         write(dotfile, 
         "$(i) [label=$(int(busIdx[i])), tooltip=\"Inj = $(busInj[i])\"") # bus label and tooltip
 
         # Represent renewable nodes with blue circles:
         if union(find(renGen),i) == find(renGen)
-            write(dotfile, ", shape=circle, color=\"#5677fc\"")
+            write(dotfile, ", shape=circle, color=\"#CCE6FF\"")
         end
 
         write(dotfile, "];\n")
@@ -152,7 +154,7 @@ function writeDot(name, busIdx, busInj, renGen, f, t, lineFlow, lineLim, size=(1
     write(dotfile, "}")
     close(dotfile)
 
-    println("$(name).dot generated.\nUse \";dot -Tsvg $(name).dot -o $(name).svg\" to create an SVG.")
+    #println("$(name).dot generated.\nUse \";dot -Tsvg $(name).dot -o $(name).svg\" to create an SVG.")
 end
 
 end
