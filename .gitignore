@@ -1,6 +1,8 @@
 *.sublime-project
 nbs/.ipynb_checkpoints
 2015-03-17-GroupPresentation
+2015-04-14-GroupPresentation
+paper/images
 *.sublime-workspace
 *.aux
 *.log
