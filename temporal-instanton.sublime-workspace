@@ -64,14 +64,6 @@
 			}
 		},
 		{
-			"file": "/home/jkersulis/Documents/ipython/IPython/html/static/style/ipython.min.css",
-			"settings":
-			{
-				"buffer_size": 34355,
-				"line_ending": "Unix"
-			}
-		},
-		{
 			"file": "2015-04-14-GroupPresentation/ipynb_presentation_building.md",
 			"settings":
 			{
@@ -80,10 +72,18 @@
 			}
 		},
 		{
-			"file": "2015-04-14-GroupPresentation/style/misc.css",
+			"file": "notes/2015-04-15-Meeting-with-Ian.md",
 			"settings":
 			{
-				"buffer_size": 5041,
+				"buffer_size": 3269,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "notes/2015-05-04 Meeting with Ian.md",
+			"settings":
+			{
+				"buffer_size": 1087,
 				"line_ending": "Unix"
 			}
 		}
@@ -95,17 +95,25 @@
 	"build_varint": "",
 	"command_palette":
 	{
-		"height": 784.0,
-		"last_filter": "anf",
+		"height": 727.0,
+		"last_filter": "anfn",
 		"selected_items":
 		[
 			[
-				"anf",
-				"ANF: Copy Current File"
-			],
-			[
 				"anfn",
 				"ANF: New File"
+			],
+			[
+				"ssla",
+				"Set Syntax: LaTeXing"
+			],
+			[
+				"sslate",
+				"Set Syntax: LaTeX"
+			],
+			[
+				"anf",
+				"ANF: Copy Current File"
 			],
 			[
 				"anfr",
@@ -250,13 +258,18 @@
 	"expanded_folders":
 	[
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/notes",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/notes"
 	],
 	"file_history":
 	[
-		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/2015-04-14-GroupPresentation/slides.ipynb",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/data/RTS-96 Data/CaseData.m",
 		"/home/jkersulis/Documents/ipython/IPython/html/static/style/ipython.min.css",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/.gitignore",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/readRTS96Data.jl",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/2015-04-14-GroupPresentation/style/misc.css",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/2015-04-14-GroupPresentation/slides.ipynb",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/notes/2015-04-15-Meeting-with-Ian.md",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/2015-04-14-GroupPresentation/ipython.min.css",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/2015-04-14-GroupPresentation/font-awesome-4.3.0/css/font-awesome.css",
@@ -274,9 +287,7 @@
 		"/home/jkersulis/.config/sublime-text-3/Packages/User/Preferences.sublime-settings",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/nbs/TrustRegionSubproblem.ipynb",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/tmp_inst_rts96.jl",
-		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/readRTS96Data.jl",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/notes/Quals2Abstract.md",
-		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/data/RTS-96 Data/CaseData.m",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/notes/2015-03-04-meeting-with-Ian.md",
 		"/home/jkersulis/Downloads/CaseData.m",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/README.md",
@@ -380,13 +391,11 @@
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/winterPowerSchool/interactiveSession/IV. Exploring a new idea.slides.html",
 		"/home/jkersulis/Documents/kersulis.github.io/_layouts/default.html",
 		"/home/jkersulis/Documents/kersulis.github.io/_includes/head.html",
-		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/winterPowerSchool/interactiveSession/I. Intro to Julia.ipynb",
-		"/home/jkersulis/Documents/kersulis.github.io/_posts/2014-09-04-MHacks-and-the-new-term.md",
-		"/home/jkersulis/Documents/kersulis.github.io/_drafts/2015-01-13-ijulia-wps.md"
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/winterPowerSchool/interactiveSession/I. Intro to Julia.ipynb"
 	],
 	"find":
 	{
-		"height": 61.0
+		"height": 35.0
 	},
 	"find_in_files":
 	{
@@ -400,6 +409,7 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"\\\\",
 			"overflow-y",
 			".map",
 			"ipython.min.css.m",
@@ -494,7 +504,7 @@
 	"groups":
 	[
 		{
-			"selected": 2,
+			"selected": 3,
 			"sheets":
 			[
 				{
@@ -519,50 +529,18 @@
 							"WordCountShouldRun": true,
 							"WordCountSyntax": "html",
 							"syntax": "Packages/HTML/HTML.tmLanguage",
-							"tab_size": 2,
+							"tab_size": 4,
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 85435.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 3,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "/home/jkersulis/Documents/ipython/IPython/html/static/style/ipython.min.css",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 34355,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								13570,
-								13570
-							]
-						],
-						"settings":
-						{
-							"WordCountShouldRun": false,
-							"WordCountSyntax": "css",
-							"syntax": "Packages/CSS/CSS.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 21993.0,
+						"translation.y": 631.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 2,
 					"type": "text"
 				},
 				{
-					"buffer": 2,
+					"buffer": 1,
 					"file": "2015-04-14-GroupPresentation/ipynb_presentation_building.md",
 					"semi_transient": false,
 					"settings":
@@ -574,8 +552,69 @@
 						"selection":
 						[
 							[
-								2799,
-								2799
+								1332,
+								1332
+							]
+						],
+						"settings":
+						{
+							"WordCountSyntax": "markdown",
+							"_anf_new": "",
+							"syntax": "Packages/Markdown/Markdown.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "notes/2015-04-15-Meeting-with-Ian.md",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3269,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1606,
+								1606
+							]
+						],
+						"settings":
+						{
+							"WordCountShouldRun": true,
+							"WordCountSyntax": "markdown",
+							"syntax": "Packages/Markdown/Markdown.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 114.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "notes/2015-05-04 Meeting with Ian.md",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1087,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1087,
+								1087
 							]
 						],
 						"settings":
@@ -591,43 +630,13 @@
 					},
 					"stack_index": 0,
 					"type": "text"
-				},
-				{
-					"buffer": 3,
-					"file": "2015-04-14-GroupPresentation/style/misc.css",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 5041,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								3981,
-								3981
-							]
-						],
-						"settings":
-						{
-							"WordCountShouldRun": true,
-							"WordCountSyntax": "plain text",
-							"syntax": "Packages/CSS/CSS.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 1513.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
-					"type": "text"
 				}
 			]
 		}
 	],
 	"incremental_find":
 	{
-		"height": 43.0
+		"height": 34.0
 	},
 	"input":
 	{
@@ -664,7 +673,7 @@
 	"project": "temporal-instanton.sublime-project",
 	"replace":
 	{
-		"height": 82.0
+		"height": 66.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -673,6 +682,22 @@
 		"last_filter": "",
 		"selected_items":
 		[
+			[
+				".m",
+				"temporal-instanton/data/RTS-96 Data/CaseData.m"
+			],
+			[
+				"read",
+				"temporal-instanton/src/readRTS96Data.jl"
+			],
+			[
+				"4-15",
+				"temporal-instanton/notes/2015-04-15-Meeting-with-Ian.md"
+			],
+			[
+				".giit",
+				"temporal-instanton/.gitignore"
+			],
 			[
 				"pre",
 				"temporal-instanton/2015-04-14-GroupPresentation/ipynb_presentation_building.md"
@@ -791,10 +816,6 @@
 			],
 			[
 				"rea",
-				"README.md"
-			],
-			[
-				"read",
 				"README.md"
 			],
 			[
