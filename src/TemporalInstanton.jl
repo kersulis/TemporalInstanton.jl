@@ -3,7 +3,7 @@ module TemporalInstanton
 export 
     tmp_inst_Qobj, tmp_inst_A, tmp_inst_b, tmp_inst_Qtheta, 
     tmp_inst_A_scale, tmp_inst_pad_b, tmp_inst_pad_Q,
-    temporalInstanton
+    temporalInstanton, tmp_inst_A_scale_new
 
 function tmp_inst_Qobj(n,nr,T)
     """ Generate the objective function matrix
@@ -129,6 +129,41 @@ function tmp_inst_A_scale(n,Ridx,T,tau,ref,line)
     
     # remove slack columns:
     #return sparse(A[:,setdiff(1:(n+nr+2)*T,ref_cols)])
+    return A
+end
+
+function tmp_inst_A_scale_new(n,Ridx,T,line,therm_a,int_length)
+    """ Augment A with T additional rows relating
+    angle difference variables to angle variables.
+    
+    Returns a T-by-(n+nr+2)*T matrix that may be
+    concatenated with the output of temp_inst_A
+    
+    Arguments:    
+    * n is the number of nodes in the network
+    * Ridx is a vector indicating wind nodes
+    * T is the number of time steps
+    * tau is the thermal coefficient from IEEE 738
+    * slack is the index of the slack bus
+    * line is the pair (i,k) indicating the chosen
+    line
+    * therm_a is a constant defined by heating parameters
+    * int_length is interval length in seconds (e.g. 600 
+        for 10 minutes)
+    """
+    (i,k) = line
+    nr = length(Ridx)
+    
+    A = zeros(T,(nr+n+2)*T)
+    
+    for t = 1:T
+        i_pos = (nr+n+1)*(t-1) + nr + i
+        k_pos = (nr+n+1)*(t-1) + nr + k
+        coef = sqrt(-exp(therm_a*int_length)^(T-t+1) + exp(therm_a*int_length)^(T-t))
+        A[t,i_pos] = -coef
+        A[t,k_pos] = coef
+        A[t,(n+nr+1)*T + t] = 1
+    end
     return A
 end
 

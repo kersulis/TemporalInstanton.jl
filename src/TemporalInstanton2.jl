@@ -3,10 +3,12 @@ module TemporalInstanton2
 export
 	partition_A,find_x_star,translate_quadratic,rotate_quadratic,
 	kernel_rotation,return_K,partition_B,return_Bhat,find_w,
-	solve_secular,return_xopt,solve_temporal_instanton,loop_through_lines
+	solve_secular,return_xopt,solve_temporal_instanton,loop_through_lines,
+    loop_through_lines_new
 
 push!(LOAD_PATH, dirname(@__FILE__))
 using TemporalInstanton
+include("LineThermalModel.jl")
 
 function partition_A(A,Qobj,T)
     """ Return A1, A2, A3 where
@@ -320,6 +322,127 @@ function loop_through_lines(
 	        end
 	        push!(diffs,xvec[end-T+1:end])
 	    end
+
+        push!(x,deviations)
+        push!(θ,angles)
+        push!(α,alpha)
+        push!(xopt,xvec)
+    end
+    return score,x,θ,α,diffs,xopt
+end
+
+function loop_through_lines_new(
+    G_of_x,
+    Qtheta,
+    A1,
+    b,
+    n,
+    T,
+    Ridx,
+    Sb,
+    ref,
+    lines,
+    res,
+    reac,
+    line_lengths,
+    Tamb,
+    T0,
+    int_length)
+
+    nr = length(Ridx)
+    
+    numLines = length(lines)
+
+    # Initialize vars used to store results:
+    score = Float64[]
+    α = Array(Vector{Float64},0)
+
+    θ = Array(Array,0)
+    x = Array(Array,0)
+    diffs = Array(Array,0)
+    xopt = Array(Array,0)
+
+    # Loop through all lines:
+    for idx = 1:numLines
+        # thermal model cannot handle zero-length lines:
+        if line_lengths[idx] == 0
+            continue
+        end
+        line = lines[idx]
+        line_model = LineModel(line[1],
+                    line[2],
+                    res[idx],
+                    reac[idx],
+                    line_lengths[idx],
+                    NaN,
+                    NaN,
+                    NaN,
+                    NaN,
+                    NaN,
+                    NaN,
+                    NaN,
+                    NaN)
+
+        add_thermal_parameters(line_model, "waxwing")
+
+        therm_a = compute_a(line_model.mCp,
+                            line_model.ηc,
+                            line_model.ηr,
+                            Tamb,
+                            line_model.Tlim)
+        therm_c = compute_c(line_model.mCp,
+                            line_model.rij,
+                            line_model.xij,
+                            Sb,
+                            line_model.length)
+        therm_d = compute_d(line_model.mCp,
+                            line_model.ηc,
+                            line_model.ηr,
+                            Tamb,
+                            line_model.Tlim,
+                            line_model.qs)
+        therm_f = compute_f(int_length,
+                            therm_a,
+                            therm_d,
+                            T,
+                            T0)
+        
+        # thermal constraint, Q(z) = 0:
+        kQtheta = (therm_a/therm_c)*(line_model.Tlim - therm_f)
+        Q_of_x = (Qtheta,0,kQtheta)
+
+        # array of vec. with Float values:
+        deviations = Array(Vector{Float64},0)
+        angles = Array(Vector{Float64},0)
+        alpha = Float64[]
+
+        # Create A2 based on chosen line:
+        A2 = tmp_inst_A_scale_new(n,Ridx,T,line,therm_a,int_length)
+        # Stack A1 and A2:
+        A = [A1; A2]
+
+        xvec,sol = solve_temporal_instanton(G_of_x,Q_of_x,A,b,T)
+        push!(score,sol)
+        if isinf(sol)
+            push!(deviations,[])
+            push!(angles,[])
+            push!(alpha,NaN)
+            push!(diffs,[])
+        else
+
+            # Variable breakdown:
+            # (nr+n+1) per time step
+            #   First nr are deviations
+            #   Next n are angles
+            #   Last is mismatch
+            # T variables at the end: anglediffs
+            for t = 1:T
+                push!(deviations,xvec[(nr+n+1)*(t-1)+1:(nr+n+1)*(t-1)+nr])
+                push!(angles,xvec[(nr+n+1)*(t-1)+nr+1:(nr+n+1)*(t-1)+nr+n])
+                push!(alpha,xvec[(nr+n+1)*(t)])
+            end
+            push!(diffs,xvec[end-T+1:end])
+        end
 
         push!(x,deviations)
         push!(θ,angles)
