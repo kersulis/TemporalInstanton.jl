@@ -124,7 +124,7 @@
 			"file": "quals2/presentation/slides.ipynb",
 			"settings":
 			{
-				"buffer_size": 76310,
+				"buffer_size": 76023,
 				"line_ending": "Unix"
 			}
 		},
@@ -758,8 +758,8 @@
 						"selection":
 						[
 							[
-								371,
-								371
+								297,
+								297
 							]
 						],
 						"settings":
@@ -767,7 +767,9 @@
 							"WordCountShouldRun": true,
 							"WordCountSyntax": "plain text",
 							"auto_name": "module LineThermalModel",
-							"syntax": "Packages/Julia/Julia.tmLanguage"
+							"syntax": "Packages/Julia/Julia.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
 						"translation.y": 0.0,
@@ -782,15 +784,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 76310,
+						"buffer_size": 76023,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								76310,
-								76310
+								0,
+								0
 							]
 						],
 						"settings":

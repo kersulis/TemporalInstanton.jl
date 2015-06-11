@@ -23,13 +23,14 @@
     
 	\author{Jonas Kersulis}
 	\title{Transmission line temperature modeling}
+	\date{ }
 	
     \begin{document}
     
     \maketitle
     
 \begin{abstract}
-This document derives an approximate line temperature equation that is second-order in angle difference. This makes it compatible with the optimization formulation in our PowerTech paper. Numerical experimentation indicates that the derived equation matches the IEEE 738 standard closely, and where the two models differ, the approximate equation is conservative.
+This document derives an approximate line temperature equation that is second-order in angle difference. This makes it compatible with the temporal instanton optimization formulation. Numerical experimentation indicates that the derived equation matches the IEEE 738 standard closely, and where the two models differ, the approximate equation is conservative.
 \end{abstract}
     
 \section{Approximate line temperature equation}\label{transmission-line-heating}
@@ -56,7 +57,7 @@ For a transmission line, these sources are:
   Radiative heating. This heating is related to line and ambient
   temperatures raised to the fourth power. Physically, thermal radiation
   is the process by which thermal energy is converted to electromagnetic
-  energy. It takes place in all objects whose abosolute temperature is
+  energy. It takes place in all objects whose absolute temperature is
   greater than zero.
 \item
   Solar irradiation. The sun imparts energy to the transmission line
