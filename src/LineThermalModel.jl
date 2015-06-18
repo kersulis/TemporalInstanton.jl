@@ -20,7 +20,7 @@ function add_thermal_parameters(line_model,conductor_name)
 		line_model.mCp	= 383.
 		line_model.Ilim	= 439.
 		line_model.r	= 110e-6
-		line_model.Tlim	= 65.
+		line_model.Tlim	= 65.5 # 65 is too low for RTS-96?
 		line_model.ηc	= 0.955
 		line_model.ηr	= 2.207e-9
 		line_model.qs	= 14.4

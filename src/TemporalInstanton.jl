@@ -56,14 +56,13 @@ function tmp_inst_A(Ridx,T,Y,ref,k)#,tau,line)
 
     # These rows relate auxiliary angle variables to
     # original angle variables:
-#     A2 = tmp_inst_A_scale(n,Ridx,T,tau,ref,line)
+    #     A2 = tmp_inst_A_scale(n,Ridx,T,tau,ref,line)
 
-#     # Augment A with new rows:
-#     A = [[full(A) zeros((n+1)*T,T)]; A2]
+    #     # Augment A with new rows:
+    #     A = [[full(A) zeros((n+1)*T,T)]; A2]
     
     return A
 end
-
 
 function tmp_inst_b(n,T,G0,P0,D)
     """ Generate the vector b of power balance constraints.
