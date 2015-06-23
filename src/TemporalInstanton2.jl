@@ -1,9 +1,9 @@
 module TemporalInstanton2
 
 export
-	partition_A,find_x_star,translate_quadratic,rotate_quadratic,
-	kernel_rotation,return_K,partition_B,return_Bhat,find_w,
-	solve_secular,return_xopt,solve_temporal_instanton,loop_through_lines,
+    partition_A,find_x_star,translate_quadratic,rotate_quadratic,
+    kernel_rotation,return_K,partition_B,return_Bhat,find_w,
+    solve_secular,return_xopt,solve_temporal_instanton,loop_through_lines,
     loop_through_lines_new
 
 push!(LOAD_PATH, dirname(@__FILE__))
@@ -249,16 +249,16 @@ function solve_temporal_instanton(G_of_x,Q_of_x,A,b,T)
 
     solutions, vectors = solve_secular(Bhat,bhat/2,-Q_of_w[3])
     if isempty(solutions)
-    	return [],Inf
+        return [],Inf
     else
-	    sol = zeros(length(vectors))
-	    for i in 1:length(vectors)
-	    	w2 = vectors[i]
-	    	xvec = return_xopt(w2,B11,B12,b1,N,U,K,x_star)
-	    	sol[i] = (xvec'*Qobj*xvec)[1]
-	        push!(opt,xvec)
-	    end
-	end
+        sol = zeros(length(vectors))
+        for i in 1:length(vectors)
+            w2 = vectors[i]
+            xvec = return_xopt(w2,B11,B12,b1,N,U,K,x_star)
+            sol[i] = (xvec'*Qobj*xvec)[1]
+            push!(opt,xvec)
+        end
+    end
 
     return opt[indmin(sol)],minimum(sol)
 end
@@ -275,7 +275,7 @@ function loop_through_lines(
     ref,
     lines)
 
-	nr = length(Ridx)
+    nr = length(Ridx)
     
     numLines = length(lines)
 
@@ -303,25 +303,25 @@ function loop_through_lines(
         xvec,sol = solve_temporal_instanton(G_of_x,Q_of_x,A,b,T)
         push!(score,sol)
         if isinf(sol)
-        	push!(deviations,[])
-        	push!(angles,[])
-        	push!(alpha,NaN)
-        	push!(diffs,[])
+            push!(deviations,[])
+            push!(angles,[])
+            push!(alpha,NaN)
+            push!(diffs,[])
         else
 
-	        # Variable breakdown:
-	        # (nr+n+1) per time step
-	        #   First nr are deviations
-	        #   Next n are angles
-	        #   Last is mismatch
-	        # T variables at the end: anglediffs
-	        for t = 1:T
-	            push!(deviations,xvec[(nr+n+1)*(t-1)+1:(nr+n+1)*(t-1)+nr])
-	            push!(angles,xvec[(nr+n+1)*(t-1)+nr+1:(nr+n+1)*(t-1)+nr+n])
-	            push!(alpha,xvec[(nr+n+1)*(t)])
-	        end
-	        push!(diffs,xvec[end-T+1:end])
-	    end
+            # Variable breakdown:
+            # (nr+n+1) per time step
+            #   First nr are deviations
+            #   Next n are angles
+            #   Last is mismatch
+            # T variables at the end: anglediffs
+            for t = 1:T
+                push!(deviations,xvec[(nr+n+1)*(t-1)+1:(nr+n+1)*(t-1)+nr])
+                push!(angles,xvec[(nr+n+1)*(t-1)+nr+1:(nr+n+1)*(t-1)+nr+n])
+                push!(alpha,xvec[(nr+n+1)*(t)])
+            end
+            push!(diffs,xvec[end-T+1:end])
+        end
 
         push!(x,deviations)
         push!(θ,angles)
