@@ -12,3 +12,4 @@ paper/images
 *.bbl
 *.blg
 images/traj_anim/*.png
+poster
