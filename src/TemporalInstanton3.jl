@@ -1,6 +1,6 @@
 module TemporalInstanton3
 
-using HDF5, JLD
+using HDF5, JLD, ProgressMeter
 
 export
     solve_instanton_qcqp, solve_temporal_instanton, LineModel
@@ -32,7 +32,7 @@ function add_thermal_parameters(line_model,conductor_name)
         line_model.mCp  = 383.
         line_model.Ilim = 439.
         line_model.r    = 110e-6
-        line_model.Tlim = 65.5 # 65 is too low for RTS-96?
+        line_model.Tlim = 65.
         line_model.ηc   = 0.955
         line_model.ηr   = 2.207e-9
         line_model.qs   = 14.4
@@ -550,6 +550,9 @@ function solve_temporal_instanton(
     
     numLines = length(lines)
 
+    # Initialize progress meter:
+    prog = Progress(length(find(line_lengths)),1)
+
     # Initialize vars used to store results:
     score = Float64[]
     α = Array(Vector{Float64},0)
@@ -665,6 +668,8 @@ function solve_temporal_instanton(
         push!(θ,angles)
         push!(α,alpha)
         push!(xopt,xvec)
+
+        next!(prog)
     end
     return score,x,θ,α,diffs,xopt
 end
