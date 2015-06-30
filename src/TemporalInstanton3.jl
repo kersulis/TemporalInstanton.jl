@@ -5,6 +5,7 @@ using HDF5, JLD, ProgressMeter
 export
     solve_instanton_qcqp, solve_temporal_instanton, LineModel
 
+include("PowerFlow.jl")
 
 # THERMAL MODELING
 type LineModel
