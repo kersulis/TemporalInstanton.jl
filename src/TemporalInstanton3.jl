@@ -1,9 +1,13 @@
 module TemporalInstanton3
 
-using HDF5, JLD, ProgressMeter
+using HDF5, JLD, ProgressMeter, IProfile
 
 export
-    solve_instanton_qcqp, solve_temporal_instanton, LineModel
+    solve_instanton_qcqp, solve_temporal_instanton, LineModel,
+    # temporary:
+    tmp_inst_Qobj,tmp_inst_pad_Q,tmp_inst_A,tmp_inst_b,tmp_inst_pad_b,
+    tmp_inst_Qtheta,add_thermal_parameters,compute_a,compute_c,
+    compute_d,compute_f,tmp_inst_A_scale_new
 
 include("PowerFlow.jl")
 
@@ -238,6 +242,7 @@ function tmp_inst_A_scale_new(n,Ridx,T,line,therm_a,int_length)
     return A
 end
 
+@iprofile begin
 function partition_A(A,Qobj,T)
     """ Return A1, A2, A3 where:
     * A1 corresponds to wind
@@ -247,20 +252,17 @@ function partition_A(A,Qobj,T)
     Used to find x_star, the min-norm solution to
     Ax=b such that x_star[idx3] = 0.
     """
-    m,n = size(A)
+    m,n = size(A)   
     idx1 = find(diag(Qobj))
     idx2 = setdiff(1:n-T,idx1)
     idx3 = n-T+1:n
-    idx = [idx1,idx2,idx3]
     
-    A1 = A[:,idx1]
-    A2 = A[:,idx2]
-    A3 = A[:,idx3]
-    return A1,A2,A3,idx1,idx2,idx3
+    (A1,A2) = (A[:,idx1],A[:,idx2])
+    return A1,A2,idx1,idx2,idx3
 end
 
-function find_x_star(Qobj,A,b,T)
-    """ x_star is the vector by which the problem must
+function find_x_star(A1,A2,idx1,idx2,n,b)
+    """ x_star is the n-vector by which the problem must
     be translated in the first step of the temporal
     instanton QCQP solution.
 
@@ -269,9 +271,9 @@ function find_x_star(Qobj,A,b,T)
     This condition ensures no linear term is introduced
     into the quadratic constraint.
     """
-    A1,A2,A3,idx1,idx2,idx3 = partition_A(A,Qobj,T)
-    x_star = zeros(size(A,2))
-    x_star[[idx1,idx2]] = [A1 A2]\b
+    x_star = zeros(n)
+    Z = sparse([A1 A2]')
+    x_star[[idx1,idx2]] = (Z/(Z'*Z))*b
     return x_star
 end
 
@@ -303,9 +305,14 @@ function kernel_rotation(A)
     problem instance to eliminate all but nullity(A) elements.
     """
     m,n = size(A)
-    dim_N = n - rank(A)
-    # if A has full row rank:
-    # dim_N = n - m
+    
+    # Assume A always has full row rank.
+    #if isposdef(A*A')
+    dim_N = n - m
+    # else
+    #     dim_N = n - rank(A)
+    #     warn("A does not have full row rank.")
+    # end
     q = qr(A'; thin=false)[1]
     R = circshift(q,(0,dim_N))
     return R
@@ -320,10 +327,12 @@ function rotate_quadratic(G_of_x,R)
 end
 
 function return_K(D)
+    """ Return K, the diagonal matrix whose elements are
+    square roots of eigenvalues of the given matrix D.
+    """
     K = ones(length(D))
     K[find(D)] = sqrt(D[find(D)])
-    K = diagm(K)
-    return K
+    return diagm(K)
 end
 
 function partition_B(G_of_w,Q_of_w)
@@ -438,11 +447,18 @@ function solve_secular(D,d,c)
 end
 
 function return_xopt(w2opt,B11,B12,b1,N,U,K,x_star)
+    """ Reverse rotations and translations to map
+    secular equation solution back to original problem
+    space.
+    """
     w1opt = -B11\(B12*w2opt + b1/2)
     wopt = [w1opt,w2opt]
-    xopt = (N*U/K)*wopt + x_star
+    #xopt = (N*U/K)*wopt + x_star
+    xopt = N*U*diagm(1./diag(K))*wopt + x_star
     return xopt
 end
+
+end # @iprofile begin
 
 function solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
     """ This function solves the following quadratically-
@@ -467,17 +483,17 @@ function solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
     using partial KKT conditions, and solving the
     resulting secular equation.
     """
-
+    m,n = size(A)
     Qobj = G_of_x[1]
     c = - Q_of_x[3]
     
     opt = Array(Vector{Float64},0)
     
     # Partition A:
-    A1,A2,A3,idx1,idx2,idx3 = partition_A(A,Qobj,T)
+    A1,A2,idx1,idx2,idx3 = partition_A(A,Qobj,T)
 
     # Find translation point:
-    x_star = find_x_star(Qobj,A,b,T)
+    x_star = find_x_star(A1,A2,idx1,idx2,n,b)
 
     # Translate quadratics:
     G_of_y = translate_quadratic(G_of_x,x_star)
@@ -581,7 +597,7 @@ function solve_temporal_instanton(
     Qtheta = tmp_inst_Qtheta(n,nr,T)
 
     # Form objective quadratic:
-    G_of_x = (Qobj,0,0)    
+    G_of_x = (Qobj,0,0)
 
     # Loop through all lines:
     for idx = 1:numLines
@@ -632,7 +648,7 @@ function solve_temporal_instanton(
         kQtheta = (therm_a/therm_c)*(line_model.Tlim - therm_f)
         Q_of_x = (Qtheta,0,kQtheta)
 
-        # array of vec. with Float values:
+        # array of vectors with Float64 values:
         deviations = Array(Vector{Float64},0)
         angles = Array(Vector{Float64},0)
         alpha = Float64[]
@@ -642,7 +658,9 @@ function solve_temporal_instanton(
         # Stack A1 and A2:
         A = [A1; A2]
 
+        # Computationally expensive part: solving QCQP
         xvec,sol = solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
+
         push!(score,sol)
         if isinf(sol)
             push!(deviations,[])
