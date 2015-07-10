@@ -108,7 +108,7 @@ function tmp_inst_Qobj(n,nr,T)
     Qobj from the problem dimensions.
     Assume no correlation between wind sites.
     """
-    Qobj = sparse(diagm(repeat([ones(nr),zeros(n+1)],outer=[T])))
+    Qobj = sparse(diagm(repeat([ones(nr);zeros(n+1)],outer=[T])))
     #Qobj = tmp_inst_pad_Q(full(Qobj),T)
     return Qobj
 end
@@ -152,7 +152,7 @@ function tmp_inst_A(Ridx,T,Y,ref,k)#,tau,line)
             zeros(1,n) ei(n,ref)' 0]
     
     # Remove columns corresponding to non-wind nodes:
-    Atemp = sparse(Atemp[:,[Ridx,n+1:2*n+1]])
+    Atemp = sparse(Atemp[:,[Ridx;n+1:2*n+1]])
     
     # Now we can tile the Atemp matrix to generate A:
     A = Atemp
@@ -242,7 +242,7 @@ function tmp_inst_A_scale_new(n,Ridx,T,line,therm_a,int_length)
     return A
 end
 
-@iprofile begin
+#@iprofile begin
 function partition_A(A,Qobj,T)
     """ Return A1, A2, A3 where:
     * A1 corresponds to wind
@@ -273,7 +273,7 @@ function find_x_star(A1,A2,idx1,idx2,n,b)
     """
     x_star = zeros(n)
     Z = sparse([A1 A2]')
-    x_star[[idx1,idx2]] = (Z/(Z'*Z))*b
+    x_star[[idx1;idx2]] = (Z/(Z'*Z))*b
     return x_star
 end
 
@@ -452,13 +452,13 @@ function return_xopt(w2opt,B11,B12,b1,N,U,K,x_star)
     space.
     """
     w1opt = -B11\(B12*w2opt + b1/2)
-    wopt = [w1opt,w2opt]
+    wopt = [w1opt;w2opt]
     #xopt = (N*U/K)*wopt + x_star
     xopt = N*U*diagm(1./diag(K))*wopt + x_star
     return xopt
 end
 
-end # @iprofile begin
+#end # @iprofile begin
 
 function solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
     """ This function solves the following quadratically-
