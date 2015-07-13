@@ -242,7 +242,7 @@ function tmp_inst_A_scale_new(n,Ridx,T,line,therm_a,int_length)
     return A
 end
 
-#@iprofile begin
+@iprofile begin
 function partition_A(A,Qobj,T)
     """ Return A1, A2, A3 where:
     * A1 corresponds to wind
@@ -458,7 +458,7 @@ function return_xopt(w2opt,B11,B12,b1,N,U,K,x_star)
     return xopt
 end
 
-#end # @iprofile begin
+end # @iprofile begin
 
 function solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
     """ This function solves the following quadratically-
@@ -599,6 +599,7 @@ function solve_temporal_instanton(
     # Form objective quadratic:
     G_of_x = (Qobj,0,0)
 
+    # addprocs(3)
     # Loop through all lines:
     for idx = 1:numLines
         # thermal model cannot handle zero-length lines:
@@ -690,6 +691,7 @@ function solve_temporal_instanton(
 
         next!(prog)
     end
+    #rmprocs([2,3,4])
     return score,x,θ,α,diffs,xopt
 end
 
