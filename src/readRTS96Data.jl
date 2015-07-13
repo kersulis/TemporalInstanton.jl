@@ -106,8 +106,8 @@ function readRTS96Data()
     Gq = zeros(length(bus_i))
 
     for i in unique(busidx)
-        Gp[i] = sum(Gp_long[busidx .== i])/Sb
-        Gq[i] = sum(Gq_long[busidx .== i])/Sb
+        Gp[i] = sum(Gp_long[find(busidx .== i)])/Sb
+        Gq[i] = sum(Gq_long[find(busidx .== i)])/Sb
     end
     # Now Gp and Gq reflect active and reactive generation at buses 1:73 consecutively.
 
