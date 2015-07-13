@@ -4,6 +4,34 @@
 		"selected_items":
 		[
 			[
+				"tmp_inst",
+				"tmp_inst_A_scale"
+			],
+			[
+				"compute",
+				"compute_d"
+			],
+			[
+				"comput",
+				"compute_c"
+			],
+			[
+				"tmp_in",
+				"tmp_inst_pad_b"
+			],
+			[
+				"tmp_ins",
+				"tmp_inst_b"
+			],
+			[
+				"tmp_",
+				"tmp_inst_A"
+			],
+			[
+				"tmp_inst_",
+				"tmp_inst_Qobj"
+			],
+			[
 				"tmp_inst_A_",
 				"tmp_inst_A_scale_new"
 			],
@@ -36,14 +64,6 @@
 				"temporalInstanton"
 			],
 			[
-				"tmp_in",
-				"tmp_inst_pad_Q"
-			],
-			[
-				"tmp_inst",
-				"tmp_inst_A_scale"
-			],
-			[
 				"tmp_inst_A",
 				"tmp_inst_A_scale"
 			],
@@ -64,22 +84,81 @@
 	"buffers":
 	[
 		{
-			"contents": "module TemporalInstanton3\n\nusing HDF5, JLD, ProgressMeter\n\nexport\n    solve_instanton_qcqp, solve_temporal_instanton, LineModel\n\ninclude(\"PowerFlow.jl\")\n\n# THERMAL MODELING\ntype LineModel\n    from\n    to\n    rij\n    xij\n    length\n    D0\n    mCp\n    Ilim\n    r\n    Tlim\n    ηc\n    ηr\n    qs\nend\n\nfunction add_thermal_parameters(line_model,conductor_name)\n    \"\"\" Assign values to fields of LineModel type instance.\n    Uses data from Mads's MPC paper.\n    \"\"\"\n    if conductor_name == \"waxwing\"\n        line_model.D0   = 15.5e-3\n        line_model.mCp  = 383.\n        line_model.Ilim = 439.\n        line_model.r    = 110e-6\n        line_model.Tlim = 65.\n        line_model.ηc   = 0.955\n        line_model.ηr   = 2.207e-9\n        line_model.qs   = 14.4\n    elseif conductor_name == \"dove\"\n        line_model.D0   = 23.5e-3\n        line_model.mCp  = 916.\n        line_model.Ilim = 753.\n        line_model.r    = 60e-6\n        line_model.Tlim = 69.\n        line_model.ηc   = 1.179\n        line_model.ηr   = 3.346e-9\n        line_model.qs   = 21.9\n    end\n    return line_model\nend\n\nfunction compute_a(mCp,ηc,ηr,Tamb,Tlim)\n    \"\"\" Returns constant a [1/s]\n    mCp [J/m-C] is line heat capacity\n    ηc [W/m-C] is conductive heat loss rate coefficient\n    ηr [W/m-C^4] is radiative heat loss rate coefficient\n    Tamb [C] is ambient temperature (of air)\n    Tlim [C] is highest allowable line temperature\n    \"\"\"\n    Tmid = (Tamb + Tlim)/2\n    return mCp\\(-ηc - 4*ηr*(Tmid + 273)^3)\nend\n\nfunction compute_c(mCp,r,x,Sb,L)\n    \"\"\" Return constant c [W/m]\n    mCp [J/m-C] is line heat capacity\n    r [pu] is line resistance\n    x [pu] is line reactance\n    Sb [W] is system base MVA\n    L [m] is line length\n    \"\"\"\n    return r*Sb/(3*mCp*L*(x^2))\nend\n\nfunction compute_d(mCp,ηc,ηr,Tamb,Tlim,q_solar)\n    \"\"\" Returns constant d [W/m]\n    mCp [J/m-C] is line heat capacity\n    ηc [W/m-C] is conductive heat loss rate coefficient\n    ηr [W/m-C^4] is radiative heat loss rate coefficient\n    Tamb [C] is ambient temperature (of air)\n    Tlim [C] is highest allowable line temperature\n    q_solar [W/m] is the solar heat gain rate\n    \"\"\"\n    Tmid = (Tamb + Tlim)/2\n    return mCp\\(ηc*Tamb - ηr*((Tmid + 273)^4 - (Tamb + 273)^4) + 4*ηr*Tmid*(Tmid+273)^3 + q_solar)\nend\n\nfunction compute_f(int_length,a,d,n,T0)\n    \"\"\" Returns constant f\n    int_length [s] is length of each interval\n    a [1/s] is a constant\n    d [W/m] is a constant\n    n [-] is the number of time intervals\n    T0 [C] is the initial steady-state line temp\n    \"\"\"\n    sum_coeff = sum([(e^(int_length*a))^i - (e^(int_length*a))^(i-1) for i in 1:n])\n    return (e^(int_length*a))^n*T0 + (d/a)*sum_coeff\nend\n\n# TEMPORAL INSTANTON\nfunction tmp_inst_Qobj(n,nr,T)\n    \"\"\" Generate the objective function matrix\n    Qobj from the problem dimensions.\n    Assume no correlation between wind sites.\n    \"\"\"\n    Qobj = sparse(diagm(repeat([ones(nr),zeros(n+1)],outer=[T])))\n    #Qobj = tmp_inst_pad_Q(full(Qobj),T)\n    return Qobj\nend\n\nfunction tmp_inst_pad_Q(Q,T)\n    \"\"\" Add T rows and T columns of zeros\n    to matrix Q\n    \"\"\"\n    m,n = size(Q)\n    return [[Q zeros(m,T)]; zeros(T,n+T)]\nend\n\nfunction tmp_inst_A(Ridx,T,Y,ref,k)#,tau,line)\n    \"\"\" Generate the power balance constraint A matrix\n    from problem dimensions, admittance matrix,\n    and generator participation factors.\n    Assumes the admittance matrix is n-by-n.\n    \n    Returns A, which is (n+1)*T-by-(nr+n+1)*T\n    \n    * nr is the number of wind farms in the network\n    * n is the number of nodes in the network\n    * Ridx is a vector indicating wind farm locations\n    * T is the number of time steps\n    * Y is the admittance matrix (n-by-n)\n    * ref is the index of the angle reference bus\n    * k is the vector of generator participation factors\n    \"\"\"\n    \n    function ei(n,i)\n        e = zeros(n)\n        e[i] = 1.\n        return e\n    end\n    \n    n = size(Y,1)\n    \n    # A has a block diagonal pattern where each\n    # block is Atemp:\n    Atemp = [[-eye(n)    Y       -k];\n            zeros(1,n) ei(n,ref)' 0]\n    \n    # Remove columns corresponding to non-wind nodes:\n    Atemp = sparse(Atemp[:,[Ridx,n+1:2*n+1]])\n    \n    # Now we can tile the Atemp matrix to generate A:\n    A = Atemp\n    for t = 2:T\n        A = blkdiag(A, Atemp)\n    end\n\n    # These rows relate auxiliary angle variables to\n    # original angle variables:\n    #     A2 = tmp_inst_A_scale(n,Ridx,T,tau,ref,line)\n\n    #     # Augment A with new rows:\n    #     A = [[full(A) zeros((n+1)*T,T)]; A2]\n    \n    return A\nend\n\nfunction tmp_inst_b(n,T,G0,P0,D)\n    \"\"\" Generate the vector b of power balance constraints.\n    Assumes G0 and D are nT-by-1 vectors.\n    \"\"\"\n    b = FloatingPoint[]\n    netGen = G0 + P0 - D\n\n    for t = 1:T\n        start = (t-1)*n + 1\n        stop = start + n - 1\n        append!(b,netGen[start:stop])\n        push!(b,0.)\n    end\n\n    # Extend b with T additional zeroes:\n    # tmp_inst_pad_b(b,T)\n    return b\nend\n\nfunction tmp_inst_pad_b(b,T)\n    \"\"\" Append T zeros to vector b\n    \"\"\"\n    append!(b,zeros(T))\nend\n\nfunction tmp_inst_Qtheta(n,nr,T)#,tau)\n    \"\"\" Generate Q_theta in the temperature constraint\n    of a temporal instanton problem instance.\n    \"line\" has the form (i,k), where i and k refer to\n    the endpoints of the chosen line.\n    \"\"\"\n    Qtheta = zeros((nr+n+2)*T,(nr+n+2)*T)\n    \n    Qtheta[end-T+1:end,end-T+1:end] = eye(T)\n    return Qtheta\nend\n\nfunction tmp_inst_A_scale_new(n,Ridx,T,line,therm_a,int_length)\n    \"\"\" Augment A with T additional rows relating\n    angle difference variables to angle variables.\n    \n    Returns a T-by-(n+nr+2)*T matrix that may be\n    concatenated with the output of temp_inst_A\n    \n    Arguments:    \n    * n is the number of nodes in the network\n    * Ridx is a vector indicating wind nodes\n    * T is the number of time steps\n    * tau is the thermal coefficient from IEEE 738\n    * slack is the index of the slack bus\n    * line is the pair (i,k) indicating the chosen\n    line\n    * therm_a is a constant defined by heating parameters\n    * int_length is interval length in seconds (e.g. 600 \n        for 10 minutes)\n    \"\"\"\n    (i,k) = line\n    nr = length(Ridx)\n    \n    A = zeros(T,(nr+n+2)*T)\n    \n    for t = 1:T\n        i_pos = (nr+n+1)*(t-1) + nr + i\n        k_pos = (nr+n+1)*(t-1) + nr + k\n        coef = sqrt(-exp(therm_a*int_length)^(T-t+1) + exp(therm_a*int_length)^(T-t))\n        A[t,i_pos] = -coef\n        A[t,k_pos] = coef\n        A[t,(n+nr+1)*T + t] = 1\n    end\n    return A\nend\n\nfunction partition_A(A,Qobj,T)\n    \"\"\" Return A1, A2, A3 where:\n    * A1 corresponds to wind\n    * A2 corresponds to angles + mismatch\n    * A3 corresponds to angle difference vars\n\n    Used to find x_star, the min-norm solution to\n    Ax=b such that x_star[idx3] = 0.\n    \"\"\"\n    m,n = size(A)   \n    idx1 = find(diag(Qobj))\n    idx2 = setdiff(1:n-T,idx1)\n    idx3 = n-T+1:n\n    idx = [idx1,idx2,idx3]\n    \n    A1 = A[:,idx1]\n    A2 = A[:,idx2]\n    A3 = A[:,idx3]\n    return A1,A2,A3,idx1,idx2,idx3\nend\n\nfunction find_x_star(Qobj,A,b,T)\n    \"\"\" x_star is the vector by which the problem must\n    be translated in the first step of the temporal\n    instanton QCQP solution.\n\n    x_star is chosen to be the point in the set Ax=b\n    nearest to the origin such that x_star[idx3] = 0.\n    This condition ensures no linear term is introduced\n    into the quadratic constraint.\n    \"\"\"\n    A1,A2,A3,idx1,idx2,idx3 = partition_A(A,Qobj,T)\n    x_star = zeros(size(A,2))\n    x_star[[idx1,idx2]] = [A1 A2]\\b\n    return x_star\nend\n\nfunction translate_quadratic(G_of_x,x_star)\n    \"\"\" This function performs the change of variables from x to z,\n    where z = x - x_star. (For translating a quadratic problem.)\n    Returns triple H_of_x consisting of matrix H, vector h, constant kh.\n\n    Arguments\n    G_of_x consists of matrix G, vector g, constant kg.\n    x_star is translation.\n\n    Used to perform second step of temporal instanton solution method,\n    assuming x_star is min-norm solution of Ax=b.\n    \"\"\"\n    G,g,kg = G_of_x\n    if g == 0\n        g = zeros(size(G,1),1)\n    end\n    H = G\n    h = g + 2*G*x_star\n    kh = kg + x_star'*G*x_star + g'*x_star\n    return (H,h,kh[1])\nend\n\nfunction kernel_rotation(A)\n    \"\"\" Find an orthonormal basis for the nullspace of A.\n    This matrix may be used to rotate a temporal instanton\n    problem instance to eliminate all but nullity(A) elements.\n    \"\"\"\n    m,n = size(A)\n    dim_N = n - rank(A)\n    # if A has full row rank:\n    # dim_N = n - m\n    q = qr(A'; thin=false)[1]\n    R = circshift(q,(0,dim_N))\n    return R\nend\n\nfunction rotate_quadratic(G_of_x,R)\n    \"\"\" Rotate quadratic G_of_x by\n    rotation matrix R.\n    \"\"\"\n    G,g,kg = G_of_x\n    return (R*G*R',R*g,kg)\nend\n\nfunction return_K(D)\n    K = ones(length(D))\n    K[find(D)] = sqrt(D[find(D)])\n    K = diagm(K)\n    return K\nend\n\nfunction partition_B(G_of_w,Q_of_w)\n    B,b = G_of_w[1],G_of_w[2]\n    Q = round(Q_of_w[1])\n    i2 = find(diag(Q))\n    i1 = setdiff(1:size(Q,1),i2)\n    B11,B12,B21,B22 = B[i1,i1],B[i1,i2],B[i2,i1],B[i2,i2]\n    b1 = b[i1]\n    b2 = b[i2]\n    return B11,B12,B21,B22,b1,b2\nend\n\nfunction return_Bhat(B11,B12,B22,b1,b2)\n    Bhat = B22 - (B12'/B11)*B12\n    bhat = b2 - (B12'/B11)*b1\n    return round(Bhat,10),bhat\nend\n\nfunction find_w(v,D,d)\n    if v == 0\n        w = float([-d[i]/(D[i,i]) for i in 1:length(d)])\n    else\n        w = float([d[i]/(v - D[i,i]) for i in 1:length(d)])\n    end\n    return w\nend\n\nfunction solve_secular(D,d,c)\n    \"\"\" Solve the secular equation via binary search.\n    \"\"\"\n    eps = 1e-8\n    solutions = Float64[]\n    vectors = Array(Vector{Float64},0)\n    poles = sort(unique(round(diag(D),10)))\n    \n    # Each diagonal element is a pole.\n    for i in 1:length(poles)\n        \n        # Head left first:\n        high = poles[i]\n        if length(poles) == 1\n            low = high - high\n        elseif i == 1\n            low = high - abs(poles[i] - poles[i+1])\n        else\n            low = high - abs(poles[i] - poles[i-1])/2\n        end\n        \n        # Initialize v:\n        v = (high + low)/2\n        w = find_w(v,D,d)\n        diff = (w'*w)[1] - c\n        diff_old = 0\n        stall = false\n        while abs(diff) > eps\n            if diff == diff_old\n                stall = true\n                break\n            end\n            if diff > 0\n                high = v\n            else\n                low = v\n            end\n            v = (high + low)/2\n            w = find_w(v,D,d)\n            diff_old = diff\n            diff = (w'*w)[1] - c\n        end\n        if !stall\n            push!(solutions,v)\n            push!(vectors,w)\n        end\n        \n        # Now head right:\n        high = poles[i]\n        if length(poles) == 1\n            low = high + high\n        elseif i == length(poles)\n            low = high + abs(poles[i] - poles[i-1])\n        else\n            low = high + abs(poles[i] - poles[i+1])/2\n        end\n        \n        v = (high + low)/2\n        w = find_w(v,D,d)\n        diff = (w'*w)[1] - c\n        diff_old = 0\n        stall = false\n        while abs(diff) > eps\n            if diff == diff_old\n                stall = true\n                break\n            end\n            if diff > 0\n                high = v\n            else\n                low = v\n            end\n            v = (high + low)/2\n            w = find_w(v,D,d)\n            diff_old = diff\n            diff = (w'*w)[1] - c\n        end\n        if !stall\n            push!(solutions,v)\n            push!(vectors,w)\n        end\n    end\n    return solutions,vectors\nend\n\nfunction return_xopt(w2opt,B11,B12,b1,N,U,K,x_star)\n    w1opt = -B11\\(B12*w2opt + b1/2)\n    wopt = [w1opt,w2opt]\n    xopt = (N*U/K)*wopt + x_star\n    return xopt\nend\n\nfunction solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)\n    \"\"\" This function solves the following quadratically-\n    constrained quadratic program:\n\n        min  G_of_x\n        s.t. A*x = b\n             Q_of_x = 0\n\n    where   G_of_x = x'*Qobj*x,\n            Q_of_x = x'*Qtheta*x - c\n\n    Thus, an equivalent problem expression is:\n\n        min  z'*Qobj*z\n        s.t. A*z = b\n             z'*Qtheta*z = c\n\n    The solution method is due in part to work by\n    Dr. Dan Bienstock of Columbia University. It\n    involves translating and rotating the problem,\n    using partial KKT conditions, and solving the\n    resulting secular equation.\n    \"\"\"\n\n    Qobj = G_of_x[1]\n    c = - Q_of_x[3]\n    \n    opt = Array(Vector{Float64},0)\n    \n    # Partition A:\n    A1,A2,A3,idx1,idx2,idx3 = partition_A(A,Qobj,T)\n\n    # Find translation point:\n    x_star = find_x_star(Qobj,A,b,T)\n\n    # Translate quadratics:\n    G_of_y = translate_quadratic(G_of_x,x_star)\n    Q_of_y = translate_quadratic(Q_of_x,x_star)\n\n    N = kernel_rotation(A)[:,1:size(A,2) - rank(A)] # take only first k cols\n\n    N1,N2,N3 = N[idx1,:],N[idx2,:],N[idx3,:] # partition N\n\n    G_of_z = rotate_quadratic(G_of_y,N')\n    Q_of_z = rotate_quadratic(Q_of_y,N')\n\n    D,U = eig(Q_of_z[1])\n    D = round(D,10)\n\n    K = return_K(D)\n\n    G_of_w = rotate_quadratic(G_of_z,(U/K)')\n    Q_of_w = rotate_quadratic(Q_of_z,(U/K)')\n\n    B11,B12,B21,B22,b1,b2 = partition_B(G_of_w,Q_of_w)\n\n    Bhat,bhat = return_Bhat(B11,B12,B22,b1,b2)\n\n    eps = 1e-8\n    w0 = find_w(0,Bhat,bhat/2)\n\n    if abs((w0'*w0) - c)[1] < eps\n        println(\"v=0 works!\")\n    end\n\n    solutions, vectors = solve_secular(Bhat,bhat/2,-Q_of_w[3])\n    if isempty(solutions)\n        return [],Inf\n    else\n        sol = zeros(length(vectors))\n        for i in 1:length(vectors)\n            w2 = vectors[i]\n            xvec = return_xopt(w2,B11,B12,b1,N,U,K,x_star)\n            sol[i] = (xvec'*Qobj*xvec)[1]\n            push!(opt,xvec)\n        end\n    end\n\n    return opt[indmin(sol)],minimum(sol)\nend\n\nfunction solve_temporal_instanton(\n    Ridx,\n    Y,\n    G0,\n    P0,\n    D0,\n    Sb,\n    ref,\n    lines,\n    res,\n    reac,\n    k,\n    line_lengths,\n    Tamb,\n    T0,\n    int_length)\n    \"\"\" Convenience function used to perform temporal\n    instanton analysis on many lines in a system at once.\n    \"\"\"\n\n    n = length(k)\n    nr = length(Ridx)\n    T = int64(length(find(P0))/nr)\n    \n    numLines = length(lines)\n\n    # Initialize progress meter:\n    prog = Progress(length(find(line_lengths)),1)\n\n    # Initialize vars used to store results:\n    score = Float64[]\n    α = Array(Vector{Float64},0)\n\n    θ = Array(Array,0)\n    x = Array(Array,0)\n    diffs = Array(Array,0)\n    xopt = Array(Array,0)\n\n    # Create Qobj:\n    Qobj = tmp_inst_Qobj(n,nr,T)\n    # Augment Qobj with additional rows and columns of zeros:\n    Qobj = tmp_inst_pad_Q(full(Qobj),T)\n\n    # Create A1 (only A2 changes during opt.):\n    A1 = full(tmp_inst_A(Ridx,T,Y,ref,k))\n    A1 = [A1 zeros((n+1)*T,T)]\n\n    # Create b:\n    b = tmp_inst_b(n,T,G0,P0,D0)\n    # Augment b with new elements:\n    tmp_inst_pad_b(b,T)\n\n    # Create Qtheta:\n    Qtheta = tmp_inst_Qtheta(n,nr,T)\n\n    # Form objective quadratic:\n    G_of_x = (Qobj,0,0)    \n\n    # Loop through all lines:\n    for idx = 1:numLines\n        # thermal model cannot handle zero-length lines:\n        if line_lengths[idx] == 0\n            continue\n        end\n        line = lines[idx]\n        line_model = LineModel(line[1],\n                    line[2],\n                    res[idx],\n                    reac[idx],\n                    line_lengths[idx],\n                    NaN,\n                    NaN,\n                    NaN,\n                    NaN,\n                    NaN,\n                    NaN,\n                    NaN,\n                    NaN)\n\n        add_thermal_parameters(line_model, \"waxwing\")\n\n        therm_a = compute_a(line_model.mCp,\n                            line_model.ηc,\n                            line_model.ηr,\n                            Tamb,\n                            line_model.Tlim)\n        therm_c = compute_c(line_model.mCp,\n                            line_model.rij,\n                            line_model.xij,\n                            Sb,\n                            line_model.length)\n        therm_d = compute_d(line_model.mCp,\n                            line_model.ηc,\n                            line_model.ηr,\n                            Tamb,\n                            line_model.Tlim,\n                            line_model.qs)\n        therm_f = compute_f(int_length,\n                            therm_a,\n                            therm_d,\n                            T,\n                            T0)\n        \n        # thermal constraint, Q(z) = 0:\n        kQtheta = (therm_a/therm_c)*(line_model.Tlim - therm_f)\n        Q_of_x = (Qtheta,0,kQtheta)\n\n        # array of vec. with Float values:\n        deviations = Array(Vector{Float64},0)\n        angles = Array(Vector{Float64},0)\n        alpha = Float64[]\n\n        # Create A2 based on chosen line:\n        A2 = tmp_inst_A_scale_new(n,Ridx,T,line,therm_a,int_length)\n        # Stack A1 and A2:\n        A = [A1; A2]\n\n        xvec,sol = solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)\n        push!(score,sol)\n        if isinf(sol)\n            push!(deviations,[])\n            push!(angles,[])\n            push!(alpha,NaN)\n            push!(diffs,[])\n        else\n\n            # Variable breakdown:\n            # (nr+n+1) per time step\n            #   First nr are deviations\n            #   Next n are angles\n            #   Last is mismatch\n            # T variables at the end: anglediffs\n            for t = 1:T\n                push!(deviations,xvec[(nr+n+1)*(t-1)+1:(nr+n+1)*(t-1)+nr])\n                push!(angles,xvec[(nr+n+1)*(t-1)+nr+1:(nr+n+1)*(t-1)+nr+n])\n                push!(alpha,xvec[(nr+n+1)*(t)])\n            end\n            push!(diffs,xvec[end-T+1:end])\n        end\n\n        push!(x,deviations)\n        push!(θ,angles)\n        push!(α,alpha)\n        push!(xopt,xvec)\n\n        next!(prog)\n    end\n    return score,x,θ,α,diffs,xopt\nend\n\nend",
 			"file": "src/TemporalInstanton3.jl",
-			"file_size": 17806,
-			"file_write_time": 130798248994256269,
 			"settings":
 			{
-				"buffer_size": 17780,
+				"buffer_size": 18470,
 				"line_ending": "Unix"
 			}
 		},
 		{
-			"file": "src/PowerFlow.jl",
+			"file": "/home/jkersulis/Documents/notebook/README.md",
 			"settings":
 			{
-				"buffer_size": 2174,
+				"buffer_size": 833,
 				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/readRTS96Data.jl",
+			"settings":
+			{
+				"buffer_size": 4083,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "  count  time(%)   time(s) bytes(%) bytes(k)\n     208   0.00   0.000021   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 247, @mstr \" Return A1, A2, A3 where:\\n    * A1 corresponds to wind\\n    * A2 corresponds to angles + mismatch\\n    * A3 corresponds to angle difference vars\\n\\n    Used to find x_star, the min-norm solution to\\n    Ax=b such that x_star[idx3] = 0.\\n    \"\n     208   0.00   0.000010   0.00         0  	# line 255, (m,n) = size(A)\n     208   0.00   0.007653   0.00      1160  	# line 256, idx1 = find(diag(Qobj))\n     208   0.02   0.097238   0.01      8392  	# line 257, idx2 = setdiff(1:n - T,idx1)\n     208   0.00   0.000010   0.00         0  	# line 258, idx3 = (n - T) + 1:n\n     208   0.00   0.006648   0.00      1103  	# line 259, idx = [idx1,idx2,idx3]\n     208   0.00   0.018495   0.06     80899  	# line 261, A1 = A[:,idx1]\n     208   0.07   0.396606   0.25    332496  	# line 262, A2 = A[:,idx2]\n     208   0.00   0.001844   0.00      4509  	# line 263, A3 = A[:,idx3]\n     208   0.00   0.000071   0.00        18  	# line 264, return (A1,A2,A3,idx1,idx2,idx3)\n     104   0.00   0.000006   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 268, @mstr \" x_star is the vector by which the problem must\\n    be translated in the first step of the temporal\\n    instanton QCQP solution.\\n\\n    x_star is chosen to be the point in the set Ax=b\\n    nearest to the origin such that x_star[idx3] = 0.\\n    This condition ensures no linear term is introduced\\n    into the quadratic constraint.\\n    \"\n     104   0.07   0.415004   0.16    214288  	# line 277, (A1,A2,A3,idx1,idx2,idx3) = partition_A(A,Qobj,T)\n     104   0.00   0.000201   0.00       471  	# line 278, x_star = zeros(size(A,2))\n     104  94.67  538.710970  94.69  124301967  	# line 279, x_star[[idx1,idx2]] = [A1 A2] \\ b\n     104   0.00   0.000003   0.00         0  	# line 280, return x_star\n     208   0.00   0.000007   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 284, @mstr \" This function performs the change of variables from x to z,\\n    where z = x - x_star. (For translating a quadratic problem.)\\n    Returns triple H_of_x consisting of matrix H, vector h, constant kh.\\n\\n    Arguments\\n    G_of_x consists of matrix G, vector g, constant kg.\\n    x_star is translation.\\n\\n    Used to perform second step of temporal instanton solution method,\\n    assuming x_star is min-norm solution of Ax=b.\\n    \"\n     208   0.00   0.000013   0.00         0  	# line 295, (G,g,kg) = G_of_x\n     208   0.00   0.008100   0.00      1271  	# line 297, g = zeros(size(G,1),1)\n     208   0.00   0.000008   0.00         0  	# line 299, H = G\n     208   0.15   0.826605   0.40    520048  	# line 300, h = g + 2 * G * x_star\n     208   0.10   0.557708   0.02     28449  	# line 301, kh = kg + x_star' * G * x_star + g' * x_star\n     208   0.00   0.000284   0.00        12  	# line 302, return (H,h,kh[1])\n     104   0.00   0.000005   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 306, @mstr \" Find an orthonormal basis for the nullspace of A.\\n    This matrix may be used to rotate a temporal instanton\\n    problem instance to eliminate all but nullity(A) elements.\\n    \"\n     104   0.00   0.000005   0.00         0  	# line 310, (m,n) = size(A)\n     104   1.56   8.872381   0.18    239716  	# line 311, dim_N = n - rank(A)\n     104   0.90   5.132271   0.82   1081692  	# line 314, q = (qr(A'; thin=false))[1]\n     104   0.20   1.140640   0.20    261949  	# line 315, R = circshift(q,(0,dim_N))\n     104   0.00   0.000006   0.00         0  	# line 316, return R\n     416   0.00   0.000040   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 320, @mstr \" Rotate quadratic G_of_x by\\n    rotation matrix R.\\n    \"\n     416   0.00   0.000024   0.00         0  	# line 323, (G,g,kg) = G_of_x\n     416   0.25   1.429353   0.21    278757  	# line 324, return (R * G * R',R * g,kg)\n     104   0.00   0.000017   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 328, @mstr \" Return K, the diagonal matrix whose elements are\\n    square roots of eigenvalues of the given matrix D.\\n    \"\n     104   0.00   0.000043   0.00       106  	# line 331, K = ones(length(D))\n     104   0.00   0.001195   0.00        75  	# line 332, K[find(D)] = sqrt(D[find(D)])\n     104   0.00   0.005441   0.01     10596  	# line 333, return diagm(K)\n     104   0.00   0.000007   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 337, (B,b) = (G_of_w[1],G_of_w[2])\n     104   0.01   0.042432   0.01     10109  	# line 338, Q = round(Q_of_w[1])\n     104   0.00   0.000965   0.00       121  	# line 339, i2 = find(diag(Q))\n     104   0.00   0.011169   0.00       901  	# line 340, i1 = setdiff(1:size(Q,1),i2)\n     104   0.00   0.004336   0.01      9759  	# line 341, (B11,B12,B21,B22) = (B[i1,i1],B[i1,i2],B[i2,i1],B[i2,i2])\n     104   0.00   0.004782   0.00       262  	# line 342, b1 = b[i1]\n     104   0.00   0.000039   0.00        10  	# line 343, b2 = b[i2]\n     104   0.00   0.000019   0.00         7  	# line 344, return (B11,B12,B21,B22,b1,b2)\n     104   0.13   0.726810   0.01     19562  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 348, Bhat = B22 - (B12' / B11) * B12\n     104   0.06   0.344746   0.01     19512  	# line 349, bhat = b2 - (B12' / B11) * b1\n     104   0.00   0.000420   0.00       113  	# line 350, return (round(Bhat,10),bhat)\n     104   0.00   0.000033   0.00        10  	# line 355, w = float($(Expr(:comprehension, :(-(d[i]) / D[i,i]), :(i = 1:length(d)))))\n   29439   0.00   0.003972   0.00      2826  	# line 357, w = float($(Expr(:comprehension, :(d[i] / (v - D[i,i])), :(i = 1:length(d)))))\n   29543   0.00   0.000714   0.00         0  	# line 359, return w\n     104   0.00   0.000007   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 363, @mstr \" Solve the secular equation via binary search.\\n    \"\n     104   0.00   0.000006   0.00         0  	# line 365, eps = 1.0e-8\n     104   0.00   0.000049   0.00         5  	# line 366, solutions = Float64[]\n     104   0.00   0.000061   0.00         5  	# line 367, vectors = Array(Vector{Float64},0)\n     104   0.00   0.025525   0.00       258  	# line 368, poles = sort(unique(round(diag(D),10)))\n     624   0.00   0.000038   0.00         0  	# line 374, high = poles[i]\n     104   0.00   0.000026   0.00         0  	# line 378, low = high - abs(poles[i] - poles[i + 1])\n     520   0.00   0.000022   0.00         0  	# line 380, low = high - abs(poles[i] - poles[i - 1]) / 2\n     624   0.00   0.000019   0.00         0  	# line 384, v = (high + low) / 2\n     624   0.00   0.000324   0.00        70  	# line 385, w = find_w(v,D,d)\n     624   0.00   0.000116   0.00        50  	# line 386, diff = (w' * w)[1] - c\n     624   0.00   0.000019   0.00         0  	# line 387, diff_old = 0\n     624   0.00   0.000018   0.00         0  	# line 388, stall = false\n      26   0.00   0.000003   0.00         0  	# line 391, stall = true\n    7151   0.00   0.000715   0.00       114  	# line 395, high = v\n    6725   0.00   0.000781   0.00       108  	# line 397, low = v\n   13876   0.00   0.000356   0.00         0  	# line 399, v = (high + low) / 2\n   13876   0.00   0.005782   0.00      1554  	# line 400, w = find_w(v,D,d)\n   13876   0.00   0.000483   0.00       222  	# line 401, diff_old = diff\n   13876   0.00   0.002252   0.00      1110  	# line 402, diff = (w' * w)[1] - c\n     598   0.00   0.000079   0.00        25  	# line 405, push!(solutions,v)\n     598   0.00   0.000097   0.00        25  	# line 406, push!(vectors,w)\n     624   0.00   0.000030   0.00         0  	# line 410, high = poles[i]\n     104   0.00   0.000007   0.00         0  	# line 414, low = high + abs(poles[i] - poles[i - 1])\n     520   0.00   0.000038   0.00         0  	# line 416, low = high + abs(poles[i] - poles[i + 1]) / 2\n     624   0.00   0.000020   0.00         0  	# line 419, v = (high + low) / 2\n     624   0.00   0.000279   0.00        70  	# line 420, w = find_w(v,D,d)\n     624   0.00   0.000111   0.00        50  	# line 421, diff = (w' * w)[1] - c\n     624   0.00   0.000019   0.00         0  	# line 422, diff_old = 0\n     624   0.00   0.000018   0.00         0  	# line 423, stall = false\n      20   0.00   0.000003   0.00         0  	# line 426, stall = true\n    6955   0.00   0.000702   0.00       111  	# line 430, high = v\n    7360   0.00   0.000724   0.00       118  	# line 432, low = v\n   14315   0.00   0.000375   0.00         0  	# line 434, v = (high + low) / 2\n   14315   0.00   0.005945   0.00      1603  	# line 435, w = find_w(v,D,d)\n   14315   0.00   0.000503   0.00       229  	# line 436, diff_old = diff\n   14315   0.00   0.002248   0.00      1145  	# line 437, diff = (w' * w)[1] - c\n     604   0.00   0.000043   0.00         1  	# line 440, push!(solutions,v)\n     604   0.00   0.000036   0.00         1  	# line 441, push!(vectors,w)\n     104   0.00   0.000008   0.00         3  	# line 444, return (solutions,vectors)\n    1202   0.00   0.000102   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 448, @mstr \" Reverse rotations and translations to map\\n    secular equation solution back to original problem\\n    space.\\n    \"\n    1202   0.63   3.566420   0.16    205590  	# line 452, w1opt = -B11 \\ (B12 * w2opt + b1 / 2)\n    1202   0.00   0.000835   0.00      1231  	# line 453, wopt = [w1opt,w2opt]\n    1202   1.17   6.631476   2.76   3626078  	# line 454, xopt = ((N * U) / K) * wopt + x_star\n    1202   0.00   0.000049   0.00         0  	# line 455, return xopt",
+			"settings":
+			{
+				"buffer_size": 10437,
+				"line_ending": "Unix",
+				"name": "count  time(%)   time(s) bytes(%) bytes(k)"
+			}
+		},
+		{
+			"contents": "  count  time(%)   time(s) bytes(%) bytes(k)\n     208   0.00   0.000022   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 247, @mstr \" Return A1, A2, A3 where:\\n    * A1 corresponds to wind\\n    * A2 corresponds to angles + mismatch\\n    * A3 corresponds to angle difference vars\\n\\n    Used to find x_star, the min-norm solution to\\n    Ax=b such that x_star[idx3] = 0.\\n    \"\n     208   0.00   0.000008   0.00         0  	# line 255, (m,n) = size(A)\n     208   0.02   0.005097   0.01      1160  	# line 256, idx1 = find(diag(Qobj))\n     208   0.58   0.137919   0.10      8392  	# line 257, idx2 = setdiff(1:n - T,idx1)\n     208   0.00   0.000009   0.00         0  	# line 258, idx3 = (n - T) + 1:n\n     208   0.03   0.005974   0.01      1103  	# line 259, idx = [idx1,idx2,idx3]\n     208   0.07   0.016212   1.01     80899  	# line 261, A1 = A[:,idx1]\n     208   0.48   0.113810   4.15    332495  	# line 262, A2 = A[:,idx2]\n     208   0.01   0.001682   0.06      4509  	# line 263, A3 = A[:,idx3]\n     208   0.27   0.062891   0.00        18  	# line 264, return (A1,A2,A3,idx1,idx2,idx3)\n     104   0.00   0.000006   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 268, @mstr \" x_star is the vector by which the problem must\\n    be translated in the first step of the temporal\\n    instanton QCQP solution.\\n\\n    x_star is chosen to be the point in the set Ax=b\\n    nearest to the origin such that x_star[idx3] = 0.\\n    This condition ensures no linear term is introduced\\n    into the quadratic constraint.\\n    \"\n     104   0.96   0.227170   2.67    214288  	# line 277, (A1,A2,A3,idx1,idx2,idx3) = partition_A(A,Qobj,T)\n     104   0.00   0.000290   0.01       471  	# line 278, x_star = zeros(size(A,2))\n     104   5.34   1.266376   5.23    419284  	# line 279, Z = sparse([A1 A2]')\n     104  11.13   2.640156   7.79    624261  	# line 280, x_star[[idx1,idx2]] = (Z / (Z' * Z)) * b\n     104   0.00   0.000006   0.00         0  	# line 281, return x_star\n     208   0.00   0.000012   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 285, @mstr \" This function performs the change of variables from x to z,\\n    where z = x - x_star. (For translating a quadratic problem.)\\n    Returns triple H_of_x consisting of matrix H, vector h, constant kh.\\n\\n    Arguments\\n    G_of_x consists of matrix G, vector g, constant kg.\\n    x_star is translation.\\n\\n    Used to perform second step of temporal instanton solution method,\\n    assuming x_star is min-norm solution of Ax=b.\\n    \"\n     208   0.00   0.000021   0.00         0  	# line 296, (G,g,kg) = G_of_x\n     208   0.04   0.008628   0.02      1269  	# line 298, g = zeros(size(G,1),1)\n     208   0.00   0.000008   0.00         0  	# line 300, H = G\n     208   2.93   0.696133   6.49    520049  	# line 301, h = g + 2 * G * x_star\n     208   2.30   0.545003   0.36     28449  	# line 302, kh = kg + x_star' * G * x_star + g' * x_star\n     208   0.00   0.000285   0.00        12  	# line 303, return (H,h,kh[1])\n     104   0.00   0.000005   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 307, @mstr \" Find an orthonormal basis for the nullspace of A.\\n    This matrix may be used to rotate a temporal instanton\\n    problem instance to eliminate all but nullity(A) elements.\\n    \"\n     104   0.00   0.000005   0.00         0  	# line 311, (m,n) = size(A)\n     104  20.66   4.900131   2.99    239716  	# line 312, dim_N = n - rank(A)\n     104  18.43   4.371692  13.51   1082740  	# line 315, q = (qr(A'; thin=false))[1]\n     104   1.08   0.256161   3.27    261949  	# line 316, R = circshift(q,(0,dim_N))\n     104   0.00   0.000006   0.00         0  	# line 317, return R\n     416   0.00   0.000044   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 321, @mstr \" Rotate quadratic G_of_x by\\n    rotation matrix R.\\n    \"\n     416   0.00   0.000024   0.00         0  	# line 324, (G,g,kg) = G_of_x\n     416   4.37   1.037023   3.48    278757  	# line 325, return (R * G * R',R * g,kg)\n     104   0.00   0.000016   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 329, @mstr \" Return K, the diagonal matrix whose elements are\\n    square roots of eigenvalues of the given matrix D.\\n    \"\n     104   0.00   0.000046   0.00       106  	# line 332, K = ones(length(D))\n     104   0.01   0.001191   0.00        75  	# line 333, K[find(D)] = sqrt(D[find(D)])\n     104   0.02   0.005743   0.13     10596  	# line 334, return diagm(K)\n     104   0.00   0.000007   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 338, (B,b) = (G_of_w[1],G_of_w[2])\n     104   0.19   0.044247   0.13     10109  	# line 339, Q = round(Q_of_w[1])\n     104   0.01   0.001214   0.00       121  	# line 340, i2 = find(diag(Q))\n     104   0.05   0.011477   0.01       901  	# line 341, i1 = setdiff(1:size(Q,1),i2)\n     104   0.02   0.004981   0.12      9759  	# line 342, (B11,B12,B21,B22) = (B[i1,i1],B[i1,i2],B[i2,i1],B[i2,i2])\n     104   0.03   0.007365   0.00       262  	# line 343, b1 = b[i1]\n     104   0.00   0.000041   0.00        10  	# line 344, b2 = b[i2]\n     104   0.00   0.000018   0.00         7  	# line 345, return (B11,B12,B21,B22,b1,b2)\n     104   0.61   0.144809   0.24     19562  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 349, Bhat = B22 - (B12' / B11) * B12\n     104   0.65   0.155270   0.24     19512  	# line 350, bhat = b2 - (B12' / B11) * b1\n     104   0.00   0.000362   0.00       113  	# line 351, return (round(Bhat,10),bhat)\n     104   0.00   0.000032   0.00        10  	# line 356, w = float($(Expr(:comprehension, :(-(d[i]) / D[i,i]), :(i = 1:length(d)))))\n   29436   0.02   0.003787   0.04      2826  	# line 358, w = float($(Expr(:comprehension, :(d[i] / (v - D[i,i])), :(i = 1:length(d)))))\n   29540   0.00   0.000767   0.00         0  	# line 360, return w\n     104   0.00   0.000006   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 364, @mstr \" Solve the secular equation via binary search.\\n    \"\n     104   0.00   0.000005   0.00         0  	# line 366, eps = 1.0e-8\n     104   0.00   0.000049   0.00         5  	# line 367, solutions = Float64[]\n     104   0.00   0.000058   0.00         5  	# line 368, vectors = Array(Vector{Float64},0)\n     104   0.11   0.025189   0.00       258  	# line 369, poles = sort(unique(round(diag(D),10)))\n     624   0.00   0.000034   0.00         0  	# line 375, high = poles[i]\n     104   0.00   0.000019   0.00         0  	# line 379, low = high - abs(poles[i] - poles[i + 1])\n     520   0.00   0.000022   0.00         0  	# line 381, low = high - abs(poles[i] - poles[i - 1]) / 2\n     624   0.00   0.000018   0.00         0  	# line 385, v = (high + low) / 2\n     624   0.00   0.000322   0.00        70  	# line 386, w = find_w(v,D,d)\n     624   0.00   0.000112   0.00        50  	# line 387, diff = (w' * w)[1] - c\n     624   0.00   0.000019   0.00         0  	# line 388, diff_old = 0\n     624   0.00   0.000018   0.00         0  	# line 389, stall = false\n      26   0.00   0.000003   0.00         0  	# line 392, stall = true\n    7149   0.00   0.000715   0.00       114  	# line 396, high = v\n    6725   0.00   0.000762   0.00       108  	# line 398, low = v\n   13874   0.00   0.000345   0.00         0  	# line 400, v = (high + low) / 2\n   13874   0.02   0.005764   0.02      1554  	# line 401, w = find_w(v,D,d)\n   13874   0.00   0.000486   0.00       222  	# line 402, diff_old = diff\n   13874   0.01   0.002120   0.01      1110  	# line 403, diff = (w' * w)[1] - c\n     598   0.00   0.000082   0.00        25  	# line 406, push!(solutions,v)\n     598   0.00   0.000097   0.00        25  	# line 407, push!(vectors,w)\n     624   0.00   0.000028   0.00         0  	# line 411, high = poles[i]\n     104   0.00   0.000006   0.00         0  	# line 415, low = high + abs(poles[i] - poles[i - 1])\n     520   0.00   0.000039   0.00         0  	# line 417, low = high + abs(poles[i] - poles[i + 1]) / 2\n     624   0.00   0.000018   0.00         0  	# line 420, v = (high + low) / 2\n     624   0.00   0.000312   0.00        70  	# line 421, w = find_w(v,D,d)\n     624   0.00   0.000105   0.00        50  	# line 422, diff = (w' * w)[1] - c\n     624   0.00   0.000018   0.00         0  	# line 423, diff_old = 0\n     624   0.00   0.000018   0.00         0  	# line 424, stall = false\n      20   0.00   0.000003   0.00         0  	# line 427, stall = true\n    6954   0.00   0.000687   0.00       111  	# line 431, high = v\n    7360   0.00   0.000717   0.00       118  	# line 433, low = v\n   14314   0.00   0.000353   0.00         0  	# line 435, v = (high + low) / 2\n   14314   0.02   0.005928   0.02      1603  	# line 436, w = find_w(v,D,d)\n   14314   0.00   0.000490   0.00       229  	# line 437, diff_old = diff\n   14314   0.01   0.002155   0.01      1145  	# line 438, diff = (w' * w)[1] - c\n     604   0.00   0.000045   0.00         1  	# line 441, push!(solutions,v)\n     604   0.00   0.000037   0.00         1  	# line 442, push!(vectors,w)\n     104   0.00   0.000011   0.00         3  	# line 445, return (solutions,vectors)\n    1202   0.00   0.000061   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 449, @mstr \" Reverse rotations and translations to map\\n    secular equation solution back to original problem\\n    space.\\n    \"\n    1202   5.45   1.293440   2.57    205590  	# line 453, w1opt = -B11 \\ (B12 * w2opt + b1 / 2)\n    1202   0.00   0.000878   0.02      1231  	# line 454, wopt = [w1opt,w2opt]\n    1202  24.06   5.707597  45.25   3626078  	# line 455, xopt = ((N * U) / K) * wopt + x_star\n    1202   0.00   0.000040   0.00         0  	# line 456, return xopt",
+			"settings":
+			{
+				"buffer_size": 10521,
+				"line_ending": "Unix",
+				"name": "count  time(%)   time(s) bytes(%) bytes(k)"
+			}
+		},
+		{
+			"contents": "  count  time(%)   time(s) bytes(%) bytes(k)\n     208   0.00   0.000029   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 247, @mstr \" Return A1, A2, A3 where:\\n    * A1 corresponds to wind\\n    * A2 corresponds to angles + mismatch\\n    * A3 corresponds to angle difference vars\\n\\n    Used to find x_star, the min-norm solution to\\n    Ax=b such that x_star[idx3] = 0.\\n    \"\n     208   0.00   0.000008   0.00         0  	# line 255, (m,n) = size(A)\n     208   0.03   0.004984   0.01      1160  	# line 256, idx1 = find(diag(Qobj))\n     208   0.96   0.171217   0.10      8392  	# line 257, idx2 = setdiff(1:n - T,idx1)\n     208   0.00   0.000008   0.00         0  	# line 258, idx3 = (n - T) + 1:n\n     208   0.03   0.005691   0.01      1103  	# line 259, idx = [idx1,idx2,idx3]\n     208   0.09   0.015954   1.00     80899  	# line 261, A1 = A[:,idx1]\n     208   0.97   0.172336   4.11    332496  	# line 262, A2 = A[:,idx2]\n     208   0.28   0.049628   0.06      4509  	# line 263, A3 = A[:,idx3]\n     208   0.00   0.000066   0.00        18  	# line 264, return (A1,A2,A3,idx1,idx2,idx3)\n     104   0.00   0.000005   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 268, @mstr \" x_star is the vector by which the problem must\\n    be translated in the first step of the temporal\\n    instanton QCQP solution.\\n\\n    x_star is chosen to be the point in the set Ax=b\\n    nearest to the origin such that x_star[idx3] = 0.\\n    This condition ensures no linear term is introduced\\n    into the quadratic constraint.\\n    \"\n     104   1.27   0.227003   2.65    214288  	# line 277, (A1,A2,A3,idx1,idx2,idx3) = partition_A(A,Qobj,T)\n     104   0.00   0.000253   0.01       471  	# line 278, x_star = zeros(size(A,2))\n     104   6.48   1.156407   5.19    419284  	# line 279, Z = sparse([A1 A2]')\n     104  12.04   2.147659   7.72    624265  	# line 280, x_star[[idx1,idx2]] = (Z / (Z' * Z)) * b\n     104   0.00   0.000005   0.00         0  	# line 281, return x_star\n     208   0.00   0.000013   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 285, @mstr \" This function performs the change of variables from x to z,\\n    where z = x - x_star. (For translating a quadratic problem.)\\n    Returns triple H_of_x consisting of matrix H, vector h, constant kh.\\n\\n    Arguments\\n    G_of_x consists of matrix G, vector g, constant kg.\\n    x_star is translation.\\n\\n    Used to perform second step of temporal instanton solution method,\\n    assuming x_star is min-norm solution of Ax=b.\\n    \"\n     208   0.00   0.000025   0.00         0  	# line 296, (G,g,kg) = G_of_x\n     208   0.05   0.008145   0.02      1274  	# line 298, g = zeros(size(G,1),1)\n     208   0.00   0.000009   0.00         0  	# line 300, H = G\n     208   5.26   0.938621   6.43    520048  	# line 301, h = g + 2 * G * x_star\n     208   0.91   0.162531   0.03      2556  	# line 302, kh = kg + x_star' * G * x_star + g' * x_star\n     208   0.00   0.000273   0.00        12  	# line 303, return (H,h,kh[1])\n     104   0.00   0.000005   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 307, @mstr \" Find an orthonormal basis for the nullspace of A.\\n    This matrix may be used to rotate a temporal instanton\\n    problem instance to eliminate all but nullity(A) elements.\\n    \"\n     104   0.00   0.000005   0.00         0  	# line 311, (m,n) = size(A)\n     104   5.83   1.040550   4.17    337012  	# line 315, dim_N = n - m\n     104  24.89   4.439220  13.39   1082742  	# line 320, q = (qr(A'; thin=false))[1]\n     104   1.45   0.259282   3.24    261949  	# line 321, R = circshift(q,(0,dim_N))\n     104   0.00   0.000006   0.00         0  	# line 322, return R\n     416   0.00   0.000042   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 326, @mstr \" Rotate quadratic G_of_x by\\n    rotation matrix R.\\n    \"\n     416   0.00   0.000028   0.00         0  	# line 329, (G,g,kg) = G_of_x\n     416   4.67   0.832682   3.45    278757  	# line 330, return (R * G * R',R * g,kg)\n     104   0.00   0.000014   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 334, @mstr \" Return K, the diagonal matrix whose elements are\\n    square roots of eigenvalues of the given matrix D.\\n    \"\n     104   0.00   0.000040   0.00       106  	# line 337, K = ones(length(D))\n     104   0.01   0.001107   0.00        75  	# line 338, K[find(D)] = sqrt(D[find(D)])\n     104   0.03   0.005114   0.13     10596  	# line 339, return diagm(K)\n     104   0.00   0.000006   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 343, (B,b) = (G_of_w[1],G_of_w[2])\n     104   0.24   0.042869   0.13     10109  	# line 344, Q = round(Q_of_w[1])\n     104   0.01   0.001201   0.00       121  	# line 345, i2 = find(diag(Q))\n     104   0.06   0.010852   0.01       901  	# line 346, i1 = setdiff(1:size(Q,1),i2)\n     104   0.03   0.004693   0.12      9759  	# line 347, (B11,B12,B21,B22) = (B[i1,i1],B[i1,i2],B[i2,i1],B[i2,i2])\n     104   0.04   0.007562   0.00       262  	# line 348, b1 = b[i1]\n     104   0.00   0.000040   0.00        10  	# line 349, b2 = b[i2]\n     104   0.00   0.000023   0.00         7  	# line 350, return (B11,B12,B21,B22,b1,b2)\n     104   0.15   0.026227   0.24     19562  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 354, Bhat = B22 - (B12' / B11) * B12\n     104   0.13   0.023582   0.24     19512  	# line 355, bhat = b2 - (B12' / B11) * b1\n     104   0.00   0.000343   0.00       113  	# line 356, return (round(Bhat,10),bhat)\n     104   0.00   0.000033   0.00        10  	# line 361, w = float($(Expr(:comprehension, :(-(d[i]) / D[i,i]), :(i = 1:length(d)))))\n   29436   0.02   0.003731   0.03      2826  	# line 363, w = float($(Expr(:comprehension, :(d[i] / (v - D[i,i])), :(i = 1:length(d)))))\n   29540   0.00   0.000732   0.00         0  	# line 365, return w\n     104   0.00   0.000007   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 369, @mstr \" Solve the secular equation via binary search.\\n    \"\n     104   0.00   0.000006   0.00         0  	# line 371, eps = 1.0e-8\n     104   0.00   0.000050   0.00         5  	# line 372, solutions = Float64[]\n     104   0.00   0.000053   0.00         5  	# line 373, vectors = Array(Vector{Float64},0)\n     104   0.15   0.026317   0.00       258  	# line 374, poles = sort(unique(round(diag(D),10)))\n     624   0.00   0.000036   0.00         0  	# line 380, high = poles[i]\n     104   0.00   0.000016   0.00         0  	# line 384, low = high - abs(poles[i] - poles[i + 1])\n     520   0.00   0.000019   0.00         0  	# line 386, low = high - abs(poles[i] - poles[i - 1]) / 2\n     624   0.00   0.000018   0.00         0  	# line 390, v = (high + low) / 2\n     624   0.00   0.000307   0.00        70  	# line 391, w = find_w(v,D,d)\n     624   0.00   0.000104   0.00        50  	# line 392, diff = (w' * w)[1] - c\n     624   0.00   0.000018   0.00         0  	# line 393, diff_old = 0\n     624   0.00   0.000017   0.00         0  	# line 394, stall = false\n      26   0.00   0.000003   0.00         0  	# line 397, stall = true\n    7149   0.00   0.000664   0.00       114  	# line 401, high = v\n    6725   0.00   0.000744   0.00       108  	# line 403, low = v\n   13874   0.00   0.000337   0.00         0  	# line 405, v = (high + low) / 2\n   13874   0.03   0.005608   0.02      1554  	# line 406, w = find_w(v,D,d)\n   13874   0.00   0.000457   0.00       222  	# line 407, diff_old = diff\n   13874   0.01   0.002039   0.01      1110  	# line 408, diff = (w' * w)[1] - c\n     598   0.00   0.000085   0.00        25  	# line 411, push!(solutions,v)\n     598   0.00   0.000095   0.00        25  	# line 412, push!(vectors,w)\n     624   0.00   0.000027   0.00         0  	# line 416, high = poles[i]\n     104   0.00   0.000005   0.00         0  	# line 420, low = high + abs(poles[i] - poles[i - 1])\n     520   0.00   0.000040   0.00         0  	# line 422, low = high + abs(poles[i] - poles[i + 1]) / 2\n     624   0.00   0.000018   0.00         0  	# line 425, v = (high + low) / 2\n     624   0.00   0.000261   0.00        70  	# line 426, w = find_w(v,D,d)\n     624   0.00   0.000095   0.00        50  	# line 427, diff = (w' * w)[1] - c\n     624   0.00   0.000017   0.00         0  	# line 428, diff_old = 0\n     624   0.00   0.000016   0.00         0  	# line 429, stall = false\n      20   0.00   0.000002   0.00         0  	# line 432, stall = true\n    6954   0.00   0.000644   0.00       111  	# line 436, high = v\n    7360   0.00   0.000684   0.00       118  	# line 438, low = v\n   14314   0.00   0.000345   0.00         0  	# line 440, v = (high + low) / 2\n   14314   0.03   0.005777   0.02      1603  	# line 441, w = find_w(v,D,d)\n   14314   0.00   0.000478   0.00       229  	# line 442, diff_old = diff\n   14314   0.01   0.002050   0.01      1145  	# line 443, diff = (w' * w)[1] - c\n     604   0.00   0.000044   0.00         1  	# line 446, push!(solutions,v)\n     604   0.00   0.000034   0.00         1  	# line 447, push!(vectors,w)\n     104   0.00   0.000008   0.00         3  	# line 450, return (solutions,vectors)\n    1202   0.00   0.000051   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 454, @mstr \" Reverse rotations and translations to map\\n    secular equation solution back to original problem\\n    space.\\n    \"\n    1202   4.89   0.871990   2.54    205590  	# line 458, w1opt = -B11 \\ (B12 * w2opt + b1 / 2)\n    1202   0.00   0.000693   0.02      1231  	# line 459, wopt = [w1opt,w2opt]\n    1202  28.89   5.152172  44.85   3626078  	# line 460, xopt = ((N * U) / K) * wopt + x_star\n    1202   0.00   0.000040   0.00         0  	# line 461, return xopt",
+			"settings":
+			{
+				"buffer_size": 10515,
+				"line_ending": "Unix",
+				"name": "count  time(%)   time(s) bytes(%) bytes(k)"
+			}
+		},
+		{
+			"contents": "  count  time(%)   time(s) bytes(%) bytes(k)\n     104   0.00   0.000020   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 247, @mstr \" Return A1, A2, A3 where:\\n    * A1 corresponds to wind\\n    * A2 corresponds to angles + mismatch\\n    * A3 corresponds to angle difference vars\\n\\n    Used to find x_star, the min-norm solution to\\n    Ax=b such that x_star[idx3] = 0.\\n    \"\n     104   0.00   0.000006   0.00         0  	# line 255, (m,n) = size(A)\n     104   0.02   0.002656   0.01       580  	# line 256, idx1 = find(diag(Qobj))\n     104   0.22   0.038414   0.05      4196  	# line 257, idx2 = setdiff(1:n - T,idx1)\n     104   0.00   0.000006   0.00         0  	# line 258, idx3 = (n - T) + 1:n\n     104   0.24   0.040908   2.70    206697  	# line 260, (A1,A2) = (A[:,idx1],A[:,idx2])\n     104   3.06   0.525135   0.00         8  	# line 261, return (A1,A2,idx1,idx2,idx3)\n     104   0.00   0.000006   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 265, @mstr \" x_star is the n-vector by which the problem must\\n    be translated in the first step of the temporal\\n    instanton QCQP solution.\\n\\n    x_star is chosen to be the point in the set Ax=b\\n    nearest to the origin such that x_star[idx3] = 0.\\n    This condition ensures no linear term is introduced\\n    into the quadratic constraint.\\n    \"\n     104   0.01   0.001329   0.01       471  	# line 274, x_star = zeros(n)\n     104   2.50   0.429332   5.48    419284  	# line 275, Z = sparse([A1 A2]')\n     104  16.26   2.792422   8.16    624261  	# line 276, x_star[[idx1,idx2]] = (Z / (Z' * Z)) * b\n     104   0.00   0.000006   0.00         0  	# line 277, return x_star\n     208   0.00   0.000010   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 281, @mstr \" This function performs the change of variables from x to z,\\n    where z = x - x_star. (For translating a quadratic problem.)\\n    Returns triple H_of_x consisting of matrix H, vector h, constant kh.\\n\\n    Arguments\\n    G_of_x consists of matrix G, vector g, constant kg.\\n    x_star is translation.\\n\\n    Used to perform second step of temporal instanton solution method,\\n    assuming x_star is min-norm solution of Ax=b.\\n    \"\n     208   0.00   0.000016   0.00         0  	# line 292, (G,g,kg) = G_of_x\n     208   0.05   0.008038   0.02      1270  	# line 294, g = zeros(size(G,1),1)\n     208   0.00   0.000010   0.00         0  	# line 296, H = G\n     208   2.62   0.450649   6.79    520048  	# line 297, h = g + 2 * G * x_star\n     208   0.98   0.168697   0.03      2556  	# line 298, kh = kg + x_star' * G * x_star + g' * x_star\n     208   0.00   0.000312   0.00        12  	# line 299, return (H,h,kh[1])\n     104   0.00   0.000005   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 303, @mstr \" Find an orthonormal basis for the nullspace of A.\\n    This matrix may be used to rotate a temporal instanton\\n    problem instance to eliminate all but nullity(A) elements.\\n    \"\n     104   0.00   0.000006   0.00         0  	# line 307, (m,n) = size(A)\n     104   7.79   1.337268   4.40    337012  	# line 311, dim_N = n - m\n     104  23.07   3.961490  14.15   1082774  	# line 316, q = (qr(A'; thin=false))[1]\n     104   0.85   0.145682   3.42    261949  	# line 317, R = circshift(q,(0,dim_N))\n     104   0.00   0.000006   0.00         0  	# line 318, return R\n     416   0.00   0.000040   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 322, @mstr \" Rotate quadratic G_of_x by\\n    rotation matrix R.\\n    \"\n     416   0.00   0.000027   0.00         0  	# line 325, (G,g,kg) = G_of_x\n     416   7.03   1.207378   3.64    278757  	# line 326, return (R * G * R',R * g,kg)\n     104   0.00   0.000014   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 330, @mstr \" Return K, the diagonal matrix whose elements are\\n    square roots of eigenvalues of the given matrix D.\\n    \"\n     104   0.00   0.000044   0.00       106  	# line 333, K = ones(length(D))\n     104   0.01   0.001201   0.00        75  	# line 334, K[find(D)] = sqrt(D[find(D)])\n     104   0.03   0.005393   0.14     10596  	# line 335, return diagm(K)\n     104   0.00   0.000008   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 339, (B,b) = (G_of_w[1],G_of_w[2])\n     104   0.24   0.040958   0.13     10109  	# line 340, Q = round(Q_of_w[1])\n     104   0.01   0.001238   0.00       121  	# line 341, i2 = find(diag(Q))\n     104   0.08   0.013342   0.01       901  	# line 342, i1 = setdiff(1:size(Q,1),i2)\n     104   0.03   0.004988   0.13      9759  	# line 343, (B11,B12,B21,B22) = (B[i1,i1],B[i1,i2],B[i2,i1],B[i2,i2])\n     104   0.04   0.007424   0.00       262  	# line 344, b1 = b[i1]\n     104   0.00   0.000043   0.00        10  	# line 345, b2 = b[i2]\n     104   0.00   0.000022   0.00         7  	# line 346, return (B11,B12,B21,B22,b1,b2)\n     104   1.15   0.197069   0.26     19562  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 350, Bhat = B22 - (B12' / B11) * B12\n     104   0.15   0.025190   0.25     19512  	# line 351, bhat = b2 - (B12' / B11) * b1\n     104   0.00   0.000403   0.00       113  	# line 352, return (round(Bhat,10),bhat)\n     104   0.00   0.000038   0.00        10  	# line 357, w = float($(Expr(:comprehension, :(-(d[i]) / D[i,i]), :(i = 1:length(d)))))\n   29436   0.02   0.003913   0.04      2826  	# line 359, w = float($(Expr(:comprehension, :(d[i] / (v - D[i,i])), :(i = 1:length(d)))))\n   29540   0.00   0.000772   0.00         0  	# line 361, return w\n     104   0.00   0.000006   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 365, @mstr \" Solve the secular equation via binary search.\\n    \"\n     104   0.00   0.000005   0.00         0  	# line 367, eps = 1.0e-8\n     104   0.00   0.000045   0.00         5  	# line 368, solutions = Float64[]\n     104   0.00   0.000056   0.00         5  	# line 369, vectors = Array(Vector{Float64},0)\n     104   0.15   0.025855   0.00       258  	# line 370, poles = sort(unique(round(diag(D),10)))\n     624   0.00   0.000041   0.00         0  	# line 376, high = poles[i]\n     104   0.00   0.000016   0.00         0  	# line 380, low = high - abs(poles[i] - poles[i + 1])\n     520   0.00   0.000019   0.00         0  	# line 382, low = high - abs(poles[i] - poles[i - 1]) / 2\n     624   0.00   0.000018   0.00         0  	# line 386, v = (high + low) / 2\n     624   0.00   0.000321   0.00        70  	# line 387, w = find_w(v,D,d)\n     624   0.00   0.000111   0.00        50  	# line 388, diff = (w' * w)[1] - c\n     624   0.00   0.000020   0.00         0  	# line 389, diff_old = 0\n     624   0.00   0.000019   0.00         0  	# line 390, stall = false\n      26   0.00   0.000003   0.00         0  	# line 393, stall = true\n    7149   0.00   0.000712   0.00       114  	# line 397, high = v\n    6725   0.00   0.000759   0.00       108  	# line 399, low = v\n   13874   0.00   0.000338   0.00         0  	# line 401, v = (high + low) / 2\n   13874   0.03   0.005909   0.02      1554  	# line 402, w = find_w(v,D,d)\n   13874   0.00   0.000537   0.00       222  	# line 403, diff_old = diff\n   13874   0.01   0.002183   0.01      1110  	# line 404, diff = (w' * w)[1] - c\n     598   0.00   0.000084   0.00        25  	# line 407, push!(solutions,v)\n     598   0.00   0.000098   0.00        25  	# line 408, push!(vectors,w)\n     624   0.00   0.000033   0.00         0  	# line 412, high = poles[i]\n     104   0.00   0.000007   0.00         0  	# line 416, low = high + abs(poles[i] - poles[i - 1])\n     520   0.00   0.000036   0.00         0  	# line 418, low = high + abs(poles[i] - poles[i + 1]) / 2\n     624   0.00   0.000019   0.00         0  	# line 421, v = (high + low) / 2\n     624   0.00   0.000270   0.00        70  	# line 422, w = find_w(v,D,d)\n     624   0.00   0.000103   0.00        50  	# line 423, diff = (w' * w)[1] - c\n     624   0.00   0.000019   0.00         0  	# line 424, diff_old = 0\n     624   0.00   0.000018   0.00         0  	# line 425, stall = false\n      20   0.00   0.000003   0.00         0  	# line 428, stall = true\n    6954   0.00   0.000739   0.00       111  	# line 432, high = v\n    7360   0.00   0.000734   0.00       118  	# line 434, low = v\n   14314   0.00   0.000367   0.00         0  	# line 436, v = (high + low) / 2\n   14314   0.04   0.006099   0.02      1603  	# line 437, w = find_w(v,D,d)\n   14314   0.00   0.000578   0.00       229  	# line 438, diff_old = diff\n   14314   0.01   0.002155   0.01      1145  	# line 439, diff = (w' * w)[1] - c\n     604   0.00   0.000044   0.00         1  	# line 442, push!(solutions,v)\n     604   0.00   0.000037   0.00         1  	# line 443, push!(vectors,w)\n     104   0.00   0.000010   0.00         3  	# line 446, return (solutions,vectors)\n    1202   0.00   0.000061   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 450, @mstr \" Reverse rotations and translations to map\\n    secular equation solution back to original problem\\n    space.\\n    \"\n    1202   3.63   0.623392   2.69    205590  	# line 454, w1opt = -B11 \\ (B12 * w2opt + b1 / 2)\n    1202   0.00   0.000774   0.02      1231  	# line 455, wopt = [w1opt,w2opt]\n    1202  29.63   5.088562  47.38   3626078  	# line 456, xopt = ((N * U) / K) * wopt + x_star\n    1202   0.00   0.000039   0.00         0  	# line 457, return xopt",
+			"settings":
+			{
+				"buffer_size": 10188,
+				"line_ending": "Unix",
+				"name": "count  time(%)   time(s) bytes(%) bytes(k)"
+			}
+		},
+		{
+			"contents": "  count  time(%)   time(s) bytes(%) bytes(k)\n     104   0.00   0.000019   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 247, @mstr \" Return A1, A2, A3 where:\\n    * A1 corresponds to wind\\n    * A2 corresponds to angles + mismatch\\n    * A3 corresponds to angle difference vars\\n\\n    Used to find x_star, the min-norm solution to\\n    Ax=b such that x_star[idx3] = 0.\\n    \"\n     104   0.00   0.000005   0.00         0  	# line 255, (m,n) = size(A)\n     104   0.02   0.002400   0.01       580  	# line 256, idx1 = find(diag(Qobj))\n     104   0.25   0.037837   0.06      4196  	# line 257, idx2 = setdiff(1:n - T,idx1)\n     104   0.00   0.000006   0.00         0  	# line 258, idx3 = (n - T) + 1:n\n     104   0.29   0.044116   2.82    206697  	# line 260, (A1,A2) = (A[:,idx1],A[:,idx2])\n     104   0.33   0.050545   0.00         8  	# line 261, return (A1,A2,idx1,idx2,idx3)\n     104   0.00   0.000015   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 265, @mstr \" x_star is the n-vector by which the problem must\\n    be translated in the first step of the temporal\\n    instanton QCQP solution.\\n\\n    x_star is chosen to be the point in the set Ax=b\\n    nearest to the origin such that x_star[idx3] = 0.\\n    This condition ensures no linear term is introduced\\n    into the quadratic constraint.\\n    \"\n     104   0.00   0.000300   0.01       471  	# line 274, x_star = zeros(n)\n     104   5.98   0.921855   5.71    419284  	# line 275, Z = sparse([A1 A2]')\n     104  17.15   2.643186   8.50    624261  	# line 276, x_star[[idx1,idx2]] = (Z / (Z' * Z)) * b\n     104   0.00   0.000006   0.00         0  	# line 277, return x_star\n     208   0.00   0.000011   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 281, @mstr \" This function performs the change of variables from x to z,\\n    where z = x - x_star. (For translating a quadratic problem.)\\n    Returns triple H_of_x consisting of matrix H, vector h, constant kh.\\n\\n    Arguments\\n    G_of_x consists of matrix G, vector g, constant kg.\\n    x_star is translation.\\n\\n    Used to perform second step of temporal instanton solution method,\\n    assuming x_star is min-norm solution of Ax=b.\\n    \"\n     208   0.00   0.000019   0.00         0  	# line 292, (G,g,kg) = G_of_x\n     208   0.05   0.007855   0.02      1269  	# line 294, g = zeros(size(G,1),1)\n     208   0.00   0.000011   0.00         0  	# line 296, H = G\n     208   2.54   0.391331   7.08    520048  	# line 297, h = g + 2 * G * x_star\n     208   3.41   0.525526   0.39     28450  	# line 298, kh = kg + x_star' * G * x_star + g' * x_star\n     208   0.00   0.000285   0.00        12  	# line 299, return (H,h,kh[1])\n     104   0.00   0.000005   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 303, @mstr \" Find an orthonormal basis for the nullspace of A.\\n    This matrix may be used to rotate a temporal instanton\\n    problem instance to eliminate all but nullity(A) elements.\\n    \"\n     104   0.00   0.000006   0.00         0  	# line 307, (m,n) = size(A)\n     104   0.00   0.000005   0.00         0  	# line 311, dim_N = n - m\n     104  25.34   3.905940  14.74   1081942  	# line 316, q = (qr(A'; thin=false))[1]\n     104   1.88   0.289077   3.57    261949  	# line 317, R = circshift(q,(0,dim_N))\n     104   0.00   0.000007   0.00         0  	# line 318, return R\n     416   0.00   0.000044   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 322, @mstr \" Rotate quadratic G_of_x by\\n    rotation matrix R.\\n    \"\n     416   0.00   0.000031   0.00         0  	# line 325, (G,g,kg) = G_of_x\n     416   5.59   0.861549   3.80    278757  	# line 326, return (R * G * R',R * g,kg)\n     104   0.00   0.000012   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 330, @mstr \" Return K, the diagonal matrix whose elements are\\n    square roots of eigenvalues of the given matrix D.\\n    \"\n     104   0.00   0.000044   0.00       106  	# line 333, K = ones(length(D))\n     104   0.01   0.001120   0.00        75  	# line 334, K[find(D)] = sqrt(D[find(D)])\n     104   0.04   0.005490   0.14     10596  	# line 335, return diagm(K)\n     104   0.00   0.000006   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 339, (B,b) = (G_of_w[1],G_of_w[2])\n     104   0.28   0.042932   0.14     10109  	# line 340, Q = round(Q_of_w[1])\n     104   0.01   0.001218   0.00       121  	# line 341, i2 = find(diag(Q))\n     104   0.07   0.011512   0.01       901  	# line 342, i1 = setdiff(1:size(Q,1),i2)\n     104   0.03   0.004794   0.13      9759  	# line 343, (B11,B12,B21,B22) = (B[i1,i1],B[i1,i2],B[i2,i1],B[i2,i2])\n     104   0.05   0.007330   0.00       262  	# line 344, b1 = b[i1]\n     104   0.00   0.000051   0.00        10  	# line 345, b2 = b[i2]\n     104   0.00   0.000017   0.00         7  	# line 346, return (B11,B12,B21,B22,b1,b2)\n     104   0.31   0.048415   0.27     19562  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 350, Bhat = B22 - (B12' / B11) * B12\n     104   0.16   0.024382   0.27     19512  	# line 351, bhat = b2 - (B12' / B11) * b1\n     104   0.00   0.000386   0.00       113  	# line 352, return (round(Bhat,10),bhat)\n     104   0.00   0.000041   0.00        10  	# line 357, w = float($(Expr(:comprehension, :(-(d[i]) / D[i,i]), :(i = 1:length(d)))))\n   29436   0.02   0.003808   0.04      2826  	# line 359, w = float($(Expr(:comprehension, :(d[i] / (v - D[i,i])), :(i = 1:length(d)))))\n   29540   0.00   0.000678   0.00         0  	# line 361, return w\n     104   0.00   0.000006   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 365, @mstr \" Solve the secular equation via binary search.\\n    \"\n     104   0.00   0.000006   0.00         0  	# line 367, eps = 1.0e-8\n     104   0.00   0.000045   0.00         5  	# line 368, solutions = Float64[]\n     104   0.00   0.000056   0.00         5  	# line 369, vectors = Array(Vector{Float64},0)\n     104   0.17   0.025519   0.00       258  	# line 370, poles = sort(unique(round(diag(D),10)))\n     624   0.00   0.000037   0.00         0  	# line 376, high = poles[i]\n     104   0.00   0.000015   0.00         0  	# line 380, low = high - abs(poles[i] - poles[i + 1])\n     520   0.00   0.000021   0.00         0  	# line 382, low = high - abs(poles[i] - poles[i - 1]) / 2\n     624   0.00   0.000018   0.00         0  	# line 386, v = (high + low) / 2\n     624   0.00   0.000309   0.00        70  	# line 387, w = find_w(v,D,d)\n     624   0.00   0.000117   0.00        50  	# line 388, diff = (w' * w)[1] - c\n     624   0.00   0.000019   0.00         0  	# line 389, diff_old = 0\n     624   0.00   0.000018   0.00         0  	# line 390, stall = false\n      26   0.00   0.000003   0.00         0  	# line 393, stall = true\n    7149   0.00   0.000687   0.00       114  	# line 397, high = v\n    6725   0.00   0.000758   0.00       108  	# line 399, low = v\n   13874   0.00   0.000348   0.00         0  	# line 401, v = (high + low) / 2\n   13874   0.04   0.005692   0.02      1554  	# line 402, w = find_w(v,D,d)\n   13874   0.00   0.000467   0.00       222  	# line 403, diff_old = diff\n   13874   0.01   0.002183   0.02      1110  	# line 404, diff = (w' * w)[1] - c\n     598   0.00   0.000085   0.00        25  	# line 407, push!(solutions,v)\n     598   0.00   0.000097   0.00        25  	# line 408, push!(vectors,w)\n     624   0.00   0.000030   0.00         0  	# line 412, high = poles[i]\n     104   0.00   0.000006   0.00         0  	# line 416, low = high + abs(poles[i] - poles[i - 1])\n     520   0.00   0.000036   0.00         0  	# line 418, low = high + abs(poles[i] - poles[i + 1]) / 2\n     624   0.00   0.000018   0.00         0  	# line 421, v = (high + low) / 2\n     624   0.00   0.000262   0.00        70  	# line 422, w = find_w(v,D,d)\n     624   0.00   0.000104   0.00        50  	# line 423, diff = (w' * w)[1] - c\n     624   0.00   0.000018   0.00         0  	# line 424, diff_old = 0\n     624   0.00   0.000017   0.00         0  	# line 425, stall = false\n      20   0.00   0.000002   0.00         0  	# line 428, stall = true\n    6954   0.00   0.000674   0.00       111  	# line 432, high = v\n    7360   0.00   0.000707   0.00       118  	# line 434, low = v\n   14314   0.00   0.000354   0.00         0  	# line 436, v = (high + low) / 2\n   14314   0.04   0.005809   0.02      1603  	# line 437, w = find_w(v,D,d)\n   14314   0.00   0.000482   0.00       229  	# line 438, diff_old = diff\n   14314   0.01   0.002231   0.02      1145  	# line 439, diff = (w' * w)[1] - c\n     604   0.00   0.000044   0.00         1  	# line 442, push!(solutions,v)\n     604   0.00   0.000035   0.00         1  	# line 443, push!(vectors,w)\n     104   0.00   0.000009   0.00         3  	# line 446, return (solutions,vectors)\n    1202   0.00   0.000057   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 450, @mstr \" Reverse rotations and translations to map\\n    secular equation solution back to original problem\\n    space.\\n    \"\n    1202   7.36   1.134688   2.80    205590  	# line 454, w1opt = -B11 \\ (B12 * w2opt + b1 / 2)\n    1202   0.01   0.000783   0.02      1231  	# line 455, wopt = [w1opt,w2opt]\n    1202  28.53   4.398882  49.39   3626078  	# line 456, xopt = ((N * U) / K) * wopt + x_star\n    1202   0.00   0.000055   0.00         0  	# line 457, return xopt",
+			"settings":
+			{
+				"buffer_size": 10188,
+				"line_ending": "Unix",
+				"name": "count  time(%)   time(s) bytes(%) bytes(k)"
+			}
+		},
+		{
+			"contents": "  count  time(%)   time(s) bytes(%) bytes(k)\n     104   0.00   0.000018   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 247, @mstr \" Return A1, A2, A3 where:\\n    * A1 corresponds to wind\\n    * A2 corresponds to angles + mismatch\\n    * A3 corresponds to angle difference vars\\n\\n    Used to find x_star, the min-norm solution to\\n    Ax=b such that x_star[idx3] = 0.\\n    \"\n     104   0.00   0.000005   0.00         0  	# line 255, (m,n) = size(A)\n     104   0.02   0.002126   0.01       580  	# line 256, idx1 = find(diag(Qobj))\n     104   0.29   0.036815   0.08      4196  	# line 257, idx2 = setdiff(1:n - T,idx1)\n     104   0.00   0.000006   0.00         0  	# line 258, idx3 = (n - T) + 1:n\n     104   1.09   0.137119   4.12    206697  	# line 260, (A1,A2) = (A[:,idx1],A[:,idx2])\n     104   0.68   0.085618   0.00         8  	# line 261, return (A1,A2,idx1,idx2,idx3)\n     104   0.00   0.000005   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 265, @mstr \" x_star is the n-vector by which the problem must\\n    be translated in the first step of the temporal\\n    instanton QCQP solution.\\n\\n    x_star is chosen to be the point in the set Ax=b\\n    nearest to the origin such that x_star[idx3] = 0.\\n    This condition ensures no linear term is introduced\\n    into the quadratic constraint.\\n    \"\n     104   0.00   0.000532   0.01       471  	# line 274, x_star = zeros(n)\n     104   3.79   0.475026   8.37    419284  	# line 275, Z = sparse([A1 A2]')\n     104  21.93   2.748968  12.46    624319  	# line 276, x_star[[idx1,idx2]] = (Z / (Z' * Z)) * b\n     104   0.00   0.000005   0.00         0  	# line 277, return x_star\n     208   0.00   0.000013   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 281, @mstr \" This function performs the change of variables from x to z,\\n    where z = x - x_star. (For translating a quadratic problem.)\\n    Returns triple H_of_x consisting of matrix H, vector h, constant kh.\\n\\n    Arguments\\n    G_of_x consists of matrix G, vector g, constant kg.\\n    x_star is translation.\\n\\n    Used to perform second step of temporal instanton solution method,\\n    assuming x_star is min-norm solution of Ax=b.\\n    \"\n     208   0.00   0.000017   0.00         0  	# line 292, (G,g,kg) = G_of_x\n     208   0.06   0.008072   0.03      1269  	# line 294, g = zeros(size(G,1),1)\n     208   0.00   0.000009   0.00         0  	# line 296, H = G\n     208   5.16   0.646146  10.38    520048  	# line 297, h = g + 2 * G * x_star\n     208   4.33   0.543178   0.57     28452  	# line 298, kh = kg + x_star' * G * x_star + g' * x_star\n     208   0.00   0.000278   0.00        12  	# line 299, return (H,h,kh[1])\n     104   0.00   0.000005   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 303, @mstr \" Find an orthonormal basis for the nullspace of A.\\n    This matrix may be used to rotate a temporal instanton\\n    problem instance to eliminate all but nullity(A) elements.\\n    \"\n     104   0.00   0.000005   0.00         0  	# line 307, (m,n) = size(A)\n     104   0.00   0.000005   0.00         0  	# line 311, dim_N = n - m\n     104  29.72   3.724387  21.60   1082774  	# line 316, q = (qr(A'; thin=false))[1]\n     104   2.99   0.375033   5.23    261949  	# line 317, R = circshift(q,(0,dim_N))\n     104   0.00   0.000006   0.00         0  	# line 318, return R\n     416   0.00   0.000038   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 322, @mstr \" Rotate quadratic G_of_x by\\n    rotation matrix R.\\n    \"\n     416   0.00   0.000028   0.00         0  	# line 325, (G,g,kg) = G_of_x\n     416   8.04   1.008091   5.56    278757  	# line 326, return (R * G * R',R * g,kg)\n     104   0.00   0.000011   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 330, @mstr \" Return K, the diagonal matrix whose elements are\\n    square roots of eigenvalues of the given matrix D.\\n    \"\n     104   0.00   0.000043   0.00       106  	# line 333, K = ones(length(D))\n     104   0.01   0.001112   0.00        75  	# line 334, K[find(D)] = sqrt(D[find(D)])\n     104   0.04   0.005332   0.21     10596  	# line 335, return diagm(K)\n     104   0.00   0.000006   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 339, (B,b) = (G_of_w[1],G_of_w[2])\n     104   0.34   0.042399   0.20     10109  	# line 340, Q = round(Q_of_w[1])\n     104   0.01   0.001246   0.00       121  	# line 341, i2 = find(diag(Q))\n     104   0.09   0.011294   0.02       901  	# line 342, i1 = setdiff(1:size(Q,1),i2)\n     104   0.04   0.004731   0.19      9759  	# line 343, (B11,B12,B21,B22) = (B[i1,i1],B[i1,i2],B[i2,i1],B[i2,i2])\n     104   0.06   0.007378   0.01       262  	# line 344, b1 = b[i1]\n     104   0.00   0.000042   0.00        10  	# line 345, b2 = b[i2]\n     104   0.00   0.000022   0.00         7  	# line 346, return (B11,B12,B21,B22,b1,b2)\n     104   0.21   0.026374   0.39     19562  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 350, Bhat = B22 - (B12' / B11) * B12\n     104   0.19   0.024333   0.39     19512  	# line 351, bhat = b2 - (B12' / B11) * b1\n     104   0.00   0.000377   0.00       113  	# line 352, return (round(Bhat,10),bhat)\n     104   0.00   0.000032   0.00        10  	# line 357, w = float($(Expr(:comprehension, :(-(d[i]) / D[i,i]), :(i = 1:length(d)))))\n   29436   0.03   0.003755   0.06      2826  	# line 359, w = float($(Expr(:comprehension, :(d[i] / (v - D[i,i])), :(i = 1:length(d)))))\n   29540   0.01   0.000684   0.00         0  	# line 361, return w\n     104   0.00   0.000006   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 365, @mstr \" Solve the secular equation via binary search.\\n    \"\n     104   0.00   0.000005   0.00         0  	# line 367, eps = 1.0e-8\n     104   0.00   0.000047   0.00         5  	# line 368, solutions = Float64[]\n     104   0.00   0.000056   0.00         5  	# line 369, vectors = Array(Vector{Float64},0)\n     104   0.21   0.025745   0.01       258  	# line 370, poles = sort(unique(round(diag(D),10)))\n     624   0.00   0.000044   0.00         0  	# line 376, high = poles[i]\n     104   0.00   0.000019   0.00         0  	# line 380, low = high - abs(poles[i] - poles[i + 1])\n     520   0.00   0.000019   0.00         0  	# line 382, low = high - abs(poles[i] - poles[i - 1]) / 2\n     624   0.00   0.000018   0.00         0  	# line 386, v = (high + low) / 2\n     624   0.00   0.000333   0.00        70  	# line 387, w = find_w(v,D,d)\n     624   0.00   0.000110   0.00        50  	# line 388, diff = (w' * w)[1] - c\n     624   0.00   0.000018   0.00         0  	# line 389, diff_old = 0\n     624   0.00   0.000018   0.00         0  	# line 390, stall = false\n      26   0.00   0.000003   0.00         0  	# line 393, stall = true\n    7149   0.01   0.000703   0.00       114  	# line 397, high = v\n    6725   0.01   0.000777   0.00       108  	# line 399, low = v\n   13874   0.00   0.000327   0.00         0  	# line 401, v = (high + low) / 2\n   13874   0.05   0.005748   0.03      1554  	# line 402, w = find_w(v,D,d)\n   13874   0.00   0.000546   0.00       222  	# line 403, diff_old = diff\n   13874   0.02   0.002066   0.02      1110  	# line 404, diff = (w' * w)[1] - c\n     598   0.00   0.000077   0.00        25  	# line 407, push!(solutions,v)\n     598   0.00   0.000088   0.00        25  	# line 408, push!(vectors,w)\n     624   0.00   0.000033   0.00         0  	# line 412, high = poles[i]\n     104   0.00   0.000006   0.00         0  	# line 416, low = high + abs(poles[i] - poles[i - 1])\n     520   0.00   0.000035   0.00         0  	# line 418, low = high + abs(poles[i] - poles[i + 1]) / 2\n     624   0.00   0.000017   0.00         0  	# line 421, v = (high + low) / 2\n     624   0.00   0.000264   0.00        70  	# line 422, w = find_w(v,D,d)\n     624   0.00   0.000100   0.00        50  	# line 423, diff = (w' * w)[1] - c\n     624   0.00   0.000017   0.00         0  	# line 424, diff_old = 0\n     624   0.00   0.000017   0.00         0  	# line 425, stall = false\n      20   0.00   0.000003   0.00         0  	# line 428, stall = true\n    6954   0.01   0.000676   0.00       111  	# line 432, high = v\n    7360   0.01   0.000714   0.00       118  	# line 434, low = v\n   14314   0.00   0.000336   0.00         0  	# line 436, v = (high + low) / 2\n   14314   0.05   0.005928   0.03      1603  	# line 437, w = find_w(v,D,d)\n   14314   0.00   0.000507   0.00       229  	# line 438, diff_old = diff\n   14314   0.02   0.002097   0.02      1145  	# line 439, diff = (w' * w)[1] - c\n     604   0.00   0.000041   0.00         1  	# line 442, push!(solutions,v)\n     604   0.00   0.000035   0.00         1  	# line 443, push!(vectors,w)\n     104   0.00   0.000010   0.00         3  	# line 446, return (solutions,vectors)\n    1202   0.00   0.000060   0.00         0  	# /home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton3.jl, line 450, @mstr \" Reverse rotations and translations to map\\n    secular equation solution back to original problem\\n    space.\\n    \"\n    1202   2.43   0.303961   4.10    205590  	# line 454, w1opt = -B11 \\ (B12 * w2opt + b1 / 2)\n    1202   0.01   0.000663   0.02      1231  	# line 455, wopt = [w1opt,w2opt]\n    1202  18.03   2.260261  25.84   1295237  	# line 457, xopt = N * U * diagm(1 ./ diag(K)) * wopt + x_star\n    1202   0.00   0.000036   0.00         0  	# line 458, return xopt",
+			"settings":
+			{
+				"buffer_size": 10202,
+				"line_ending": "Unix",
+				"name": "count  time(%)   time(s) bytes(%) bytes(k)"
 			}
 		}
 	],
@@ -253,13 +332,17 @@
 	"expanded_folders":
 	[
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton",
-		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/notes"
 	],
 	"file_history":
 	[
-		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/LineThermalModel.jl",
+		"/home/jkersulis/Downloads/sparse null/luq.m",
+		"/home/jkersulis/Downloads/sparse null/demo.m",
+		"/home/jkersulis/Downloads/sparse null/spspaces.m",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/tmp_inst_rts96.jl",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/REQUIRE",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/PowerFlow.jl",
+		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/LineThermalModel.jl",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton.jl",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/TemporalInstanton2.jl",
 		"/home/jkersulis/Documents/Dropbox/InstantonAnew/Jonas Edits/Time-Coupled Instanton/temporal-instanton/src/readRTS96Data.jl",
@@ -380,12 +463,7 @@
 		"/home/jkersulis/Documents/Power.jl/RE",
 		"/home/jkersulis/Documents/kersulis.github.io/_drafts/2015-01-14-cost-of-outage.md",
 		"/home/jkersulis/Documents/kersulis.github.io/_posts/2015-01-14-cost-of-outage.md",
-		"/home/jkersulis/Documents/kersulis.github.io/_config.yml",
-		"/home/jkersulis/Documents/kersulis.github.io/cv.md",
-		"/home/jkersulis/Documents/kersulis.github.io/_posts/2015-01-14-matpower-in-julia.md",
-		"/home/jkersulis/Documents/kersulis.github.io/_drafts/2015-01-14-matpower-in-julia.md",
-		"/home/jkersulis/Documents/updatepip.py",
-		"/home/jkersulis/.ipython/kernels/julia/kernel.json"
+		"/home/jkersulis/Documents/kersulis.github.io/_config.yml"
 	],
 	"find":
 	{
@@ -403,6 +481,17 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"@ipro",
+			";",
+			"iprofile",
+			"qr",
+			"return_xopt",
+			"find_x_St",
+			"partition_A",
+			"idx1",
+			"find_x_star",
+			"@ipro",
+			"partition_A",
 			"T0",
 			"function",
 			"psdataload",
@@ -504,7 +593,7 @@
 	"groups":
 	[
 		{
-			"selected": 0,
+			"selected": 1,
 			"sheets":
 			[
 				{
@@ -513,15 +602,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 17780,
+						"buffer_size": 18470,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								6783,
-								6783
+								14373,
+								14373
 							]
 						],
 						"settings":
@@ -534,35 +623,95 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 8273.0,
+						"translation.y": 18373.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 0,
+					"stack_index": 1,
 					"type": "text"
 				},
 				{
 					"buffer": 1,
-					"file": "src/PowerFlow.jl",
+					"file": "/home/jkersulis/Documents/notebook/README.md",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2174,
+						"buffer_size": 833,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								439,
-								439
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"WordCountShouldRun": true,
+							"WordCountSyntax": "markdown",
+							"syntax": "Packages/Markdown/Markdown.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "src/readRTS96Data.jl",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4083,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3569,
+								3569
 							]
 						],
 						"settings":
 						{
 							"WordCountShouldRun": true,
 							"WordCountSyntax": "julia",
-							"_anf_new": "",
 							"syntax": "Packages/Julia/Julia.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 3023.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 10437,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1961,
+								1961
+							]
+						],
+						"settings":
+						{
+							"WordCountSyntax": "plain text",
+							"auto_name": "count  time(%)   time(s) bytes(%) bytes(k)",
+							"syntax": "Packages/Text/Plain text.tmLanguage",
 							"tab_size": 4,
 							"translate_tabs_to_spaces": true
 						},
@@ -570,7 +719,164 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 10521,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3745,
+								3745
+							]
+						],
+						"settings":
+						{
+							"WordCountSyntax": "plain text",
+							"auto_name": "count  time(%)   time(s) bytes(%) bytes(k)",
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 315.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 8,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 10515,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1938,
+								1938
+							]
+						],
+						"settings":
+						{
+							"WordCountSyntax": "plain text",
+							"auto_name": "count  time(%)   time(s) bytes(%) bytes(k)",
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 7,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 10188,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								3490,
+								3490
+							]
+						],
+						"settings":
+						{
+							"WordCountSyntax": "plain text",
+							"auto_name": "count  time(%)   time(s) bytes(%) bytes(k)",
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 735.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 10188,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								10103,
+								10103
+							]
+						],
+						"settings":
+						{
+							"WordCountShouldRun": true,
+							"WordCountSyntax": "plain text",
+							"auto_name": "count  time(%)   time(s) bytes(%) bytes(k)",
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 980.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 8,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 10202,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2551,
+								2551
+							]
+						],
+						"settings":
+						{
+							"WordCountShouldRun": true,
+							"WordCountSyntax": "plain text",
+							"auto_name": "count  time(%)   time(s) bytes(%) bytes(k)",
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
 					"type": "text"
 				}
 			]
@@ -625,6 +931,14 @@
 		"selected_items":
 		[
 			[
+				"readr",
+				"temporal-instanton/src/readRTS96Data.jl"
+			],
+			[
+				"rts",
+				"temporal-instanton/src/tmp_inst_rts96.jl"
+			],
+			[
 				"tempora",
 				"temporal-instanton/src/TemporalInstanton2.jl"
 			],
@@ -646,14 +960,6 @@
 			],
 			[
 				"tmp",
-				"temporal-instanton/src/tmp_inst_rts96.jl"
-			],
-			[
-				"readr",
-				"temporal-instanton/src/readRTS96Data.jl"
-			],
-			[
-				"rts",
 				"temporal-instanton/src/tmp_inst_rts96.jl"
 			],
 			[
