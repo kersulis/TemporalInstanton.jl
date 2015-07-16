@@ -1,40 +1,43 @@
 type LineModel
-	from
-	to
-	rij
-	xij
-	length
-	D0
-	mCp
-	Ilim
-	r
-	Tlim
-	ηc
-	ηr
-	qs
+    from
+    to
+    rij
+    xij
+    length
+    D0
+    mCp
+    Ilim
+    r
+    Tlim
+    ηc
+    ηr
+    qs
 end
 
 function add_thermal_parameters(line_model,conductor_name)
-	if conductor_name == "waxwing"
-		line_model.D0	= 15.5e-3
-		line_model.mCp	= 383.
-		line_model.Ilim	= 439.
-		line_model.r	= 110e-6
-		line_model.Tlim	= 65.5 # 65 is too low for RTS-96?
-		line_model.ηc	= 0.955
-		line_model.ηr	= 2.207e-9
-		line_model.qs	= 14.4
-	elseif conductor_name == "dove"
-		line_model.D0	= 23.5e-3
-		line_model.mCp	= 916.
-		line_model.Ilim	= 753.
-		line_model.r	= 60e-6
-		line_model.Tlim	= 69.
-		line_model.ηc	= 1.179
-		line_model.ηr	= 3.346e-9
-		line_model.qs	= 21.9
-	end
-	return line_model
+    """ Assign values to fields of LineModel type instance.
+    Uses data from Mads's MPC paper.
+    """
+    if conductor_name == "waxwing"
+        line_model.D0   = 15.5e-3
+        line_model.mCp  = 383.
+        line_model.Ilim = 439.
+        line_model.r    = 110e-6
+        line_model.Tlim = 65.
+        line_model.ηc   = 0.955
+        line_model.ηr   = 2.207e-9
+        line_model.qs   = 14.4
+    elseif conductor_name == "dove"
+        line_model.D0   = 23.5e-3
+        line_model.mCp  = 916.
+        line_model.Ilim = 753.
+        line_model.r    = 60e-6
+        line_model.Tlim = 69.
+        line_model.ηc   = 1.179
+        line_model.ηr   = 3.346e-9
+        line_model.qs   = 21.9
+    end
+    return line_model
 end
 
 function compute_a(mCp,ηc,ηr,Tamb,Tlim)
@@ -84,6 +87,7 @@ function compute_f(int_length,a,d,n,T0)
     sum_coeff = sum([(e^(int_length*a))^i - (e^(int_length*a))^(i-1) for i in 1:n])
     return (e^(int_length*a))^n*T0 + (d/a)*sum_coeff
 end
+
 
 function compute_T(int_length,a,c,f,n,θij)
     """ Return line's final temperature

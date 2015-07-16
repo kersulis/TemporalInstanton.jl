@@ -1,4 +1,4 @@
-module TemporalInstanton3
+module TemporalInstanton
 
 using HDF5, JLD, ProgressMeter, IProfile
 
@@ -10,97 +10,7 @@ export
     compute_d,compute_f,tmp_inst_A_scale_new
 
 include("PowerFlow.jl")
-
-# THERMAL MODELING
-type LineModel
-    from
-    to
-    rij
-    xij
-    length
-    D0
-    mCp
-    Ilim
-    r
-    Tlim
-    ηc
-    ηr
-    qs
-end
-
-function add_thermal_parameters(line_model,conductor_name)
-    """ Assign values to fields of LineModel type instance.
-    Uses data from Mads's MPC paper.
-    """
-    if conductor_name == "waxwing"
-        line_model.D0   = 15.5e-3
-        line_model.mCp  = 383.
-        line_model.Ilim = 439.
-        line_model.r    = 110e-6
-        line_model.Tlim = 65.
-        line_model.ηc   = 0.955
-        line_model.ηr   = 2.207e-9
-        line_model.qs   = 14.4
-    elseif conductor_name == "dove"
-        line_model.D0   = 23.5e-3
-        line_model.mCp  = 916.
-        line_model.Ilim = 753.
-        line_model.r    = 60e-6
-        line_model.Tlim = 69.
-        line_model.ηc   = 1.179
-        line_model.ηr   = 3.346e-9
-        line_model.qs   = 21.9
-    end
-    return line_model
-end
-
-function compute_a(mCp,ηc,ηr,Tamb,Tlim)
-    """ Returns constant a [1/s]
-    mCp [J/m-C] is line heat capacity
-    ηc [W/m-C] is conductive heat loss rate coefficient
-    ηr [W/m-C^4] is radiative heat loss rate coefficient
-    Tamb [C] is ambient temperature (of air)
-    Tlim [C] is highest allowable line temperature
-    """
-    Tmid = (Tamb + Tlim)/2
-    return mCp\(-ηc - 4*ηr*(Tmid + 273)^3)
-end
-
-function compute_c(mCp,r,x,Sb,L)
-    """ Return constant c [W/m]
-    mCp [J/m-C] is line heat capacity
-    r [pu] is line resistance
-    x [pu] is line reactance
-    Sb [W] is system base MVA
-    L [m] is line length
-    """
-    return r*Sb/(3*mCp*L*(x^2))
-end
-
-function compute_d(mCp,ηc,ηr,Tamb,Tlim,q_solar)
-    """ Returns constant d [W/m]
-    mCp [J/m-C] is line heat capacity
-    ηc [W/m-C] is conductive heat loss rate coefficient
-    ηr [W/m-C^4] is radiative heat loss rate coefficient
-    Tamb [C] is ambient temperature (of air)
-    Tlim [C] is highest allowable line temperature
-    q_solar [W/m] is the solar heat gain rate
-    """
-    Tmid = (Tamb + Tlim)/2
-    return mCp\(ηc*Tamb - ηr*((Tmid + 273)^4 - (Tamb + 273)^4) + 4*ηr*Tmid*(Tmid+273)^3 + q_solar)
-end
-
-function compute_f(int_length,a,d,n,T0)
-    """ Returns constant f
-    int_length [s] is length of each interval
-    a [1/s] is a constant
-    d [W/m] is a constant
-    n [-] is the number of time intervals
-    T0 [C] is the initial steady-state line temp
-    """
-    sum_coeff = sum([(e^(int_length*a))^i - (e^(int_length*a))^(i-1) for i in 1:n])
-    return (e^(int_length*a))^n*T0 + (d/a)*sum_coeff
-end
+include("ThermalModel.jl")
 
 # TEMPORAL INSTANTON
 function tmp_inst_Qobj(n,nr,T)
@@ -126,9 +36,9 @@ function tmp_inst_A(Ridx,T,Y,ref,k)#,tau,line)
     from problem dimensions, admittance matrix,
     and generator participation factors.
     Assumes the admittance matrix is n-by-n.
-    
+
     Returns A, which is (n+1)*T-by-(nr+n+1)*T
-    
+
     * nr is the number of wind farms in the network
     * n is the number of nodes in the network
     * Ridx is a vector indicating wind farm locations
@@ -137,23 +47,23 @@ function tmp_inst_A(Ridx,T,Y,ref,k)#,tau,line)
     * ref is the index of the angle reference bus
     * k is the vector of generator participation factors
     """
-    
+
     function ei(n,i)
         e = zeros(n)
         e[i] = 1.
         return e
     end
-    
+
     n = size(Y,1)
-    
+
     # A has a block diagonal pattern where each
     # block is Atemp:
     Atemp = [[-eye(n)    Y       -k];
             zeros(1,n) ei(n,ref)' 0]
-    
+
     # Remove columns corresponding to non-wind nodes:
     Atemp = sparse(Atemp[:,[Ridx;n+1:2*n+1]])
-    
+
     # Now we can tile the Atemp matrix to generate A:
     A = Atemp
     for t = 2:T
@@ -166,7 +76,7 @@ function tmp_inst_A(Ridx,T,Y,ref,k)#,tau,line)
 
     #     # Augment A with new rows:
     #     A = [[full(A) zeros((n+1)*T,T)]; A2]
-    
+
     return A
 end
 
@@ -202,7 +112,7 @@ function tmp_inst_Qtheta(n,nr,T)#,tau)
     the endpoints of the chosen line.
     """
     Qtheta = zeros((nr+n+2)*T,(nr+n+2)*T)
-    
+
     Qtheta[end-T+1:end,end-T+1:end] = eye(T)
     return Qtheta
 end
@@ -210,11 +120,11 @@ end
 function tmp_inst_A_scale_new(n,Ridx,T,line,therm_a,int_length)
     """ Augment A with T additional rows relating
     angle difference variables to angle variables.
-    
+
     Returns a T-by-(n+nr+2)*T matrix that may be
     concatenated with the output of temp_inst_A
-    
-    Arguments:    
+
+    Arguments:
     * n is the number of nodes in the network
     * Ridx is a vector indicating wind nodes
     * T is the number of time steps
@@ -223,14 +133,14 @@ function tmp_inst_A_scale_new(n,Ridx,T,line,therm_a,int_length)
     * line is the pair (i,k) indicating the chosen
     line
     * therm_a is a constant defined by heating parameters
-    * int_length is interval length in seconds (e.g. 600 
+    * int_length is interval length in seconds (e.g. 600
         for 10 minutes)
     """
     (i,k) = line
     nr = length(Ridx)
-    
+
     A = zeros(T,(nr+n+2)*T)
-    
+
     for t = 1:T
         i_pos = (nr+n+1)*(t-1) + nr + i
         k_pos = (nr+n+1)*(t-1) + nr + k
@@ -252,11 +162,11 @@ function partition_A(A,Qobj,T)
     Used to find x_star, the min-norm solution to
     Ax=b such that x_star[idx3] = 0.
     """
-    m,n = size(A)   
+    m,n = size(A)
     idx1 = find(diag(Qobj))
     idx2 = setdiff(1:n-T,idx1)
     idx3 = n-T+1:n
-    
+
     (A1,A2) = (A[:,idx1],A[:,idx2])
     return A1,A2,idx1,idx2,idx3
 end
@@ -305,7 +215,7 @@ function kernel_rotation(A)
     problem instance to eliminate all but nullity(A) elements.
     """
     m,n = size(A)
-    
+
     # Assume A always has full row rank.
     #if isposdef(A*A')
     dim_N = n - m
@@ -368,10 +278,10 @@ function solve_secular(D,d,c)
     solutions = Float64[]
     vectors = Array(Vector{Float64},0)
     poles = sort(unique(round(diag(D),10)))
-    
+
     # Each diagonal element is a pole.
     for i in 1:length(poles)
-        
+
         # Head left first:
         high = poles[i]
         if length(poles) == 1
@@ -381,7 +291,7 @@ function solve_secular(D,d,c)
         else
             low = high - abs(poles[i] - poles[i-1])/2
         end
-        
+
         # Initialize v:
         v = (high + low)/2
         w = find_w(v,D,d)
@@ -407,7 +317,7 @@ function solve_secular(D,d,c)
             push!(solutions,v)
             push!(vectors,w)
         end
-        
+
         # Now head right:
         high = poles[i]
         if length(poles) == 1
@@ -417,7 +327,7 @@ function solve_secular(D,d,c)
         else
             low = high + abs(poles[i] - poles[i+1])/2
         end
-        
+
         v = (high + low)/2
         w = find_w(v,D,d)
         diff = (w'*w)[1] - c
@@ -486,9 +396,9 @@ function solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
     m,n = size(A)
     Qobj = G_of_x[1]
     c = - Q_of_x[3]
-    
+
     opt = Array(Vector{Float64},0)
-    
+
     # Partition A:
     A1,A2,idx1,idx2,idx3 = partition_A(A,Qobj,T)
 
@@ -564,7 +474,7 @@ function solve_temporal_instanton(
     n = length(k)
     nr = length(Ridx)
     T = int64(length(find(P0))/nr)
-    
+
     numLines = length(lines)
 
     # Initialize progress meter:
@@ -644,7 +554,7 @@ function solve_temporal_instanton(
                             therm_d,
                             T,
                             T0)
-        
+
         # thermal constraint, Q(z) = 0:
         kQtheta = (therm_a/therm_c)*(line_model.Tlim - therm_f)
         Q_of_x = (Qtheta,0,kQtheta)
