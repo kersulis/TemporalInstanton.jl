@@ -1,10 +1,9 @@
-*.sublime-project
+*.sublime*
 nbs/.ipynb_checkpoints
 2015-03-17-GroupPresentation
 2015-04-14-GroupPresentation
 quals2
 paper/images
-*.sublime-workspace
 *.aux
 *.log
 *.synctex.gz

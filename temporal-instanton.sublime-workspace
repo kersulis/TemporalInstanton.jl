@@ -100,10 +100,13 @@
 			}
 		},
 		{
+			"contents": "# Function used to create instance of powerSystemData type from MATLAB workspace:\nfunction psDataLoad()\n    (Sb, f, t, r, x, b, Y, bustype, \n     Gp, Gq, Dp, Dq, Rp, Rq, \n     Pmax, Pmin, Qmax, Qmin, \n     Plim, Vg, Vceiling, Vfloor, \n    busIdx, N, Nr, Ng) = readRTS96Data()\n\n    # Allow each generator to participate equally in droop response.\n    # Note: this only applies to analysis types with droop response!\n    # k = zeros(length(Gp))\n    # k[find(Gp.!=0)] = 1/length(Gp)\n    \n    k = Float64[]\n    for i = 1:length(Gp)\n        if Gp[i] != 0\n            push!(k, 1/length(find(Gp)))\n        else\n            push!(k,0)\n        end\n    end\n\n    return powerSystemData(Sb,f,t,r,x,b,Y,bustype,Gp,Gq,Dp,Dq,Rp,Rq,Pmax,Pmin,Qmax,Qmin,Plim,Vg,Vceiling,Vfloor,busIdx,N,Nr,Ng,k)\nend\n\nfunction readRTS96Data()\n    # Load RTS96 data\n    # uses MAT\n    path=\"../src/caseRTS96.mat\" # Assumes current dir is nbs\n    caseRTS96 = matread(path) # import MATLAB workspace\n\n    # Connect relevant MATLAB variables to Julia\n    bus_i = caseRTS96[\"bus_i\"][:,1] # vector of unique bus indices (73)\n    bus = caseRTS96[\"bus\"][:,1] # vector of generator bus indices (99)\n    Sb = caseRTS96[\"Sb\"] # base MVA\n    bustype = caseRTS96[\"type\"][:,1]\n\n    Gp_long = caseRTS96[\"Pg\"] # conventional active power output, divide by Sb later\n    Gq_long = caseRTS96[\"Qg\"] # conventional reactive power output, divide by Sb later\n\n    Rp = (caseRTS96[\"Wind\"]./Sb)[:,1] # renewable active generation, has zero where no farm exists\n    Rq = (caseRTS96[\"Wind\"].*(0.484/Sb))[:,1]\n\n    Dp = caseRTS96[\"Pd\"]./Sb + Rp # I previously subtracted wind from active demand\n    Dp = Dp[:,1]\n    Dq = caseRTS96[\"Qd\"]./Sb # reactive power demand vector\n    Dq = Dq[:,1]\n\n    Pmax = (caseRTS96[\"Pmax\"]./Sb)[:,1] # conventional gen. max active output\n    Pmin = (caseRTS96[\"Pmin\"]./Sb)[:,1] # conventional gen. min active output\n\n    Qmax = (caseRTS96[\"Qmax\"]./Sb)[:,1] # conventional gen. max reactive output\n    Qmin = (caseRTS96[\"Qmin\"]./Sb)[:,1] # conventional gen. min reactive output\n\n    Vm = caseRTS96[\"Vm\"][:,1] # should be vector of ones\n    Va = caseRTS96[\"Va\"][:,1] # should be vector of zeros\n\n    Plim = (caseRTS96[\"rateA\"]./Sb)[:,1]\n    Vceiling = caseRTS96[\"Vmax\"][:,1] # one voltage mag. ceiling constraint per node\n    Vfloor = caseRTS96[\"Vmin\"][:,1] # one voltage mag. floor constraint per node\n\n    Vceiling[bustype .== 2] = 1 # ceiling is 1 for voltage-controlled nodes\n    Vfloor[bustype .== 2] = 1 # floor is 1 for voltage-controlled nodes\n\n    Vg = caseRTS96[\"Vg\"][:,1] # voltage magnitudes from Jenny's solved ACOPF\n\n    f = round(Int64,caseRTS96[\"fbus\"][:,1]) # \"from bus\" ...\n    t = round(Int64,caseRTS96[\"tbus\"][:,1]) # ... \"to bus\"\n    r = caseRTS96[\"r\"][:,1] # resistance, pu\n    x = caseRTS96[\"x\"][:,1] # reactance, pu\n    b = caseRTS96[\"b\"][:,1]  # susceptance, pu\n\n    # map bus numbers to 1:73\n    for i = 1:length(f)\n        if f[i] < 201\n            f[i] -= 100\n        elseif f[i] < 301\n            f[i] -= 176\n        else\n            f[i] -= 252\n        end\n    end\n    for i = 1:length(t)\n        if t[i] < 201\n            t[i] -= 100\n        elseif t[i] < 301\n            t[i] -= 176\n        else\n            t[i] -= 252\n        end\n    end\n\n    busidx = Int64[1]\n    for i = 2:length(bus)\n        # push!(busidx, bus[i] < 201 ? bus[i] - 100 : bus[i] < 301 ? bus[i] - 176 : bus[i] - 252)\n        if bus[i] < 201\n            push!(busidx, bus[i]-100)\n        elseif bus[i] < 301\n            push!(busidx, bus[i]-176)\n        else\n            push!(busidx, bus[i]-252)\n        end\n    end\n\n    # area 1: buses 1-24\n    # area 2: buses 25-48\n    # area 3: buses 49-73\n\n    Gp = zeros(length(bus_i))\n    Gq = zeros(length(bus_i))\n\n    for i in unique(busidx)\n        Gp[i] = sum(Gp_long[find(busidx .== i)])/Sb\n        Gq[i] = sum(Gq_long[find(busidx .== i)])/Sb\n    end\n    # Now Gp and Gq reflect active and reactive generation at buses 1:73 consecutively.\n\n    N = length(bus_i)\n    Nr = length(find(Rp))\n    Ng = length(find(Gp))\n\n    Y = createY(f,t,r,x,b,true)\n\n    return  Sb, f, t, r, x, b, Y, bustype, \n            Gp, Gq, Dp, Dq, Rp, Rq, \n            Pmax, Pmin, Qmax, Qmin, \n            Plim, Vg, Vceiling, Vfloor, \n            bus_i, N, Nr, Ng\nend",
 			"file": "src/readRTS96Data.jl",
+			"file_size": 4083,
+			"file_write_time": 130810263952815006,
 			"settings":
 			{
-				"buffer_size": 4083,
+				"buffer_size": 4251,
 				"line_ending": "Unix"
 			}
 		},
@@ -336,6 +339,7 @@
 	],
 	"file_history":
 	[
+		"/home/jkersulis/Documents/matpower/matpower4.1/case9.m",
 		"/home/jkersulis/Downloads/sparse null/luq.m",
 		"/home/jkersulis/Downloads/sparse null/demo.m",
 		"/home/jkersulis/Downloads/sparse null/spspaces.m",
@@ -462,8 +466,7 @@
 		"/home/jkersulis/Documents/Power.jl/REQUIRE",
 		"/home/jkersulis/Documents/Power.jl/RE",
 		"/home/jkersulis/Documents/kersulis.github.io/_drafts/2015-01-14-cost-of-outage.md",
-		"/home/jkersulis/Documents/kersulis.github.io/_posts/2015-01-14-cost-of-outage.md",
-		"/home/jkersulis/Documents/kersulis.github.io/_config.yml"
+		"/home/jkersulis/Documents/kersulis.github.io/_posts/2015-01-14-cost-of-outage.md"
 	],
 	"find":
 	{
@@ -593,7 +596,7 @@
 	"groups":
 	[
 		{
-			"selected": 1,
+			"selected": 2,
 			"sheets":
 			[
 				{
@@ -615,7 +618,6 @@
 						],
 						"settings":
 						{
-							"WordCountShouldRun": true,
 							"WordCountSyntax": "julia",
 							"_anf_new": "",
 							"syntax": "Packages/Julia/Julia.tmLanguage",
@@ -623,10 +625,10 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 18373.0,
+						"translation.y": 16801.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 2,
 					"type": "text"
 				},
 				{
@@ -656,7 +658,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 0,
+					"stack_index": 1,
 					"type": "text"
 				},
 				{
@@ -665,15 +667,15 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 4083,
+						"buffer_size": 4251,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								3569,
-								3569
+								484,
+								421
 							]
 						],
 						"settings":
@@ -685,10 +687,10 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 3023.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 3,
+					"stack_index": 0,
 					"type": "text"
 				},
 				{
@@ -709,6 +711,7 @@
 						],
 						"settings":
 						{
+							"WordCountShouldRun": true,
 							"WordCountSyntax": "plain text",
 							"auto_name": "count  time(%)   time(s) bytes(%) bytes(k)",
 							"syntax": "Packages/Text/Plain text.tmLanguage",
@@ -833,7 +836,6 @@
 						],
 						"settings":
 						{
-							"WordCountShouldRun": true,
 							"WordCountSyntax": "plain text",
 							"auto_name": "count  time(%)   time(s) bytes(%) bytes(k)",
 							"syntax": "Packages/Text/Plain text.tmLanguage",
@@ -865,7 +867,6 @@
 						],
 						"settings":
 						{
-							"WordCountShouldRun": true,
 							"WordCountSyntax": "plain text",
 							"auto_name": "count  time(%)   time(s) bytes(%) bytes(k)",
 							"syntax": "Packages/Text/Plain text.tmLanguage",
@@ -876,7 +877,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 3,
 					"type": "text"
 				}
 			]
