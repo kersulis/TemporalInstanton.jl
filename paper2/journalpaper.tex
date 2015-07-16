@@ -38,7 +38,7 @@
 % paper title
 % can use linebreaks \\ within to get better formatting as desired
 \title{The Journal Article:\\
-It's finally happening.}
+subtitle}
 
 
 % author names and affiliations
@@ -91,11 +91,13 @@ Forecast uncertainty, Optimization, Transmission operations, Wind energy
 \end{IEEEkeywords}
 
 
-\section{Introduction}\label{sec:intro}
+\section{Introduction and review}\label{sec:intro}
 
-Of the many sources of uncertainty in modern transmission grid operation, wind forecast inaccuracy is one of the most important. A single wind farm's output can change significantly in a short time. As the number of wind farms increases, complicated changes in generation across a region can cause congestion in the network. In certain cases this congestion may cause a transmission line to overheat and sag. In this paper we use mathematical programming to find wind generation patterns that cause transmission line sag.
+The impact of wind forecast inaccuracy is greater than ever in grids around the world. As reliance on wind generation increases, changes in weather can induce network congestion. In certain cases this congestion may even cause a transmission line to overheat and sag. System operators use wind forecast data to steer the network away from these scenarios, but wind forecasts are significantly less accurate than generation and demand predictions. How might forecast inaccuracies compound across the network to overheat transmission lines? How likely is this to occur? In this paper we develop temporal instanton analysis, which uses mathematical programming to find troublesome wind patterns and rank them according to likelihood. With this information, system operators and planners gain a new line of defense against renewable generation uncertainty.
 
 The remainder of this paper is organized as follows. Section II translates the verbal description above into a mathematical formulation of temporal instanton analysis. Section III describes a previously-developed solution method for the temporal instanton problem. We expand on prior work by providing a more detailed treatment of the objective function, discussing implementation details including computational complexity and sparsity, and proposing a particular algorithm for solving the secular equation. Section IV contains results for two networks: a modified version of the RTS-96 and the larger WECC network. The former network has been used in previous instanton analysis studies, while the latter serves to demonstrate scalability of temporal instanton analysis. Finally, an appendix contains a detailed description of the thermal model used to calculate line temperature.
+
+Wind forecasting is a complicated business. Consider first a single wind farm whose output is forecast for some future time. Let the forecast performance be represented by a random variable. Using historical data from ERCOT in Texas, \cite{hodge2011} determined appropriate density functions for this variable based on the forecast horizon. For predictions a few minutes or hours away, forecast performance is approximately Cauchy, with deviations concentrated heavily around the forecast value. As the time horizon increases, accuracy suffers and the distribution approaches the Gaussian curve. Now consider several wind farms scattered across a transmission grid. In addition to individual site forecasts, one must now consider overall patterns. Wind sites tend to be spatially correlated: if wind speed increases at one site, it is unlikely that it will simultaneously decrease at a neighboring site. Temporal correlation further complicates matters: increased wind at site A now may be strongly correlated with greater wind speeds at site B in the future. Spatial and temporal correlation may be calculated from measurement data and encoded in a correlation matrix. The optimization framework developed in this paper contains such a correlation matrix in its objective function.
 
 %The prevalence of renewables in modern transmission networks has
 %researchers and system operators asking: What happens when the wind
