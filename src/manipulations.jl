@@ -63,6 +63,9 @@ function kernel_rotation(A; dim_N_only=true)
     m,n = size(A)
 
     # Assume A always has full row rank of m.
+    # It may be possible for this assumption to fail
+    # due to numerics, but a rank() check is expensive.
+    
     #if isposdef(A*A')
     dim_N = n - m # dimension of nullspace of A
     # else

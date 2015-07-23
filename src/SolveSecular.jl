@@ -1,6 +1,6 @@
+""" Solve the secular equation via binary search.
+"""
 function solve_secular(D,d,c)
-    """ Solve the secular equation via binary search.
-    """
     eps = 1e-8
     solutions = Float64[]
     vectors = Array(Vector{Float64},0)
