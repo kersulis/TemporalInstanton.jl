@@ -55,23 +55,29 @@ function translate_quadratic(G_of_x,x_star)
     return (H,h,kh[1])
 end
 
-function kernel_rotation(A)
+function kernel_rotation(A; dim_N_only=true)
     """ Find an orthonormal basis for the nullspace of A.
     This matrix may be used to rotate a temporal instanton
     problem instance to eliminate all but nullity(A) elements.
     """
     m,n = size(A)
 
-    # Assume A always has full row rank.
+    # Assume A always has full row rank of m.
     #if isposdef(A*A')
-    dim_N = n - m
+    dim_N = n - m # dimension of nullspace of A
     # else
     #     dim_N = n - rank(A)
     #     warn("A does not have full row rank.")
     # end
     q = qr(A'; thin=false)[1]
-    R = circshift(q,(0,dim_N))
-    return R
+    N = circshift(q,(0,dim_N))
+
+    # Usually we only need the cols that span N(A):
+    if dim_N_only
+        return N[:,1:dim_N]
+    else
+        return N
+    end
 end
 
 function rotate_quadratic(G_of_x,R)
