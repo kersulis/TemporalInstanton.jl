@@ -2,18 +2,15 @@
 Qobj from the problem dimensions.
 Assume no correlation between wind sites.
 """
-function tmp_inst_Qobj(n,nr,T)
+function tmp_inst_Qobj(n,nr,T; pad=true)
     Qobj = sparse(diagm(repeat([ones(nr);zeros(n+1)],outer=[T])))
-    #Qobj = tmp_inst_pad_Q(full(Qobj),T)
-    return Qobj
-end
-
-""" Add T rows and T columns of zeros
-to matrix Q
-"""
-function tmp_inst_pad_Q(Q,T)
-    m,n = size(Q)
-    return [[Q zeros(m,T)]; zeros(T,n+T)]
+    if !pad
+        return Qobj
+    else
+        # Add T rows and columns of zeros to Q:
+        r,c = size(Qobj)
+        return [[full(Qobj) zeros(r,T)]; zeros(T,c+T)]
+    end
 end
 
 """ Generate the power balance constraint A matrix
@@ -31,7 +28,7 @@ Returns A, which is (n+1)*T-by-(nr+n+1)*T
 * ref is the index of the angle reference bus
 * k is the vector of generator participation factors
 """
-function tmp_inst_A(Ridx,T,Y,ref,k)#,tau,line)
+function tmp_inst_A1(Ridx,T,Y,ref,k; pad=true)
     function ei(n,i)
         e = zeros(n)
         e[i] = 1.
@@ -54,20 +51,18 @@ function tmp_inst_A(Ridx,T,Y,ref,k)#,tau,line)
         A = blkdiag(A, Atemp)
     end
 
-    # These rows relate auxiliary angle variables to
-    # original angle variables:
-    #     A2 = tmp_inst_A_scale(n,Ridx,T,tau,ref,line)
-
-    #     # Augment A with new rows:
-    #     A = [[full(A) zeros((n+1)*T,T)]; A2]
-
-    return A
+    if !pad
+        return full(A)
+    else
+        # pad A with columns of zeros (rows will be added during line loop)
+        return [full(A) zeros((n+1)*T,T)]
+    end
 end
 
 """ Generate the vector b of power balance constraints.
 Assumes G0 and D are nT-by-1 vectors.
 """
-function tmp_inst_b(n,T,G0,P0,D)
+function tmp_inst_b(n,T,G0,P0,D; pad=true)
     b = FloatingPoint[]
     netGen = G0 + P0 - D
 
@@ -77,16 +72,11 @@ function tmp_inst_b(n,T,G0,P0,D)
         append!(b,netGen[start:stop])
         push!(b,0.)
     end
-
-    # Extend b with T additional zeroes:
-    # tmp_inst_pad_b(b,T)
+    if pad
+        # Not sure when I would ever not want to do this...
+        append!(b,zeros(T))
+    end
     return b
-end
-
-    """ Append T zeros to vector b
-    """
-function tmp_inst_pad_b(b,T)
-    append!(b,zeros(T))
 end
 
 """ Generate Q_theta in the temperature constraint
