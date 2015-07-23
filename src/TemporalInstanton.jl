@@ -5,7 +5,7 @@ using HDF5, JLD, ProgressMeter, IProfile
 export
     solve_instanton_qcqp, solve_temporal_instanton, LineModel,
     # temporary:
-    tmp_inst_Qobj,tmp_inst_pad_Q,tmp_inst_A,tmp_inst_b,tmp_inst_pad_b,
+    tmp_inst_Qobj,tmp_inst_pad_Q,tmp_inst_A1,tmp_inst_b,tmp_inst_pad_b,
     tmp_inst_Qtheta,add_thermal_parameters,compute_a,compute_c,
     compute_d,compute_f,tmp_inst_A_scale_new
 
@@ -15,29 +15,29 @@ include("QCQPMatrixBuilding.jl")
 include("manipulations.jl")
 include("SolveSecular.jl")
 
+""" Solve the following quadratically-
+constrained quadratic program:
+
+    min  G_of_x
+    s.t. A*x = b
+         Q_of_x = 0
+
+where   G_of_x = x'*Qobj*x,
+        Q_of_x = x'*Qtheta*x - c
+
+Thus, an equivalent problem expression is:
+
+    min  z'*Qobj*z
+    s.t. A*z = b
+         z'*Qtheta*z = c
+
+The solution method is due in part to Dr. Dan
+Bienstock of Columbia University. It involves
+translating and rotating the problem, using
+partial KKT conditions, and solving the
+resulting secular equation.
+"""
 function solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
-    """ This function solves the following quadratically-
-    constrained quadratic program:
-
-        min  G_of_x
-        s.t. A*x = b
-             Q_of_x = 0
-
-    where   G_of_x = x'*Qobj*x,
-            Q_of_x = x'*Qtheta*x - c
-
-    Thus, an equivalent problem expression is:
-
-        min  z'*Qobj*z
-        s.t. A*z = b
-             z'*Qtheta*z = c
-
-    The solution method is due in part to work by
-    Dr. Dan Bienstock of Columbia University. It
-    involves translating and rotating the problem,
-    using partial KKT conditions, and solving the
-    resulting secular equation.
-    """
     m,n = size(A)
     Qobj = G_of_x[1]
     c = - Q_of_x[3]
@@ -54,7 +54,7 @@ function solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
     G_of_y = translate_quadratic(G_of_x,x_star)
     Q_of_y = translate_quadratic(Q_of_x,x_star)
 
-    N = kernel_rotation(A)[:,1:size(A,2) - rank(A)] # take only first k cols
+    N = kernel_rotation(A; dim_N_only=true) # take only cols spanning N(A)
 
     N1,N2,N3 = N[idx1,:],N[idx2,:],N[idx3,:] # partition N
 
@@ -96,6 +96,9 @@ function solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
     return opt[indmin(sol)],minimum(sol)
 end
 
+""" Perform temporal instanton analysis on
+many lines in a system at once.
+"""
 function solve_temporal_instanton(
     Ridx,
     Y,
@@ -112,49 +115,37 @@ function solve_temporal_instanton(
     Tamb,
     T0,
     int_length)
-    """ Convenience function used to perform temporal
-    instanton analysis on many lines in a system at once.
-    """
-
-    n = length(k)
-    nr = length(Ridx)
-    T = round(Int64,length(find(P0))/nr)
-
-    numLines = length(lines)
 
     # Initialize progress meter:
     prog = Progress(length(find(line_lengths)),1)
 
-    # Initialize vars used to store results:
+    n = length(k)
+    nr = length(Ridx)
+    T = round(Int64,length(find(P0))/nr)
+    numLines = length(lines)
+
+    # Vars used to store results:
     score = Float64[]
     α = Array(Vector{Float64},0)
-
     θ = Array(Array,0)
     x = Array(Array,0)
     diffs = Array(Array,0)
     xopt = Array(Array,0)
 
-    # Create Qobj:
-    Qobj = tmp_inst_Qobj(n,nr,T)
-    # Augment Qobj with additional rows and columns of zeros:
-    Qobj = tmp_inst_pad_Q(full(Qobj),T)
-
-    # Create A1 (only A2 changes during opt.):
-    A1 = full(tmp_inst_A(Ridx,T,Y,ref,k))
-    A1 = [A1 zeros((n+1)*T,T)]
-
-    # Create b:
-    b = tmp_inst_b(n,T,G0,P0,D0)
-    # Augment b with new elements:
-    tmp_inst_pad_b(b,T)
-
-    # Create Qtheta:
-    Qtheta = tmp_inst_Qtheta(n,nr,T)
-
     # Form objective quadratic:
+    Qobj = tmp_inst_Qobj(n,nr,T; pad=true)
     G_of_x = (Qobj,0,0)
 
+    # Create A1 (only A2, the bottom part,
+    # changes during line loop):
+    A1 = tmp_inst_A1(Ridx,T,Y,ref,k; pad=true)
+
+    b = tmp_inst_b(n,T,G0,P0,D0; pad=true)
+    Qtheta = tmp_inst_Qtheta(n,nr,T)
+
+    # parallelize the loop:
     # addprocs(3)
+
     # Loop through all lines:
     for idx = 1:numLines
         # thermal model cannot handle zero-length lines:
@@ -246,6 +237,7 @@ function solve_temporal_instanton(
 
         next!(prog)
     end
+    # shut down procs (parallelization over)
     #rmprocs([2,3,4])
     return score,x,θ,α,diffs,xopt
 end
