@@ -1,67 +1,51 @@
-type LineModel
-    from
-    to
-    rij
-    xij
-    length
-    D0
-    mCp
-    Ilim
-    r
-    Tlim
-    ηc
-    ηr
-    qs
-end
-
-type ConductorParams
-    D0
-    mCp
-    Ilim
-    r
-    Tlim
-    ηc
-    ηr
-    qs
-end
-
-""" Assign values to fields of `LineModel` type instance.
-Uses data from Mads's MPC paper.
+""" Parameters that depend on which line is chosen.
 """
-function add_thermal_parameters(line_model,conductor_name)
-    if conductor_name == "waxwing"
-        line_model.D0   = 15.5e-3
-        line_model.mCp  = 383.
-        line_model.Ilim = 439.
-        line_model.r    = 110e-6
-        line_model.Tlim = 65.
-        line_model.ηc   = 0.955
-        line_model.ηr   = 2.207e-9
-        line_model.qs   = 14.4
-    elseif conductor_name == "dove"
-        line_model.D0   = 23.5e-3
-        line_model.mCp  = 916.
-        line_model.Ilim = 753.
-        line_model.r    = 60e-6
-        line_model.Tlim = 69.
-        line_model.ηc   = 1.179
-        line_model.ηr   = 3.346e-9
-        line_model.qs   = 21.9
-    end
-    return line_model
+type LineParams
+    from    # node
+    to      # node
+    rij     # [pu] resistance
+    xij     # [pu] reactance
+    length  # [m]
+end
+
+""" Parameters that vary only with conductor material.
+"""
+type ConductorParams
+    D0      # [m] conductor diameter
+    mCp     # [J/m-C] line heat capacity
+    Ilim    # [A] max. allowable current
+    r       # [pu] line resistance
+    Tlim    # [C] highest allowable line temperature
+    ηc      # [W/m-C] conductive heat loss rate coefficient
+    ηr      # [W/m-C^4] radiative heat loss rate coefficient
+    qs      # [W/m] solar heat gain rate
 end
 
 """ Returns instance of `ConductorParams` filled with
-conductor parameters.
+conductor parameters. Data from Mads's MPC paper.
 
 Accepts "waxwing" and "dove" as arguments.
 """
-function return_conductor_params(conductor_name::String)
-    if conductor_name == "waxwing"
+function return_conductor_params(conductor::String)
+    if conductor == "waxwing"
         return ConductorParams(15.5e-3,383.,439.,110e-6,65.,0.955,2.207e-9,14.4)
-    elseif conductor_name == "dove"
+    elseif conductor == "dove"
         return ConductorParams(23.5e-3,916.,753.,60e-6,69.,1.179,3.346e-9,21.9)
     end
+end
+
+""" Return (a,c,d,f) thermal constants used in line temperature IVP. Arguments:
+
+* `lp` instance of LineParams
+* `cp` instance of ConductorParams
+* `Tamb` [C] ambient temperature
+"""
+function return_thermal_constants(lp,cp,Tamb,Sb,int_length,n,T0)
+    a = compute_a(cp.mCp,cp.ηc,cp.ηr,Tamb,cp.Tlim)
+    c = compute_c(cp.mCp,lp.rij,lp.xij,Sb,lp.length)
+    d = compute_d(cp.mCp,cp.ηc,cp.ηr,Tamb,cp.Tlim,cp.qs)
+    f = compute_f(int_length,a,d,n,T0)
+    return a,c,d,f
 end
 
 """ Returns constant `a` [1/s]. Arguments:
@@ -105,15 +89,15 @@ end
 
 """ Returns constant `f` [C]. Arguments:
 
-* `int_length` [s] is length of each interval
+* `il` [s] is time interval length
 * `a` [1/s] is a constant
 * `d` [W/m] is a constant
 * `n` [unitless] is the number of time intervals
 * `T0` [C] is the initial steady-state line temp
 """
-function compute_f(int_length,a,d,n,T0)
-    sum_coeff = sum([(e^(int_length*a))^i - (e^(int_length*a))^(i-1) for i in 1:n])
-    return (e^(int_length*a))^n*T0 + (d/a)*sum_coeff
+function compute_f(il,a,d,n,T0)
+    sum_coeff = sum([(e^(il*a))^i - (e^(il*a))^(i-1) for i in 1:n])
+    return (e^(il*a))^n*T0 + (d/a)*sum_coeff
 end
 
 
