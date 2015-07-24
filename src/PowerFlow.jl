@@ -67,7 +67,7 @@ function fixed_wind_b(n,T,G0,Pnet,D)
     return b
 end
 
-function return_angles(fixed_x,N)
+function return_angles(fixed_x,N,T)
     angles = Array(Vector,0)
     alpha = FloatingPoint[]
     for i = 1:T
