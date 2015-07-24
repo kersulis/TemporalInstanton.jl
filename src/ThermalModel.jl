@@ -14,9 +14,20 @@ type LineModel
     qs
 end
 
-    """ Assign values to fields of LineModel type instance.
-    Uses data from Mads's MPC paper.
-    """
+type ConductorParams
+    D0
+    mCp
+    Ilim
+    r
+    Tlim
+    ηc
+    ηr
+    qs
+end
+
+""" Assign values to fields of `LineModel` type instance.
+Uses data from Mads's MPC paper.
+"""
 function add_thermal_parameters(line_model,conductor_name)
     if conductor_name == "waxwing"
         line_model.D0   = 15.5e-3
@@ -40,48 +51,65 @@ function add_thermal_parameters(line_model,conductor_name)
     return line_model
 end
 
-""" Returns constant a [1/s]
-mCp [J/m-C] is line heat capacity
-ηc [W/m-C] is conductive heat loss rate coefficient
-ηr [W/m-C^4] is radiative heat loss rate coefficient
-Tamb [C] is ambient temperature (of air)
-Tlim [C] is highest allowable line temperature
+""" Returns instance of `ConductorParams` filled with
+conductor parameters.
+
+Accepts "waxwing" and "dove" as arguments.
+"""
+function return_conductor_params(conductor_name::String)
+    if conductor_name == "waxwing"
+        return ConductorParams(15.5e-3,383.,439.,110e-6,65.,0.955,2.207e-9,14.4)
+    elseif conductor_name == "dove"
+        return ConductorParams(23.5e-3,916.,753.,60e-6,69.,1.179,3.346e-9,21.9)
+    end
+end
+
+""" Returns constant `a` [1/s]. Arguments:
+
+* `mCp` [J/m-C] is line heat capacity
+* `ηc` [W/m-C] is conductive heat loss rate coefficient
+* `ηr` [W/m-C^4] is radiative heat loss rate coefficient
+* `Tamb` [C] is ambient temperature (of air)
+* `Tlim` [C] is highest allowable line temperature
 """
 function compute_a(mCp,ηc,ηr,Tamb,Tlim)
     Tmid = (Tamb + Tlim)/2
     return mCp\(-ηc - 4*ηr*(Tmid + 273)^3)
 end
 
-""" Return constant c [W/m]
-mCp [J/m-C] is line heat capacity
-r [pu] is line resistance
-x [pu] is line reactance
-Sb [W] is system base MVA
-L [m] is line length
+""" Return constant `c` [W/m]. Arguments:
+
+* `mCp` [J/m-C] is line heat capacity
+* `r` [pu] is line resistance
+* `x` [pu] is line reactance
+* `Sb` [W] is system base MVA
+* `L` [m] is line length
 """
 function compute_c(mCp,r,x,Sb,L)
     return r*Sb/(3*mCp*L*(x^2))
 end
 
-""" Returns constant d [W/m]
-mCp [J/m-C] is line heat capacity
-ηc [W/m-C] is conductive heat loss rate coefficient
-ηr [W/m-C^4] is radiative heat loss rate coefficient
-Tamb [C] is ambient temperature (of air)
-Tlim [C] is highest allowable line temperature
-q_solar [W/m] is the solar heat gain rate
+""" Returns constant `d` [W/m]. Arguments:
+
+* `mCp` [J/m-C] is line heat capacity
+* `ηc` [W/m-C] is conductive heat loss rate coefficient
+* `ηr` [W/m-C^4] is radiative heat loss rate coefficient
+* `Tamb` [C] is ambient temperature (of air)
+* `Tlim` [C] is highest allowable line temperature
+* `q_solar` [W/m] is the solar heat gain rate
 """
 function compute_d(mCp,ηc,ηr,Tamb,Tlim,q_solar)
     Tmid = (Tamb + Tlim)/2
     return mCp\(ηc*Tamb - ηr*((Tmid + 273)^4 - (Tamb + 273)^4) + 4*ηr*Tmid*(Tmid+273)^3 + q_solar)
 end
 
-""" Returns constant f
-int_length [s] is length of each interval
-a [1/s] is a constant
-d [W/m] is a constant
-n [-] is the number of time intervals
-T0 [C] is the initial steady-state line temp
+""" Returns constant `f` [C]. Arguments:
+
+* `int_length` [s] is length of each interval
+* `a` [1/s] is a constant
+* `d` [W/m] is a constant
+* `n` [unitless] is the number of time intervals
+* `T0` [C] is the initial steady-state line temp
 """
 function compute_f(int_length,a,d,n,T0)
     sum_coeff = sum([(e^(int_length*a))^i - (e^(int_length*a))^(i-1) for i in 1:n])
@@ -89,13 +117,14 @@ function compute_f(int_length,a,d,n,T0)
 end
 
 
-""" Return line's final temperature
-int_length [s] is length of each interval
-a [1/s] is a constant
-c [W/m] is a constant
-f [C] is a constant
-n [-] is the number of time intervals
-θij [rad] is the vector of angle differences (sorted by time interval)
+""" Return line's final temperature. Arguments:
+
+* `int_length` [s] is length of each interval
+* `a` [1/s] is a constant
+* `c` [W/m] is a constant
+* `f` [C] is a constant
+* `n` [unitless] is the number of time intervals
+* `θij` [rad] is the vector of angle differences (sorted by time interval)
 """
 function compute_T(int_length,a,c,f,n,θij)
     angle_coeffs = [(e^(int_length*a))^i - (e^(int_length*a))^(i-1) for i in 1:n]
