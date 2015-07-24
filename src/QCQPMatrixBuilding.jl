@@ -19,6 +19,7 @@ and generator participation factors.
 Assumes the admittance matrix is n-by-n.
 
 Returns A, which is (n+1)*T-by-(nr+n+1)*T
+(or (nr+n+2)*T if pad=true)
 
 * nr is the number of wind farms in the network
 * n is the number of nodes in the network
@@ -54,7 +55,7 @@ function tmp_inst_A1(Ridx,T,Y,ref,k; pad=true)
     if !pad
         return full(A)
     else
-        # pad A with columns of zeros (rows will be added during line loop)
+        # pad A with T columns of zeros (rows added during line loop)
         return [full(A) zeros((n+1)*T,T)]
     end
 end
@@ -108,19 +109,19 @@ line
 * int_length is interval length in seconds (e.g. 600
     for 10 minutes)
 """
-function tmp_inst_A_scale_new(n,Ridx,T,line,therm_a,int_length)
+function tmp_inst_A2(n,Ridx,T,line,therm_a,int_length)
     (i,k) = line
     nr = length(Ridx)
 
-    A = zeros(T,(nr+n+2)*T)
+    A2 = zeros(T,(nr+n+2)*T)
 
     for t = 1:T
         i_pos = (nr+n+1)*(t-1) + nr + i
         k_pos = (nr+n+1)*(t-1) + nr + k
         coef = sqrt(-exp(therm_a*int_length)^(T-t+1) + exp(therm_a*int_length)^(T-t))
-        A[t,i_pos] = -coef
-        A[t,k_pos] = coef
-        A[t,(n+nr+1)*T + t] = 1
+        A2[t,i_pos] = -coef
+        A2[t,k_pos] = coef
+        A2[t,(n+nr+1)*T + t] = 1
     end
-    return A
+    return A2
 end
