@@ -3,11 +3,15 @@ module TemporalInstanton
 using HDF5, JLD, ProgressMeter, IProfile
 
 export
-    solve_instanton_qcqp, solve_temporal_instanton, LineModel,
+    solve_instanton_qcqp, solve_temporal_instanton, LineParams,
+    ConductorParams,
     # temporary:
-    tmp_inst_Qobj,tmp_inst_pad_Q,tmp_inst_A1,tmp_inst_b,tmp_inst_pad_b,
-    tmp_inst_Qtheta,add_thermal_parameters,compute_a,compute_c,
-    compute_d,compute_f,tmp_inst_A_scale_new
+    tmp_inst_Qobj,tmp_inst_A1,tmp_inst_b,tmp_inst_Qtheta,
+    return_conductor_params,return_thermal_constants,tmp_inst_A2,
+
+    # power flow:
+    expand_renewable_vector,fixed_wind_A,fixed_wind_b,return_angles,
+    return_angle_diffs
 
 include("PowerFlow.jl")
 include("ThermalModel.jl")
@@ -56,8 +60,6 @@ function solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
 
     N = kernel_rotation(A; dim_N_only=true) # take only cols spanning N(A)
 
-    N1,N2,N3 = N[idx1,:],N[idx2,:],N[idx3,:] # partition N
-
     G_of_z = rotate_quadratic(G_of_y,N')
     Q_of_z = rotate_quadratic(Q_of_y,N')
 
@@ -97,7 +99,24 @@ function solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
 end
 
 """ Perform temporal instanton analysis on
-many lines in a system at once.
+many lines in a system at once. Inputs:
+
+* `Ridx`            Vector: indices of nodes that have wind farms
+* `Y`               Admittance matrix
+* `G0`              Conventional generation dispatch
+* `P0`              Renewable generation forecast
+* `D0`              Conventional demand
+* `Sb`              System base voltage
+* `ref`             Index of system angle reference bus
+* `lines`           Vector: tuples (from,to) of lines to loop through
+* `res`             Vector: pu resistance for all lines
+* `reac`            Vector: pu reactance for all lines
+* `k`               Vector: conventional generator participation factors
+* `line_lengths`    Vector: line lengths in meters
+* `line_conductors` Vector: strings (e.g. "waxwing") indicating conductor types
+* `Tamb`            Ambient temperature
+* `T0`              Initial line temperature (TODO: compute within)
+* `int_length`      Length of each time interval in seconds
 """
 function solve_temporal_instanton(
     Ridx,
@@ -112,6 +131,7 @@ function solve_temporal_instanton(
     reac,
     k,
     line_lengths,
+    line_conductors,
     Tamb,
     T0,
     int_length)
@@ -146,53 +166,32 @@ function solve_temporal_instanton(
     # parallelize the loop:
     # addprocs(3)
 
-    # Loop through all lines:
-    for idx = 1:numLines
-        # thermal model cannot handle zero-length lines:
-        if line_lengths[idx] == 0
-            continue
-        end
+    # Loop through all lines excluding those with zero length:
+    nz_line_idx = find(line_lengths.!=0)
+
+    # initialize conductor_name
+    # conductor_name = "init"
+    # conductor_params = ConductorParams(15.5e-3,383.,439.,110e-6,65.,0.955,2.207e-9,14.4)
+
+    # loop through lines (having non-zero length)
+    for idx in nz_line_idx
         line = lines[idx]
-        line_model = LineModel(line[1],
-                    line[2],
-                    res[idx],
-                    reac[idx],
-                    line_lengths[idx],
-                    NaN,
-                    NaN,
-                    NaN,
-                    NaN,
-                    NaN,
-                    NaN,
-                    NaN,
-                    NaN)
+        conductor_name = line_conductors[idx]
+        conductor_params = return_conductor_params(conductor_name)
 
-        add_thermal_parameters(line_model, "waxwing")
+        # if current line uses a different conductor than previous,
+        # re-compute conductor_params:
+        # if line_conductors[idx] != conductor_name
+        #     conductor_name = line_conductors[idx]
+        #     conductor_params = return_conductor_params(conductor_name)
+        # end
+        # compute line_params based on current line:
+        line_params = LineParams(line[1],line[2],res[idx],reac[idx],line_lengths[idx])
 
-        therm_a = compute_a(line_model.mCp,
-                            line_model.ηc,
-                            line_model.ηr,
-                            Tamb,
-                            line_model.Tlim)
-        therm_c = compute_c(line_model.mCp,
-                            line_model.rij,
-                            line_model.xij,
-                            Sb,
-                            line_model.length)
-        therm_d = compute_d(line_model.mCp,
-                            line_model.ηc,
-                            line_model.ηr,
-                            Tamb,
-                            line_model.Tlim,
-                            line_model.qs)
-        therm_f = compute_f(int_length,
-                            therm_a,
-                            therm_d,
-                            T,
-                            T0)
+        (therm_a,therm_c,therm_d,therm_f) = return_thermal_constants(line_params,conductor_params,Tamb,Sb,int_length,T,T0)
 
         # thermal constraint, Q(z) = 0:
-        kQtheta = (therm_a/therm_c)*(line_model.Tlim - therm_f)
+        kQtheta = (therm_a/therm_c)*(conductor_params.Tlim - therm_f)
         Q_of_x = (Qtheta,0,kQtheta)
 
         # array of vectors with Float64 values:
@@ -201,7 +200,7 @@ function solve_temporal_instanton(
         alpha = Float64[]
 
         # Create A2 based on chosen line:
-        A2 = tmp_inst_A_scale_new(n,Ridx,T,line,therm_a,int_length)
+        A2 = tmp_inst_A2(n,Ridx,T,line,therm_a,int_length)
         # Stack A1 and A2:
         A = [A1; A2]
 
@@ -215,7 +214,6 @@ function solve_temporal_instanton(
             push!(alpha,NaN)
             push!(diffs,[])
         else
-
             # Variable breakdown:
             # (nr+n+1) per time step
             #   First nr are deviations
@@ -235,6 +233,7 @@ function solve_temporal_instanton(
         push!(α,alpha)
         push!(xopt,xvec)
 
+        # update ProgressMeter
         next!(prog)
     end
     # shut down procs (parallelization over)
