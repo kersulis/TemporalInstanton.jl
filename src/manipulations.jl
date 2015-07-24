@@ -1,4 +1,4 @@
-@iprofile begin
+# @iprofile begin
 function partition_A(A,Qobj,T)
     """ Return A1, A2, A3 where:
     * A1 corresponds to wind
@@ -65,7 +65,7 @@ function kernel_rotation(A; dim_N_only=true)
     # Assume A always has full row rank of m.
     # It may be possible for this assumption to fail
     # due to numerics, but a rank() check is expensive.
-    
+
     #if isposdef(A*A')
     dim_N = n - m # dimension of nullspace of A
     # else
@@ -138,4 +138,4 @@ function return_xopt(w2opt,B11,B12,b1,N,U,K,x_star)
     return xopt
 end
 
-end # @iprofile begin
+# end # @iprofile begin
