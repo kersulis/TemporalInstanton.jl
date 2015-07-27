@@ -55,7 +55,7 @@ function translate_quadratic(G_of_x,x_star)
     return (H,h,kh[1])
 end
 
-function kernel_rotation(A; dim_N_only=true)
+function kernel_rotation(A; spqr=true)
     """ Find an orthonormal basis for the nullspace of A.
     This matrix may be used to rotate a temporal instanton
     problem instance to eliminate all but nullity(A) elements.
@@ -65,22 +65,36 @@ function kernel_rotation(A; dim_N_only=true)
     # Assume A always has full row rank of m.
     # It may be possible for this assumption to fail
     # due to numerics, but a rank() check is expensive.
-
-    #if isposdef(A*A')
     dim_N = n - m # dimension of nullspace of A
-    # else
-    #     dim_N = n - rank(A)
-    #     warn("A does not have full row rank.")
-    # end
-    q = qr(A'; thin=false)[1]
-    N = circshift(q,(0,dim_N))
 
-    # Usually we only need the cols that span N(A):
-    if dim_N_only
-        return N[:,1:dim_N]
-    else
+    if spqr
+        F = qrfact(sparse(A'))
+        # B selects last dim_N cols of Q:
+        B = [zeros(size(A,2)-dim_N,dim_N); eye(dim_N)]
+        N = convert(Array,SparseMatrix.SPQR.qmult(SparseMatrix.SPQR.QX, F, SparseMatrix.CHOLMOD.Dense(B)))
         return N
+    else
+        q = qr(A'; thin=false)[1]
+        return q[:,end-dim_N+1:end]
     end
+end
+
+""" Find an orthonormal basis for the nullspace of A.
+This matrix may be used to rotate a temporal instanton
+problem instance to eliminate all but nullity(A) elements.
+"""
+function kernel_rotation_sparse(A; dim_N_only=true)
+    m,n = size(A)
+    # Assume A always has full row rank of m.
+    # It may be possible for this assumption to fail
+    # due to numerics, but a rank() check is expensive.
+    dim_N = n - m # dimension of nullspace of A
+
+    # qr factorization of A using fill-reducing permutation:
+    F = qrfact(sparse(A'))
+    # B selects last dim_N cols of Q:
+    B = [zeros(size(A,2)-dim_N,dim_N); eye(dim_N)]
+    N = convert(Array,SparseMatrix.SPQR.qmult(SparseMatrix.SPQR.QX, F, SparseMatrix.CHOLMOD.Dense(B)))
 end
 
 function rotate_quadratic(G_of_x,R)

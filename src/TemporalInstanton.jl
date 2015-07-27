@@ -58,7 +58,7 @@ function solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
     G_of_y = translate_quadratic(G_of_x,x_star)
     Q_of_y = translate_quadratic(Q_of_x,x_star)
 
-    N = kernel_rotation(A; dim_N_only=true) # take only cols spanning N(A)
+    N = kernel_rotation(A, spqr=false) # take only cols spanning N(A)
 
     G_of_z = rotate_quadratic(G_of_y,N')
     Q_of_z = rotate_quadratic(Q_of_y,N')
