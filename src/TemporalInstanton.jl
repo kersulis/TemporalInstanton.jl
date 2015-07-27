@@ -4,7 +4,8 @@ using HDF5, JLD, ProgressMeter, IProfile
 
 export
     solve_instanton_qcqp, solve_temporal_instanton, LineParams,
-    ConductorParams,
+    ConductorParams, analyze_line,
+
     # temporary:
     tmp_inst_Qobj,tmp_inst_A1,tmp_inst_b,tmp_inst_Qtheta,
     return_conductor_params,return_thermal_constants,tmp_inst_A2,
@@ -136,21 +137,10 @@ function solve_temporal_instanton(
     T0,
     int_length)
 
-    # Initialize progress meter:
-    prog = Progress(length(find(line_lengths)),1)
-
     n = length(k)
     nr = length(Ridx)
     T = round(Int64,length(find(P0))/nr)
     numLines = length(lines)
-
-    # Vars used to store results:
-    score = Float64[]
-    α = Array(Vector{Float64},0)
-    θ = Array(Array,0)
-    x = Array(Array,0)
-    diffs = Array(Array,0)
-    xopt = Array(Array,0)
 
     # Form objective quadratic:
     Qobj = tmp_inst_Qobj(n,nr,T; pad=true)
@@ -163,18 +153,11 @@ function solve_temporal_instanton(
     b = tmp_inst_b(n,T,G0,P0,D0; pad=true)
     Qtheta = tmp_inst_Qtheta(n,nr,T)
 
-    # parallelize the loop:
-    # addprocs(3)
-
-    # Loop through all lines excluding those with zero length:
+    # Exclude lines with zero length:
     nz_line_idx = find(line_lengths.!=0)
 
-    # initialize conductor_name
-    # conductor_name = "init"
-    # conductor_params = ConductorParams(15.5e-3,383.,439.,110e-6,65.,0.955,2.207e-9,14.4)
-
     # loop through lines (having non-zero length)
-    for idx in nz_line_idx
+    results = @parallel (vcat) for idx in nz_line_idx
         line = lines[idx]
         conductor_name = line_conductors[idx]
         conductor_params = return_conductor_params(conductor_name)
@@ -194,11 +177,6 @@ function solve_temporal_instanton(
         kQtheta = (therm_a/therm_c)*(conductor_params.Tlim - therm_f)
         Q_of_x = (Qtheta,0,kQtheta)
 
-        # array of vectors with Float64 values:
-        deviations = Array(Vector{Float64},0)
-        angles = Array(Vector{Float64},0)
-        alpha = Float64[]
-
         # Create A2 based on chosen line:
         A2 = tmp_inst_A2(n,Ridx,T,line,therm_a,int_length)
         # Stack A1 and A2:
@@ -206,6 +184,22 @@ function solve_temporal_instanton(
 
         # Computationally expensive part: solving QCQP
         xvec,sol = solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
+    end
+
+    # Store results in more human-readable form:
+    score = Float64[]
+    α = Array(Vector{Float64},0)
+    θ = Array(Array,0)
+    x = Array(Array,0)
+    diffs = Array(Array,0)
+    xopt = Array(Array,0)
+
+    for i in 1:size(results,1)
+        xvec,sol = results[i]
+        # array of vectors with Float64 values:
+        deviations = Array(Vector{Float64},0)
+        angles = Array(Vector{Float64},0)
+        alpha = Float64[]
 
         push!(score,sol)
         if isinf(sol)
@@ -232,12 +226,7 @@ function solve_temporal_instanton(
         push!(θ,angles)
         push!(α,alpha)
         push!(xopt,xvec)
-
-        # update ProgressMeter
-        next!(prog)
     end
-    # shut down procs (parallelization over)
-    #rmprocs([2,3,4])
     return score,x,θ,α,diffs,xopt
 end
 
