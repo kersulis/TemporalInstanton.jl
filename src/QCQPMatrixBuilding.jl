@@ -3,13 +3,13 @@ Qobj from the problem dimensions.
 Assume no correlation between wind sites.
 """
 function tmp_inst_Qobj(n,nr,T; pad=true)
-    Qobj = sparse(diagm(repeat([ones(nr);zeros(n+1)],outer=[T])))
+    Qobj = spdiagm(repeat([ones(nr);zeros(n+1)],outer=[T]))
     if !pad
         return Qobj
     else
         # Add T rows and columns of zeros to Q:
         r,c = size(Qobj)
-        return [[full(Qobj) zeros(r,T)]; zeros(T,c+T)]
+        return [[Qobj spzeros(r,T)]; spzeros(T,c+T)]
     end
 end
 
