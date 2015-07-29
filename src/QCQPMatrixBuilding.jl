@@ -107,19 +107,26 @@ line
 * int_length is interval length in seconds (e.g. 600
     for 10 minutes)
 """
-function tmp_inst_A2(n,Ridx,T,line,therm_a,int_length)
+function tmp_inst_A2(
+    n::Int64,
+    Ridx::Array{Int64,1},
+    T::Int64,
+    line::Tuple{Int64,Int64},
+    therm_a::Float64,
+    int_length::Float64
+    )
+
     (i,k) = line
     nr = length(Ridx)
 
-    A2 = zeros(T,(nr+n+2)*T)
+    pos = [(nr+n+1)*(t-1) + nr for t in 1:T]
+    one_pos = collect((n+nr+1)*T+1:(n+nr+2)*T)
+    coefs = [sqrt(-exp(therm_a*int_length)^(T-t+1) +
+        exp(therm_a*int_length)^(T-t)) for t in 1:T]
 
-    for t = 1:T
-        i_pos = (nr+n+1)*(t-1) + nr + i
-        k_pos = (nr+n+1)*(t-1) + nr + k
-        coef = sqrt(-exp(therm_a*int_length)^(T-t+1) + exp(therm_a*int_length)^(T-t))
-        A2[t,i_pos] = -coef
-        A2[t,k_pos] = coef
-        A2[t,(n+nr+1)*T + t] = 1
-    end
-    return A2
+    sparse(
+    repmat(1:T,3),
+    [pos+i;pos+k;one_pos],
+    [-coefs;coefs;ones(T)]
+    )
 end
