@@ -85,10 +85,8 @@ of a temporal instanton problem instance.
 "line" has the form (i,k), where i and k refer to
 the endpoints of the chosen line.
 """
-function tmp_inst_Qtheta(n,nr,T)#,tau)
-    Qtheta = zeros((nr+n+2)*T,(nr+n+2)*T)
-    Qtheta[end-T+1:end,end-T+1:end] = eye(T)
-    return Qtheta
+function tmp_inst_Qtheta(n,nr,T)
+    blkdiag(spzeros((nr+n+1)*T,(nr+n+1)*T),speye(T))
 end
 
 """ Augment A with T additional rows relating
