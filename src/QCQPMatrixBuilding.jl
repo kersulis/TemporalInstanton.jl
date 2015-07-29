@@ -31,7 +31,7 @@ Returns A, which is (n+1)*T-by-(nr+n+1)*T
 """
 function tmp_inst_A1(Ridx,T,Y,ref,k; pad=true)
     function ei(n,i)
-        e = zeros(n)
+        e = spzeros(n,1)
         e[i] = 1.
         return e
     end
@@ -40,11 +40,11 @@ function tmp_inst_A1(Ridx,T,Y,ref,k; pad=true)
 
     # A has a block diagonal pattern where each
     # block is Atemp:
-    Atemp = [[-eye(n)    Y       -k];
-            zeros(1,n) ei(n,ref)' 0]
+    Atemp = [[-speye(n)    sparse(Y)       -sparsevec(k)];
+            spzeros(1,n)   ei(n+1,ref)'                 ]
 
     # Remove columns corresponding to non-wind nodes:
-    Atemp = sparse(Atemp[:,[Ridx;n+1:2*n+1]])
+    Atemp = Atemp[:,[Ridx;n+1:2*n+1]]
 
     # Now we can tile the Atemp matrix to generate A:
     A = Atemp
@@ -53,10 +53,10 @@ function tmp_inst_A1(Ridx,T,Y,ref,k; pad=true)
     end
 
     if !pad
-        return full(A)
+        return A
     else
         # pad A with T columns of zeros (rows added during line loop)
-        return [full(A) zeros((n+1)*T,T)]
+        return [A spzeros((n+1)*T,T)]
     end
 end
 
