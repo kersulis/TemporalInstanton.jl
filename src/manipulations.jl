@@ -71,7 +71,7 @@ function kernel_rotation(A; spqr=true)
         F = qrfact(sparse(A'))
         # B selects last dim_N cols of Q:
         B = [zeros(size(A,2)-dim_N,dim_N); eye(dim_N)]
-        N = convert(Array,SparseMatrix.SPQR.qmult(SparseMatrix.SPQR.QX, F, SparseMatrix.CHOLMOD.Dense(B)))
+        N = sparse(SparseMatrix.SPQR.qmult(SparseMatrix.SPQR.QX, F, SparseMatrix.CHOLMOD.Dense(B)))
         return N
     else
         q = qr(A'; thin=false)[1]
@@ -105,13 +105,21 @@ function rotate_quadratic(G_of_x,R)
     return (R*G*R',R*g,kg)
 end
 
+function rotate_matrix(G,R)
+    R*G*R'
+end
+
+function rotate_vector(G,R)
+    R*g
+end
+
 function return_K(D)
     """ Return K, the diagonal matrix whose elements are
     square roots of eigenvalues of the given matrix D.
     """
     K = ones(length(D))
     K[find(D)] = sqrt(D[find(D)])
-    return diagm(K)
+    return spdiagm(K)
 end
 
 function partition_B(G_of_w,Q_of_w)
@@ -147,7 +155,6 @@ function return_xopt(w2opt,B11,B12,b1,N,U,K,x_star)
     """
     w1opt = -B11\(B12*w2opt + b1/2)
     wopt = [w1opt;w2opt]
-    #xopt = (N*U/K)*wopt + x_star
     xopt = N*U*diagm(1./diag(K))*wopt + x_star
     return xopt
 end
