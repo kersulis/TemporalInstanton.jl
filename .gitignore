@@ -1,4 +1,5 @@
 *.sublime*
+*.mem
 nbs/.ipynb_checkpoints
 2015-03-17-GroupPresentation
 2015-04-14-GroupPresentation
