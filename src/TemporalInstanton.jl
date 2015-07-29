@@ -4,16 +4,18 @@ using HDF5, JLD, ProgressMeter, IProfile
 
 export
     solve_instanton_qcqp, solve_temporal_instanton, LineParams,
-    ConductorParams, analyze_line,
+    ConductorParams, load_rts96_data, load_polish_data, createY,
 
     # temporary:
     tmp_inst_Qobj,tmp_inst_A1,tmp_inst_b,tmp_inst_Qtheta,
     return_conductor_params,return_thermal_constants,tmp_inst_A2,
+    kernel_rotation,
 
     # power flow:
     expand_renewable_vector,fixed_wind_A,fixed_wind_b,return_angles,
     return_angle_diffs
 
+include("DataLoad.jl")
 include("PowerFlow.jl")
 include("ThermalModel.jl")
 include("QCQPMatrixBuilding.jl")
@@ -59,7 +61,7 @@ function solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
     G_of_y = translate_quadratic(G_of_x,x_star)
     Q_of_y = translate_quadratic(Q_of_x,x_star)
 
-    N = kernel_rotation(A, spqr=false) # take only cols spanning N(A)
+    N = kernel_rotation(A, spqr=true) # take only cols spanning N(A)
 
     G_of_z = rotate_quadratic(G_of_y,N')
     Q_of_z = rotate_quadratic(Q_of_y,N')
@@ -137,6 +139,7 @@ function solve_temporal_instanton(
     T0,
     int_length)
 
+    # why does all allocation happen here?
     n = length(k)
     nr = length(Ridx)
     T = round(Int64,length(find(P0))/nr)
@@ -184,8 +187,14 @@ function solve_temporal_instanton(
 
         # Computationally expensive part: solving QCQP
         xvec,sol = solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
+        # is anything happening? report as each line is finished:
+        #println("$(idx)/$(length(lines))")
     end
 
+    return results
+end
+
+function process_instanton_results(results)
     # Store results in more human-readable form:
     score = Float64[]
     α = Array(Vector{Float64},0)
