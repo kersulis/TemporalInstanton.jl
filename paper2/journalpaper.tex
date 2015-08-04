@@ -82,6 +82,7 @@ New York, NY, United States\\
 \begin{abstract}
 %A time-coupled instanton method for characterizing transmission network vulnerability to wind generation fluctuation is presented. To extend prior instanton work to multiple-time-step analysis, line constraints are specified in terms of temperature rather than current. An optimization formulation is developed to express the minimum wind forecast deviation such that at least one line is driven to its thermal limit. Results are shown for an IEEE RTS-96 system with several wind-farms.
 A previously-developed method for studying a transmission network's vulnerability to wind forecast inaccuracy is expanded. This method uses optimization to find a wind generation pattern close to the forecast that violates a specified line. Repeating the optimization for all lines in the network yields a set of generation patterns which may be sorted by likelihood. Instanton analysis thus yields insight into the potential effects of wind forecast inaccuracy at the system level.
+% To demonstrate the practicability of this method, we present results for the RTS-96 and show how the method scales to larger networks.
 \end{abstract}
 
 %INDEX TERMS
@@ -93,11 +94,9 @@ Forecast uncertainty, Optimization, Transmission operations, Wind energy
 
 \section{Introduction and review}\label{sec:intro}
 
-The impact of wind forecast inaccuracy is greater than ever in grids around the world. As reliance on wind generation increases, changes in weather can induce network congestion. In certain cases this congestion may even cause a transmission line to overheat and sag. System operators use wind forecast data to steer the network away from these scenarios, but wind forecasts are significantly less accurate than generation and demand predictions. How might forecast inaccuracies compound across the network to overheat transmission lines? How likely is this to occur? In this paper we develop temporal instanton analysis, which uses mathematical programming to find troublesome wind patterns and rank them according to likelihood. With this information, system operators and planners gain a new line of defense against renewable generation uncertainty.
+The impact of wind forecast inaccuracy is greater than ever in grids around the world. As reliance on wind generation increases, changes in weather can induce network congestion. In certain cases this congestion may even cause a transmission line to overheat and sag. System operators use wind forecast data to steer the network away from these scenarios, but wind forecasts are significantly less accurate than generation and demand predictions. How might forecast inaccuracies compound across the network to overheat transmission lines? How likely is this to occur? To help answer these questions we present temporal instanton analysis, which uses mathematical programming to find troublesome wind patterns and rank them according to likelihood. With this information, system operators and planners gain a new line of defense against renewable generation uncertainty.
 
 The remainder of this paper is organized as follows. Section II translates the verbal description above into a mathematical formulation of temporal instanton analysis. Section III describes a previously-developed solution method for the temporal instanton problem. We expand on prior work by providing a more detailed treatment of the objective function, discussing implementation details including computational complexity and sparsity, and proposing a particular algorithm for solving the secular equation. Section IV contains results for two networks: a modified version of the RTS-96 and the larger WECC network. The former network has been used in previous instanton analysis studies, while the latter serves to demonstrate scalability of temporal instanton analysis. Finally, an appendix contains a detailed description of the thermal model used to calculate line temperature.
-
-Wind forecasting is a complicated business. Consider first a single wind farm whose output is forecast for some future time. Let the forecast performance be represented by a random variable. Using historical data from ERCOT in Texas, \cite{hodge2011} determined appropriate density functions for this variable based on the forecast horizon. For predictions a few minutes or hours away, forecast performance is approximately Cauchy, with deviations concentrated heavily around the forecast value. As the time horizon increases, accuracy suffers and the distribution approaches the Gaussian curve. Now consider several wind farms scattered across a transmission grid. In addition to individual site forecasts, one must now consider overall patterns. Wind sites tend to be spatially correlated: if wind speed increases at one site, it is unlikely that it will simultaneously decrease at a neighboring site. Temporal correlation further complicates matters: increased wind at site A now may be strongly correlated with greater wind speeds at site B in the future. Spatial and temporal correlation may be calculated from measurement data and encoded in a correlation matrix. The optimization framework developed in this paper contains such a correlation matrix in its objective function.
 
 %The prevalence of renewables in modern transmission networks has
 %researchers and system operators asking: What happens when the wind
@@ -159,6 +158,22 @@ Wind forecasting is a complicated business. Consider first a single wind farm wh
 %Instanton analysis may also be viewed as an optimal control problem. The goal is to drive the system to the edge of its feasible operating region while minimizing the ``effort'' of wind variation. We want to find the smallest deviation from a wind forecast that will drive enough current through at least one line to send it to its thermal limit. It is easy to check whether a particular wind forecast will lead to a line exceeding its thermal threshold; instanton analysis provides us with the sensitivity of line overloads to changes in the given forecast.
 %If the relationship between generation and heat input was linear, we would have a linear optimal control problem.
 
+\section{Model}\label{sec:model}
+
+The first step in temporal instanton analysis is translation of phenomena like wind forecast inaccuracy, transmission line sag, and power balance into mathematical expressions. Ultimately these expressions will be combined into an optimization problem.
+
+\subsection{Wind forecast}\label{sec:wind-forecast}
+
+% Wind forecast overview & justification of covariance matrix
+Wind forecasting is a complicated business. Consider first a single wind farm whose output is forecast for some future time. Let the forecast performance be represented by a random variable. Using historical data from ERCOT in Texas, \cite{hodge2011} determined appropriate density functions for this variable based on the forecast horizon. For predictions a few minutes or hours away, forecast performance is approximately Cauchy, with deviations concentrated heavily around the forecast value. As the time horizon increases, accuracy suffers and the distribution approaches a Gaussian curve. Now consider several wind farms scattered across a transmission grid. In addition to individual site forecasts, one must now consider overall patterns. Wind sites tend to be spatially correlated: if wind speed increases at one site, it is unlikely that it will simultaneously decrease at a neighboring site. Temporal covariance further complicates matters: increased wind at site A now may be strongly correlated with greater wind speeds at site B in the future. Spatial and temporal covariance may be calculated from measurement data and encoded in a covariance matrix. This matrix is incorporated in the quadratic objective function developed in \ref{sec:Qobj}.
+
+% place this in the QCQP part of the paper
+To ensure that the wind patterns discovered by temporal instanton are realistic, the optimization problem objective function must contain covariance information. Suppose that wind generation throughout the network is represented as a Gaussian random vector. Comparing our objective function to the PDF of such a vector shows that $Q_{dev}$ corresponds to the inverse of covariance.
+
+\subsection{Transmission line heating}\label{sec:line-heating}
+
+Transmission line heating is best modeled by a differential equation.
+
 \section{Temporal instanton problem as a QCQP}\label{sec:qcqp}
 
 \subsection{Line losses}\label{sec:line-losses}
@@ -190,7 +205,7 @@ be $z = \begin{bmatrix}dev_t^\top & \theta_1^\top & \alpha_1 &
 \begin{align*}
 Q_{obj} = \begin{bmatrix} Q_{dev} & 0 & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0 \\ 0 & 0  & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & Q_{dev} & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0 \\ 0 & 0 & 0 & 0 & 0 & 0\end{bmatrix}.
 \end{align*}
-Note that $Q_{dev}$ represents the correlation between wind-farms (if any). In the Section \ref{sec:solution} numerical analysis, we will assume $Q_{dev}=I$, the identity matrix.
+Note that $Q_{dev}$ represents covariance between wind-farms (if any). In the Section \ref{sec:solution} numerical analysis, we will assume $Q_{dev}=I$, the identity matrix.
 
 \subsection{Linear constraints: $A$ and $b$}\label{sec:Ax=b}
 
@@ -344,7 +359,7 @@ Of course, this change of variables must also be applied to the cost function. A
 \label{opt4:quad} s.t.\quad &w_2^\top w_2 = c
 \end{align}
 \end{subequations}
-where 
+where
 \[
 B= K^{-1}U^\top N_1^\top Q_z N_1 UK^{-1} \text{ and }b=2 K^{-1}U^\top
 N_1^\top Q_z z_1^*.
@@ -365,7 +380,7 @@ expanding the objective:
 f(w) &=
 \begin{bmatrix} w_1^\top & w_2^\top \end{bmatrix}
 \begin{bmatrix} B_{11} & B_{12} \\ B_{12}^\top & B_{22}\end{bmatrix}
-\begin{bmatrix} w_1 \\ w_2 \end{bmatrix} + 
+\begin{bmatrix} w_1 \\ w_2 \end{bmatrix} +
 \begin{bmatrix} w_1^\top & w_2^\top \end{bmatrix}
 \begin{bmatrix} b_1 \\ b_2\end{bmatrix} \\
 &=
@@ -385,7 +400,7 @@ B_{12}\right)w_2 \\
 &\qquad + w_2^\top (b_2 - B_{12}^\top B_{11}^{-1}b_1).
 \end{align*}
 %\begin{align*}
-%f(w_2) &= w_2^\top\left(B_{22} - B_{12}^\top B_{11}^{-1} B_{12}\right)w_2 + 
+%f(w_2) &= w_2^\top\left(B_{22} - B_{12}^\top B_{11}^{-1} B_{12}\right)w_2 +
 %w_2^\top (b_2 - B_{12}^\top B_{11}^{-1}b_1) \\
 %&\qquad - \frac{1}{4}b_1^\top B_{11}^{-1}b_1
 %\end{align*}
@@ -437,9 +452,18 @@ and the secular equation value $s(v)$ is on the vertical. Solutions
 are intersections of $s(v)$ with the horizontal line $s(v)=c$. They
 can be computed numerically with a simple binary search algorithm.
 
-\subsection{Computation complexity}
 
-\subsection{Sparsity}
+\section{Implementation details}
+\label{sec:implementation-details}
+
+No iterative scheme is required to solve the temporal instanton QCQP; only a string of transformations is required. Still, thorough analysis requires a QCQP solution for each line in the network. As the number of lines and nodes increases, processing and memory requirements grow quickly. Careful coding is required to make the method scale well.
+
+\begin{itemize}
+    \item Use sparse methods to build QCQP matrices. This makes a dramatic difference in storage requirements. As an example, the $Q_\theta$ matrix for RTS-96 temporal instanton analysis with six time intervals requires 2.5 MB in dense form; a sparse representation occupies just 40 bytes.
+    \item Use sparse methods for matrix multiplication, concatenation, and factorization. Maintain sparsity from start to finish. Any step that uses a dense matrix representation will be a bottleneck, especially for larger networks.
+    \item Parallelize. After the unchanging pieces of QCQP are built, the remainder of analysis consists of building smaller matrices and performing various transormations for each line in the network. Each line's analysis is independent from all others, so a parallel for loop is a great way to spread computation across multiple processors. After experimenting with anywhere from one to five worker processes on a four-core laptop, we decided that the best processing time/memory allocation tradeoff is to use two processors. This cut overall computation time in half with just a modest increase in memory allocation.
+\end{itemize}
+
 
 \section{Results}\label{sec:results}
 
@@ -464,7 +488,7 @@ pu).
 \begin{figure}[t]
 \centering
 \includegraphics[trim=0in 0in 0.5in 0.5in,clip,width=1\linewidth]{images/secular}
-\caption{Plot of secular equation for a single line in the RTS-96. Note that $s(v)$ approaches infinity at the three poles, and there could be as many as six solutions if $c$ were large enough.}	
+\caption{Plot of secular equation for a single line in the RTS-96. Note that $s(v)$ approaches infinity at the three poles, and there could be as many as six solutions if $c$ were large enough.}
 \label{fig:secular}
 \end{figure}
 
@@ -578,7 +602,7 @@ T(t) &= ke^{at} - \frac{b}{a}
 \end{align}
 
 where $k=T(0) + b/a$. Note that $b$ is influenced by power flow (via
-$f_{ij}^\text{loss}$), but $a$ is not.    
+$f_{ij}^\text{loss}$), but $a$ is not.
 
 \section{From temperature equation to optimization constraint}\label{from-ivp-to-optimization-constraint}
 
@@ -634,7 +658,7 @@ T(t_n) &= (e^{(t_1 - t_0)a})^n T(t_0) + \frac{1}{a} \sum_{i=1}^n \left( (e^{(t_1
 \end{align*}
 Expand the sum term:
 \begin{multline}\label{eq:sumexpand}
-\frac{1}{a} \sum_{i=1}^n \left( (e^{(t_1-t_0)a})^i - (e^{(t_1-t_0)a})^{i-1} \right)(c\theta_{ij}(t_{n-i+1})^2 + d) = \frac{c}{a}\left[ \sum_{i=1}^n \left( (e^{(t_1-t_0)a})^i - (e^{(t_1-t_0)a})^{i-1} \right)\theta_{ij}(t_{n-i+1})^2\right] + \\  \qquad + \frac{d}{a}\left[ \sum_{i=1}^n \left( (e^{(t_1-t_0)a})^i - (e^{(t_1-t_0)a})^{i-1} \right)\right] 
+\frac{1}{a} \sum_{i=1}^n \left( (e^{(t_1-t_0)a})^i - (e^{(t_1-t_0)a})^{i-1} \right)(c\theta_{ij}(t_{n-i+1})^2 + d) = \frac{c}{a}\left[ \sum_{i=1}^n \left( (e^{(t_1-t_0)a})^i - (e^{(t_1-t_0)a})^{i-1} \right)\theta_{ij}(t_{n-i+1})^2\right] + \\  \qquad + \frac{d}{a}\left[ \sum_{i=1}^n \left( (e^{(t_1-t_0)a})^i - (e^{(t_1-t_0)a})^{i-1} \right)\right]
 \end{multline}
 Substitute \eqref{eq:sumexpand} into the line temperature equation, introducing the constant $f$ to keep things a bit neater:
 \begin{align}\label{eq:almostthere}
@@ -771,10 +795,10 @@ I used RTS-96 network data and Waxwing conductor parameters to compare IEEE 738 
 \begin{center}
 \begin{tabular}{c|c}
 	Interval & Angle difference (rad) \\ \hline
-	   1     &          0.09          \\ 
-	   2     &          0.04          \\ 
-	   3     &          0.15          \\ 
-\end{tabular} 
+	   1     &          0.09          \\
+	   2     &          0.04          \\
+	   3     &          0.15          \\
+\end{tabular}
 \end{center}
 
 \begin{figure}[h]
@@ -804,7 +828,7 @@ Notes:
 
 %Section \ref{sec:line-losses} describes an approximate line loss formulation that forms the basis of a dynamical model developed in Section \ref{sec:temp-dynamics}. Finally, Section \ref{sec:instanton-formulation} incorporates line temperature dynamics into a complete mathematical model.
 
-%The equations governing AC power flow are nonlinear. If we use these equations to balance the power flows in our optimization, the resulting feasible region will be nonconvex. Previous instanton work has addressed this issue by replacing the AC power flow equations with DC equations (the DC power flow equations assume that the network is lossless, with all voltage magnitudes equal to 1 per unit). This substitution renders the feasible region of instanton optimization (in the absence of nonlinear constraints) convex. 
+%The equations governing AC power flow are nonlinear. If we use these equations to balance the power flows in our optimization, the resulting feasible region will be nonconvex. Previous instanton work has addressed this issue by replacing the AC power flow equations with DC equations (the DC power flow equations assume that the network is lossless, with all voltage magnitudes equal to 1 per unit). This substitution renders the feasible region of instanton optimization (in the absence of nonlinear constraints) convex.
 
 %There are two primary difficulties associated with time-coupled instanton analysis. First, every active and reactive power flow is related to all variables involved in the flow:  the voltage magnitudes at both nodes and the angle difference between them. If we allow this tight coupling into our optimization framework, there will be no guarantee of a unique solution, or indeed of any solution at all. The second difficulty arises from the equation for power loss. Power loss on a line is proportional to the square of the current through it. This nonlinear relationship leads to nonconvexity in the optimization problem's feasible region. In this paper we address the first concern by using the DC power flow, and we sidestep the second difficulty by using a piecewise-continuous convex relaxation of the power loss equation.
 
@@ -825,7 +849,7 @@ Notes:
 	       $T^\text{lim}$        &    $C$     &      \splitcell{Line temperature at\\steady-state current limit.}   \\ \hline
 	       $\Delta q_{s,ij}$ & $W/m$ & \splitcell{Solar heat input\\ into conductor} \\ \hline
 	       $\Delta T_\text{amb}$ & C & \splitcell{Change in \\ambient temperature} \\ \hline
-\end{tabular} 
+\end{tabular}
 \end{center}
 \end{table}
 
@@ -855,7 +879,7 @@ where:
 \begin{itemize}
 \itemsep1pt\parskip0pt\parsep0pt
 \item $dev_{i,t}$ is the difference between actual output and forecast output at wind-farm $i$ and time $t$. Thus, $dev_t$ is the vector of wind forecast deviations at time $t$.
-\item $Q_{dev}$ may be set to the identity matrix or used to encode correlation between wind sites.
+\item $Q_{dev}$ may be set to the identity matrix or used to covariance between wind sites.
 \item $R_{i,t}$ is renewable generation forecast at bus $i$ and time $t$.
 \item $Y_{ij}$ is the $(i,j)$-th element of the admittance matrix, which assumes zero resistance.
 \item $\theta_{ij,t}$ is the difference between voltage angles $\theta_i$ and $\theta_j$ at time $t$.
@@ -948,5 +972,3 @@ $Q_{\theta}$ is addressed in Section~\ref{sec:Qtheta}.
 \bibliography{bib}
 
 \end{document}
-
-
