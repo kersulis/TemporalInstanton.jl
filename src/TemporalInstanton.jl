@@ -5,6 +5,7 @@ using HDF5, JLD, ProgressMeter, IProfile
 export
     solve_instanton_qcqp, solve_temporal_instanton, LineParams,
     ConductorParams, load_rts96_data, load_polish_data, createY,
+    process_instanton_results,
 
     # temporary:
     tmp_inst_Qobj,tmp_inst_A1,tmp_inst_b,tmp_inst_Qtheta,
@@ -66,13 +67,16 @@ function solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
     G_of_z = rotate_quadratic(G_of_y,N')
     Q_of_z = rotate_quadratic(Q_of_y,N')
 
-    D,U = eig(Q_of_z[1])
+    D,U = eig(full(Q_of_z[1]))
+    # won't work because nev cannot be size(Q,1):
+    # D,U = eigs(Q_of_z[1],nev=size(Q_of_z[1],1))
     D = round(D,10)
 
     K = return_K(D)
+    Kinv = diagm(1./diag(K))
 
-    G_of_w = rotate_quadratic(G_of_z,(U/K)')
-    Q_of_w = rotate_quadratic(Q_of_z,(U/K)')
+    G_of_w = rotate_quadratic(G_of_z,(U*Kinv)')
+    Q_of_w = rotate_quadratic(Q_of_z,(U*Kinv)')
 
     B11,B12,B21,B22,b1,b2 = partition_B(G_of_w,Q_of_w)
 
@@ -140,6 +144,7 @@ function solve_temporal_instanton(
     int_length)
 
     # why does all allocation happen here?
+    # (parallel question)
     n = length(k)
     nr = length(Ridx)
     T = round(Int64,length(find(P0))/nr)
@@ -186,7 +191,11 @@ function solve_temporal_instanton(
         A = [A1; A2]
 
         # Computationally expensive part: solving QCQP
+        #try
         xvec,sol = solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
+        #catch
+        #    save("bad_matrices.jld","line",line)
+        #end
         # is anything happening? report as each line is finished:
         #println("$(idx)/$(length(lines))")
     end
@@ -194,7 +203,7 @@ function solve_temporal_instanton(
     return results
 end
 
-function process_instanton_results(results)
+function process_instanton_results(results,n,nr,T)
     # Store results in more human-readable form:
     score = Float64[]
     α = Array(Vector{Float64},0)
