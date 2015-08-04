@@ -29,27 +29,6 @@ function find_x_star(A1,A2,idx1,idx2,n,b)
     """
     x_star = zeros(n)
 
-    # Z = sparse([A1 A2]')
-    # try
-    #     x_star[[idx1;idx2]] = (Z/(Z'*Z))*b
-    # catch
-    #     Z = full(Z)
-    #     x_star[[idx1;idx2]] = (Z*pinv(Z'*Z))*b
-    # end
-
-    # Z = full([A1 A2]')
-    # x_star[[idx1;idx2]] = (Z*pinv(Z'*Z))*b
-
-    # Z = sparse(A2')
-    # x_star[idx2] = (Z*Z')\Z*b
-
-    # Z = sparse(A2[1:end-T,:])'
-    # #println("$(det(full(Z)))")
-    # x_star[idx2] = cholfact(Z*Z')\Z*b[1:end-T]
-
-    # Z = sparse(A2[1:end-T,:]')
-    # x_star[idx2] = (Z/(Z'*Z))*(b[1:end-T])
-
     try
         x_star[[idx1;idx2]] = sparse([A1 A2])\b
     catch
