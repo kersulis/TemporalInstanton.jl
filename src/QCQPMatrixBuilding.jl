@@ -19,7 +19,7 @@ and generator participation factors.
 Assumes the admittance matrix is n-by-n.
 
 Returns A, which is (n+1)*T-by-(nr+n+1)*T
-(or (nr+n+2)*T if pad=true)
+(or (n+1)*T-by-(nr+n+2)*T if pad=true)
 
 * nr is the number of wind farms in the network
 * n is the number of nodes in the network
@@ -124,6 +124,7 @@ function tmp_inst_A2(
     coefs = [sqrt(-exp(therm_a*int_length)^(T-t+1) +
         exp(therm_a*int_length)^(T-t)) for t in 1:T]
 
+    #display((therm_a,i,k))
     sparse(
     repmat(1:T,3),
     [pos+i;pos+k;one_pos],

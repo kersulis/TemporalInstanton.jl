@@ -31,7 +31,7 @@ function load_polish_data()
 
     Gp = zeros(length(bus_i))
     for i in bus_i
-        Gp[i] = sum(Gp_long[find(genBus.==i)])/Sb
+        Gp[convert(Int64,i)] = sum(Gp_long[find(genBus.==i)])/Sb
     end
 
     # convert generators smaller than 82 MW into wind farms
@@ -79,6 +79,71 @@ function load_polish_data()
 
     # use RTS-96 line lengths to generate similar line lengths
     line_lengths = load("../data/polish_line_lengths.jld","line_lengths")
+
+    # temporary (re-use rts-96 line conductor parameters)
+    line_conductors = fill("waxwing",length(line_lengths))
+
+    return  Ridx, Y,
+            Gp, Dp, Rp,
+            Sb, ref, lines,
+            res, reac, k,
+            line_lengths, line_conductors
+end
+
+function mat2tmpinst(name)
+    mpc = loadcase(name,describe=false)
+    bus_i = mpc["bus"][:,1]
+    genBus = mpc["gen"][:,1]
+    Sb = mpc["baseMVA"]
+    Gp_long = mpc["gen"][:,2]
+
+    f = round(Int64,mpc["branch"][:,1]) # "from bus" ...
+    t = round(Int64,mpc["branch"][:,2]) # ... "to bus"
+    r = mpc["branch"][:,3]              # resistance, pu
+    x = mpc["branch"][:,4]              # reactance, pu
+    b = mpc["branch"][:,5]              # susceptance, pu
+
+    Y = createY(f,t,r,x,b,true)
+
+    Gp = zeros(length(bus_i))
+    for i in bus_i
+        Gp[convert(Int64,i)] = sum(Gp_long[find(genBus.==i)])/Sb
+    end
+
+    Dp = mpc["bus"][:,3]./Sb
+
+    # convert half the generators into wind farms:
+    Rp = zeros(length(Gp))
+    for i in 1:length(Gp)
+        if Gp[i] < mean(Gp)
+            Rp[i] = Gp[i]
+            Gp[i] = 0
+        end
+    end
+
+    Ridx = find(Rp)
+
+    Sb = Sb*1e6 # convert from MW to W
+
+    ref = 1
+
+    lines = [(f[i],t[i]) for i in 1:length(f)]
+
+    res = r
+    reac = x
+
+    # Allow each generator to participate equally in droop response.
+    k = Float64[]
+    for i = 1:length(Gp)
+        if Gp[i] != 0
+            push!(k, 1/length(find(Gp)))
+        else
+            push!(k,0)
+        end
+    end
+
+    # use RTS-96 line lengths to generate similar line lengths
+    line_lengths = load("../data/polish_line_lengths.jld","line_lengths")[1:length(lines)]
 
     # temporary (re-use rts-96 line conductor parameters)
     line_conductors = fill("waxwing",length(line_lengths))
