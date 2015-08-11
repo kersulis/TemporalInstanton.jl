@@ -464,6 +464,7 @@ No iterative scheme is required to solve the temporal instanton QCQP; only a str
     \item Parallelize. After the unchanging pieces of QCQP are built, the remainder of analysis consists of building smaller matrices and performing various transormations for each line in the network. Each line's analysis is independent from all others, so a parallel for loop is a great way to spread computation across multiple processors. After experimenting with anywhere from one to five worker processes on a four-core laptop, we decided that the best processing time/memory allocation tradeoff is to use two processors. This cut overall computation time in half with just a modest increase in memory allocation.
 \end{itemize}
 
+Translation, the first step of the QCQP solution method, is computationally expensive and relies on the $A$ matrix having full row rank. Unfortunately, $A$ can have linearly dependent rows for some lines in certain networks.
 
 \section{Results}\label{sec:results}
 
