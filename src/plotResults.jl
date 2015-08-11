@@ -4,12 +4,6 @@ type temporalInstantonResults
 	α
 end
 
-
-module plotResults
-
-export
-	generateDot
-
 function generateDot(name,
 	psData,
 	tmpInstRes,
@@ -25,7 +19,7 @@ function generateDot(name,
     renewableInj = zeros(n)
     renewableInj[find(psData.Rp)] = x[idx][tidx]
     renewableInj += P0[(tidx-1)*n+1:tidx*n]
-    
+
     busInj = (G0+ - D0)[(tidx-1)*n+1:tidx*n] + α[idx][tidx]*psData.k + renewableInj
 
     lineFlow = Float64[]
@@ -35,7 +29,7 @@ function generateDot(name,
     for i = 1:length(psData.f)
         push!(lineFlow, (θ[idx][tidx][f[i]]-θ[idx][tidx][t[i]])/x[i])
     end
-    
+
     writeDot(name,
         psData.busIdx,
         busInj,
@@ -45,7 +39,7 @@ function generateDot(name,
         lineFlow,
         psData.Plim,
     dim)
-    
+
     #return busInj,renewableInj
 end
 
@@ -65,15 +59,15 @@ function writeDot(name, busIdx, busInj, renGen, f, t, lineFlow, lineLim, size=(1
     lineFlow = round(lineFlow,2)
 
     font = "Helvetica"
-    
+
     # Open the dot file, overwriting anything already there:
     dotfile = open("$(name).dot","w")
-    
+
     # Begin writing the dot file:
     write(dotfile, "digraph $(name) {\nnewrank=true;\n")
 
     # Set graph properties:
-    write(dotfile, 
+    write(dotfile,
     "graph [fontname=\"$(font)\", tooltip=\" \", overlap=false, size=\"$(size[1]),$(size[2])\", ratio=fill, orientation=\"portrait\",layout=dot];\n")
 
     # Set default node properties:
@@ -83,11 +77,11 @@ function writeDot(name, busIdx, busInj, renGen, f, t, lineFlow, lineLim, size=(1
     write(dotfile, "edge [fontname=\"$(font)\", penwidth=4, fontsize=25];\n")
 
     # Write bus data to dot file:
-    write(dotfile, 
+    write(dotfile,
     "subgraph cluster_a1 {\nlabel=\"Area 1: High Wind\";\nfontcolor=\"#000000\";\nfontname=\"$(font)\";\nfontsize=35;\ncolor=\"#ffffff\";\nlabeljust=\"c\";\n")
 
     for i = 1:24
-        write(dotfile, 
+        write(dotfile,
         "$(i) [label=$(int(busIdx[i])), tooltip=\"Inj = $(busInj[i])\"") # bus label and tooltip
 
         # Represent renewable nodes with blue circles:
@@ -99,11 +93,11 @@ function writeDot(name, busIdx, busInj, renGen, f, t, lineFlow, lineLim, size=(1
     end
     write(dotfile, "}\n")
 
-    write(dotfile, 
+    write(dotfile,
     "subgraph cluster_a2 {\nlabel=\"Area 2: Moderate Wind\";\nfontcolor=\"#000000\";\nfontname=\"$(font)\";\nfontsize=35;\ncolor=\"#ffffff\";\nlabeljust=\"l\";\n")
 
     for i = 25:48
-        write(dotfile, 
+        write(dotfile,
         "$(i) [label=$(int(busIdx[i])), tooltip=\"Inj = $(busInj[i])\"") # bus label and tooltip
 
         # Represent renewable nodes with blue circles:
@@ -115,10 +109,10 @@ function writeDot(name, busIdx, busInj, renGen, f, t, lineFlow, lineLim, size=(1
     end
     write(dotfile, "}\n")
 
-    write(dotfile, 
+    write(dotfile,
     "subgraph cluster_a3 {\nlabel=\"Area 3: Low Wind\";\nfontcolor=\"#000000\";\nfontname=\"$(font)\";\nfontsize=35;\ncolor=\"#ffffff\";\nlabeljust=\"r\";\n")
     for i = 49:length(busIdx)
-        write(dotfile, 
+        write(dotfile,
         "$(i) [label=$(int(busIdx[i])), tooltip=\"Inj = $(busInj[i])\"") # bus label and tooltip
 
         # Represent renewable nodes with blue circles:
@@ -140,10 +134,10 @@ function writeDot(name, busIdx, busInj, renGen, f, t, lineFlow, lineLim, size=(1
         # label with flow,
         # and color according to strain
         if lineFlow[i] > 0
-            write(dotfile, 
+            write(dotfile,
             "$(f[i]) -> $(t[i]) [label=$(lineFlow[i])")
         else
-            write(dotfile, 
+            write(dotfile,
             "$(t[i]) -> $(f[i]) [label=$(-lineFlow[i])")
         end
         write(dotfile,
@@ -155,6 +149,4 @@ function writeDot(name, busIdx, busInj, renGen, f, t, lineFlow, lineLim, size=(1
     close(dotfile)
 
     #println("$(name).dot generated.\nUse \";dot -Tsvg $(name).dot -o $(name).svg\" to create an SVG.")
-end
-
 end
