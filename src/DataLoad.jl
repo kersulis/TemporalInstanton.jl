@@ -1,10 +1,9 @@
 # Data loading and manipulation:
-using HDF5, JLD
-using MatpowerCases
+using JLD, MatpowerCases
 include("tmp_inst_rts96.jl")
 include("readPolishData.jl")
 
-function load_rts96_data()
+function load_rts96_data(;return_as_type=false)
     function return_line_conductors(bus_names,bus_voltages,from,to)
         numLines = length(from)
         node2voltage(node) = bus_voltages[find(bus_names.==node)][1]
@@ -50,5 +49,9 @@ function load_rts96_data()
     bus_voltages = mpc["bus"][:,10]
     line_conductors = return_line_conductors(busIdx,bus_voltages,from,to);
 
-    return Ridx,Y,Gp,Dp,Rp,Sb,ref,lines,res,reac,k,line_lengths,line_conductors
+    if return_as_type
+        return InstantonInputData(Ridx,Y,Gp,Dp,Rp,Sb,ref,lines,res,reac,k,line_lengths,line_conductors,NaN,NaN,NaN,NaN,[])
+    else
+        return Ridx,Y,Gp,Dp,Rp,Sb,ref,lines,res,reac,k,line_lengths,line_conductors
+    end
 end
