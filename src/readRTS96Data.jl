@@ -1,9 +1,10 @@
+using MAT
 # Function used to create instance of powerSystemData type from MATLAB workspace:
 function psDataLoad()
-    (Sb, f, t, r, x, b, Y, bustype, 
-     Gp, Gq, Dp, Dq, Rp, Rq, 
-     Pmax, Pmin, Qmax, Qmin, 
-     Plim, Vg, Vceiling, Vfloor, 
+    (Sb, f, t, r, x, b, Y, bustype,
+     Gp, Gq, Dp, Dq, Rp, Rq,
+     Pmax, Pmin, Qmax, Qmin,
+     Plim, Vg, Vceiling, Vfloor,
     busIdx, N, Nr, Ng) = readRTS96Data()
 
     # Allow each generator to participate equally in droop response.
@@ -117,9 +118,9 @@ function readRTS96Data()
 
     Y = createY(f,t,r,x,b,true)
 
-    return  Sb, f, t, r, x, b, Y, bustype, 
-            Gp, Gq, Dp, Dq, Rp, Rq, 
-            Pmax, Pmin, Qmax, Qmin, 
-            Plim, Vg, Vceiling, Vfloor, 
+    return  Sb, f, t, r, x, b, Y, bustype,
+            Gp, Gq, Dp, Dq, Rp, Rq,
+            Pmax, Pmin, Qmax, Qmin,
+            Plim, Vg, Vceiling, Vfloor,
             bus_i, N, Nr, Ng
 end
