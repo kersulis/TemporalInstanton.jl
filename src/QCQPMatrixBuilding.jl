@@ -2,8 +2,17 @@
 Qobj from the problem dimensions.
 Assume no correlation between wind sites.
 """
-function tmp_inst_Qobj(n,nr,T; pad=true)
-    Qobj = spdiagm(repeat([ones(nr);zeros(n+1)],outer=[T]))
+function tmp_inst_Qobj(n,nr,T,corr=[]; pad=true)
+    if isempty(corr)
+        Qobj = spdiagm(repeat([ones(nr);zeros(n+1)],outer=[T]))
+    else
+        corr = sparse(corr)
+        Qobj = blkdiag(corr,spzeros(n+1,n+1))
+        for t = 2:T
+            Qobj = blkdiag(Qobj,blkdiag(corr,spzeros(n+1,n+1)))
+        end
+    end
+
     if !pad
         return Qobj
     else

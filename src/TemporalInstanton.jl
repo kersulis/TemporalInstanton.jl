@@ -1,11 +1,11 @@
 module TemporalInstanton
 
-using HDF5, JLD, ProgressMeter, IProfile
+#using MAT, MatpowerCases, JLD#, IProfile, HDF5, ProgressMeter
 
 export
     solve_instanton_qcqp, solve_temporal_instanton, LineParams,
     ConductorParams, load_rts96_data, load_polish_data, createY,
-    process_instanton_results,
+    process_instanton_results, InstantonInputData, InstantonOutputData,
 
     # temporary:
     tmp_inst_Qobj,tmp_inst_A1,tmp_inst_b,tmp_inst_Qtheta,
@@ -14,14 +14,49 @@ export
 
     # power flow:
     expand_renewable_vector,fixed_wind_A,fixed_wind_b,return_angles,
-    return_angle_diffs
+    return_angle_diffs,
 
+    # plot:
+    temperatureTrajectory
+
+type InstantonInputData
+    Ridx
+    Y
+    G0
+    D0
+    R0
+    Sb
+    ref
+    lines
+    res
+    reac
+    k
+    line_lengths
+    line_conductors
+    Tamb
+    T0
+    int_length
+    time_values
+    corr
+
+    #InstantonInputData(Ridx, Y, G0, D0, R0, Sb, ref, lines, res, reac, k, line_lengths, line_conductors) = InstantonInputData(Ridx, Y, G0, D0, R0, Sb, ref, lines, res, reac, k, line_lengths, line_conductors, [], [], [])
+end
+
+type InstantonOutputData
+    score
+    x
+    θ
+    α
+    diffs
+    xopt
+end
 include("DataLoad.jl")
 include("PowerFlow.jl")
 include("ThermalModel.jl")
 include("QCQPMatrixBuilding.jl")
 include("manipulations.jl")
 include("SolveSecular.jl")
+include("plot.jl")
 
 """ Solve the following quadratically-
 constrained quadratic program:
@@ -44,6 +79,9 @@ Bienstock of Columbia University. It involves
 translating and rotating the problem, using
 partial KKT conditions, and solving the
 resulting secular equation.
+
+* Return `NaN` if there is no intersection
+between the secular equation and horizontal line. *
 """
 function solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
     m,n = size(A)
@@ -91,7 +129,7 @@ function solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
 
     solutions, vectors = solve_secular(Bhat,bhat/2,-Q_of_w[3])
     if isempty(solutions)
-        return [],Inf
+        return [],NaN
     else
         sol = zeros(length(vectors))
         for i in 1:length(vectors)
@@ -100,13 +138,14 @@ function solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
             sol[i] = (xvec'*Qobj*xvec)[1]
             push!(opt,xvec)
         end
+        return opt[indmin(sol)],minimum(sol)
     end
-
-    return opt[indmin(sol)],minimum(sol)
 end
 
 """ Perform temporal instanton analysis on
-many lines in a system at once. Inputs:
+many lines in a system at once.
+
+Inputs:
 
 * `Ridx`            Vector: indices of nodes that have wind farms
 * `Y`               Admittance matrix
@@ -124,6 +163,12 @@ many lines in a system at once. Inputs:
 * `Tamb`            Ambient temperature
 * `T0`              Initial line temperature (TODO: compute within)
 * `int_length`      Length of each time interval in seconds
+
+Interpreting `score`:
+
+* `score[i]::Float64`: solution found for line `i`
+* `score[i]::Inf`: power flow has no effect on temperature (zero resistance)
+* `score[i]::NaN`: no secular equation intersection for line `i`
 """
 function solve_temporal_instanton(
     Ridx,
@@ -141,7 +186,8 @@ function solve_temporal_instanton(
     line_conductors,
     Tamb,
     T0,
-    int_length)
+    int_length,
+    corr=[])
 
     # why does all allocation happen here?
     # (parallel question)
@@ -151,7 +197,7 @@ function solve_temporal_instanton(
     numLines = length(lines)
 
     # Form objective quadratic:
-    Qobj = tmp_inst_Qobj(n,nr,T; pad=true)
+    Qobj = tmp_inst_Qobj(n,nr,T,corr; pad=true)
     G_of_x = (Qobj,0,0)
 
     # Create A1 (only A2, the bottom part,
@@ -166,44 +212,75 @@ function solve_temporal_instanton(
 
     # loop through lines (having non-zero length)
     results = @parallel (vcat) for idx in nz_line_idx
-        line = lines[idx]
-        conductor_name = line_conductors[idx]
-        conductor_params = return_conductor_params(conductor_name)
+        if res[idx] == 0.
+            # power flow cannot influence line temp, so skip
+            xvec,sol = ([],Inf)
+        else
+            line = lines[idx]
+            conductor_name = line_conductors[idx]
+            conductor_params = return_conductor_params(conductor_name)
 
-        # if current line uses a different conductor than previous,
-        # re-compute conductor_params:
-        # if line_conductors[idx] != conductor_name
-        #     conductor_name = line_conductors[idx]
-        #     conductor_params = return_conductor_params(conductor_name)
-        # end
-        # compute line_params based on current line:
-        line_params = LineParams(line[1],line[2],res[idx],reac[idx],line_lengths[idx])
+            # if current line uses a different conductor than previous,
+            # re-compute conductor_params:
+            # if line_conductors[idx] != conductor_name
+            #     conductor_name = line_conductors[idx]
+            #     conductor_params = return_conductor_params(conductor_name)
+            # end
+            # compute line_params based on current line:
+            line_params = LineParams(line[1],line[2],res[idx],reac[idx],line_lengths[idx])
 
-        (therm_a,therm_c,therm_d,therm_f) = return_thermal_constants(line_params,conductor_params,Tamb,Sb,int_length,T,T0)
+            (therm_a,therm_c,therm_d,therm_f) = return_thermal_constants(line_params,conductor_params,Tamb,Sb,int_length,T,T0)
 
-        # thermal constraint, Q(z) = 0:
-        kQtheta = (therm_a/therm_c)*(conductor_params.Tlim - therm_f)
-        Q_of_x = (Qtheta,0,kQtheta)
+            # thermal constraint, Q(z) = 0:
+            kQtheta = (therm_a/therm_c)*(conductor_params.Tlim - therm_f)
+            Q_of_x = (Qtheta,0,kQtheta)
 
-        # Create A2 based on chosen line:
-        A2 = tmp_inst_A2(n,Ridx,T,line,therm_a,int_length)
-        # Stack A1 and A2:
-        A = [A1; A2]
+            # Create A2 based on chosen line:
+            A2 = tmp_inst_A2(n,Ridx,T,line,therm_a,int_length)
+            # Stack A1 and A2:
+            A = [A1; A2]
 
-        # Computationally expensive part: solving QCQP
-        #try
-        xvec,sol = solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
+            # Computationally expensive part: solving QCQP
+            #try
+            xvec,sol = solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
+            if isempty(xvec)
+                xvec,sol = zeros(size(Qobj,1)),sol
+            end
+            # this is what will be concatenated into `results`:
+        end
         #catch
         #    save("bad_matrices.jld","line",line)
         #end
         # is anything happening? report as each line is finished:
-        #println("$(idx)/$(length(lines))")
+        # println("$(idx)/$(length(lines))")
+
+        xvec,sol
     end
 
     return results
 end
 
-function process_instanton_results(results,n,nr,T)
+solve_temporal_instanton(inputData::InstantonInputData) = solve_temporal_instanton(
+    inputData.Ridx,
+    inputData.Y,
+    inputData.G0,
+    inputData.R0,
+    inputData.D0,
+    inputData.Sb,
+    inputData.ref,
+    inputData.lines,
+    inputData.res,
+    inputData.reac,
+    inputData.k,
+    inputData.line_lengths,
+    inputData.line_conductors,
+    inputData.Tamb,
+    inputData.T0,
+    inputData.int_length,
+    inputData.corr
+)
+
+function process_instanton_results(results,n,nr,T;return_as_type=false)
     # Store results in more human-readable form:
     score = Float64[]
     α = Array(Vector{Float64},0)
@@ -245,7 +322,11 @@ function process_instanton_results(results,n,nr,T)
         push!(α,alpha)
         push!(xopt,xvec)
     end
-    return score,x,θ,α,diffs,xopt
+    if return_as_type
+        return InstantonOutputData(score,x,θ,α,diffs,xopt)
+    else
+        return score,x,θ,α,diffs,xopt
+    end
 end
 
 end
