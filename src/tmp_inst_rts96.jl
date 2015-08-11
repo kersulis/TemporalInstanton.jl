@@ -1,7 +1,4 @@
 # Begin by importing RTS-96 data as with previous project.
-
-using MAT
-
 type powerSystemData
     Sb
     f
