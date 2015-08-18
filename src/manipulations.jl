@@ -6,7 +6,11 @@
 Used to find x_star, the min-norm solution to
 Ax=b such that x_star[idx3] = 0.
 """
-function partition_A(A,Qobj,T)
+function partition_A(
+    A::SparseMatrixCSC{Float64,Int64},
+    Qobj::SparseMatrixCSC{Float64,Int64},
+    T::Int64
+    )
     n = size(A,2)
     idx1 = find(diag(Qobj))
     idx2 = setdiff(1:n-T,idx1)
@@ -25,7 +29,14 @@ nearest to the origin such that x_star[idx3] = 0.
 This condition ensures no linear term is introduced
 into the quadratic constraint.
 """
-function find_x_star(A1,A2,idx1,idx2,n,b)
+function find_x_star(
+    A1::SparseMatrixCSC{Float64,Int64},
+    A2::SparseMatrixCSC{Float64,Int64},
+    idx1::Vector{Int64},
+    idx2::Vector{Int64},
+    n::Int64,
+    b::Vector{Float64}
+    )
     x_star = zeros(n)
 
     try
@@ -51,7 +62,7 @@ x_star is translation.
 Used to perform second step of temporal instanton solution method,
 assuming x_star is min-norm solution of Ax=b.
 """
-function translate_quadratic(G_of_x,x_star)
+function translate_quadratic(G_of_x::Tuple,x_star::Vector{Float64})
     G,g,kg = G_of_x
     if g == 0
         g = zeros(size(G,1),1)
@@ -66,7 +77,7 @@ end
 This matrix may be used to rotate a temporal instanton
 problem instance to eliminate all but nullity(A) elements.
 """
-function kernel_rotation(A; spqr=true)
+function kernel_rotation(A::SparseMatrixCSC{Float64,Int64}; spqr=true)
     m,n = size(A)
 
     # Assume A always has full row rank of m.
@@ -89,29 +100,25 @@ end
 """ Rotate quadratic G_of_x by
 rotation matrix R.
 """
-function rotate_quadratic(G_of_x,R)
+function rotate_quadratic(G_of_x::Tuple,R::Array{Float64,2})
+    G,g,kg = G_of_x
+    return (R*G*R',R*g,kg)
+end
+function rotate_quadratic(G_of_x::Tuple,R::SparseMatrixCSC{Float64,Int64})
     G,g,kg = G_of_x
     return (R*G*R',R*g,kg)
 end
 
-function rotate_matrix(G,R)
-    R*G*R'
-end
-
-function rotate_vector(G,R)
-    R*g
-end
-
 """ Return K, the diagonal matrix whose elements are
-square roots of eigenvalues of the given matrix D.
+square roots of elements in the given vector d.
 """
-function return_K(D)
-    K = ones(length(D))
-    K[find(D)] = sqrt(D[find(D)])
+function return_K(d::Vector{Float64})
+    K = ones(length(d))
+    K[find(d)] = sqrt(d[find(d)])
     return spdiagm(K)
 end
 
-function partition_B(G_of_w,Q_of_w)
+function partition_B(G_of_w::Tuple,Q_of_w::Tuple)
     B,b = G_of_w[1],G_of_w[2]
     Q = round(Q_of_w[1])
     i2 = find(diag(Q))
@@ -122,14 +129,24 @@ function partition_B(G_of_w,Q_of_w)
     return B11,B12,B21,B22,b1,b2
 end
 
-function return_Bhat(B11,B12,B22,b1,b2)
+function return_Bhat(
+    B11::Array{Float64,2},
+    B12::Array{Float64,2},
+    B22::Array{Float64,2},
+    b1::Vector{Float64},
+    b2::Vector{Float64}
+    )
     Bhat = B22 - (B12'/B11)*B12
     bhat = b2 - (B12'/B11)*b1
     return round(Bhat,10),bhat
 end
 
-function find_w(v,D,d)
-    if v == 0
+function find_w(
+    v::Float64,
+    D::Array{Float64,2},
+    d::Vector{Float64}
+    )
+    if v == 0.0
         w = float([-d[i]/(D[i,i]) for i in 1:length(d)])
     else
         w = float([d[i]/(v - D[i,i]) for i in 1:length(d)])
@@ -141,7 +158,16 @@ end
 secular equation solution back to original problem
 space.
 """
-function return_xopt(w2opt,B11,B12,b1,N,U,K,x_star)
+function return_xopt(
+    w2opt::Vector{Float64},
+    B11::Array{Float64,2},
+    B12::Array{Float64,2},
+    b1::Vector{Float64},
+    N::SparseMatrixCSC{Float64,Int64},#Array{Float64,2},
+    U::Array{Float64,2},
+    K::SparseMatrixCSC{Float64,Int64},#Array{Float64,2},
+    x_star::Vector{Float64}
+    )
     w1opt = -B11\(B12*w2opt + b1/2)
     wopt = [w1opt;w2opt]
     xopt = N*U*diagm(1./diag(K))*wopt + x_star
