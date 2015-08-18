@@ -52,7 +52,13 @@ resulting secular equation.
 * Return `NaN` if there is no intersection
 between the secular equation and horizontal line. *
 """
-function solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
+function solve_instanton_qcqp(
+    G_of_x::Tuple,
+    Q_of_x::Tuple,
+    A::SparseMatrixCSC{Float64,Int64},
+    b::Vector{Float64},
+    T::Int64
+    )
     m,n = size(A)
     Qobj = G_of_x[1]
     c = - Q_of_x[3]
@@ -208,7 +214,7 @@ function solve_temporal_instanton(
             # Create A2 based on chosen line:
             A2 = tmp_inst_A2(n,Ridx,T,line,therm_a,int_length)
             # Stack A1 and A2:
-            A = [A1; A2]
+            A = [A1; A2]::SparseMatrixCSC{Float64,Int64}
 
             # Computationally expensive part: solving QCQP
             #try
