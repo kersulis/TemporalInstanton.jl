@@ -73,7 +73,7 @@ end
 Assumes G0 and D are nT-by-1 vectors.
 """
 function tmp_inst_b(n,T,G0,R0,D0; pad=true)
-    b = FloatingPoint[]
+    b = Vector{Float64}()
     netGen = G0 + R0 - D0
 
     for t = 1:T
