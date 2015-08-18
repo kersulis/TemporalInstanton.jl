@@ -2,7 +2,13 @@
 Qobj from the problem dimensions.
 Assume no correlation between wind sites.
 """
-function tmp_inst_Qobj(n,nr,T,corr=[]; pad=true)
+function tmp_inst_Qobj(
+    n::Int64,
+    nr::Int64,
+    T::Int64,
+    corr::Array{Float64,2} = Array{Float64,2}();
+    pad::Bool = true
+    )
     if isempty(corr)
         Qobj = spdiagm(repeat([ones(nr);zeros(n+1)],outer=[T]))
     else
@@ -38,8 +44,15 @@ Returns A, which is (n+1)*T-by-(nr+n+1)*T
 * ref is the index of the angle reference bus
 * k is the vector of generator participation factors
 """
-function tmp_inst_A1(Ridx,T,Y,ref,k; pad=true)
-    function ei(n,i)
+function tmp_inst_A1(
+    Ridx::Vector{Int64},
+    T::Int64,
+    Y::SparseMatrixCSC{Float64,Int64},
+    ref::Int64,
+    k::Vector{Float64};
+    pad::Bool = true
+    )
+    function ei(n::Int64,i::Int64)
         e = spzeros(n,1)
         e[i] = 1.
         return e
@@ -72,7 +85,14 @@ end
 """ Generate the vector b of power balance constraints.
 Assumes G0 and D are nT-by-1 vectors.
 """
-function tmp_inst_b(n,T,G0,R0,D0; pad=true)
+function tmp_inst_b(
+    n::Int64,
+    T::Int64,
+    G0::Vector{Float64},
+    R0::Vector{Float64},
+    D0::Vector{Float64};
+    pad::Bool = true
+    )
     b = Vector{Float64}()
     netGen = G0 + R0 - D0
 
@@ -94,7 +114,11 @@ of a temporal instanton problem instance.
 "line" has the form (i,k), where i and k refer to
 the endpoints of the chosen line.
 """
-function tmp_inst_Qtheta(n,nr,T)
+function tmp_inst_Qtheta(
+    n::Int64,
+    nr::Int64,
+    T::Int64
+    )
     blkdiag(spzeros((nr+n+1)*T,(nr+n+1)*T),speye(T))
 end
 
