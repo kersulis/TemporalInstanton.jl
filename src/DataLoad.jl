@@ -1,7 +1,6 @@
 # Data loading and manipulation:
 using JLD, MatpowerCases
 include("tmp_inst_rts96.jl")
-include("readPolishData.jl")
 
 function load_rts96_data(;return_as_type=false)
     ####### LOAD DATA ########
@@ -136,6 +135,7 @@ function createY(
     )
     y = 1./x
     sparse([f; t; t; f],[t; f; t; f],[-y; -y; y; y])
+    return Y
 end
 
 """ Use bus voltage level to determine appropriate conductor type. TODO: replace with Jon's conductor interpolation code.
@@ -154,4 +154,5 @@ function return_line_conductors(bus_names,bus_voltages,from,to)
     end
     line_conductors = [volt2cond(volt) for volt in line_voltages]
     convert(Array{ASCIIString},line_conductors)
+    return line_conductors
 end
