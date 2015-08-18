@@ -97,7 +97,7 @@ function solve_instanton_qcqp(
     Bhat,bhat = return_Bhat(B11,B12,B22,b1,b2)
 
     eps = 1e-8
-    w0 = find_w(0,Bhat,bhat/2)
+    w0 = find_w(0.0,Bhat,bhat/2)
 
     if abs((w0'*w0) - c)[1] < eps
         println("v=0 works!")
