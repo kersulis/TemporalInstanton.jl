@@ -178,7 +178,7 @@ function solve_temporal_instanton(
     D0::Vector{Float64},
     Sb::Float64,
     ref::Int64,
-    lines,
+    lines::Array{Tuple{Int64,Int64}},
     res::Vector{Float64},
     reac::Vector{Float64},
     k::Vector{Float64},

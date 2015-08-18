@@ -56,6 +56,7 @@ function load_polish_data()
     ref = 1
 
     lines = [(f[i],t[i]) for i in 1:length(f)]
+    lines = convert(Array{Tuple{Int64,Int64}},lines)
 
     res = r
     reac = x
@@ -70,12 +71,6 @@ function load_polish_data()
             push!(k,0)
         end
     end
-
-    # return  Sb, f, t, r, x, b, Y, bustype,
-    #         Gp, Gq, Dp, Dq, Rp, Rq,
-    #         Pmax, Pmin, Qmax, Qmin,
-    #         Plim, Vg, Vceiling, Vfloor,
-    #         bus_i, N, Nr, Ng
 
     # use RTS-96 line lengths to generate similar line lengths
     line_lengths = load("../data/polish_line_lengths.jld","line_lengths")
@@ -128,6 +123,7 @@ function mat2tmpinst(name)
     ref = 1
 
     lines = [(f[i],t[i]) for i in 1:length(f)]
+    lines = convert(Array{Tuple{Int64,Int64}},lines)
 
     res = r
     reac = x

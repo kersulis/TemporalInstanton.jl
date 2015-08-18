@@ -40,7 +40,8 @@ function load_rts96_data(;return_as_type=false)
     Y = full(Y) # Full admittance matrix (ref not removed)
     ref = 1 # Index of ref node
     k = k # Conventional generator participation factors
-    lines = [(f[i],t[i]) for i in 1:length(f)];
+    lines = [(f[i],t[i]) for i in 1:length(f)]
+    lines = convert(Array{Tuple{Int64,Int64}},lines)
     line_lengths = load("../data/RTS-96\ Data/line_lengths.jld", "line_lengths")
 
     mpc = loadcase("case96",describe=false)
