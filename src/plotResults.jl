@@ -8,7 +8,7 @@ function generateDot(name,
 	psData,
 	tmpInstRes,
     idx,tidx,
-    G0,P0,D0,
+    G0,R0,D0,
     dim)
 
 	x = tmpInstRes.x
@@ -18,7 +18,7 @@ function generateDot(name,
 
     renewableInj = zeros(n)
     renewableInj[find(psData.Rp)] = x[idx][tidx]
-    renewableInj += P0[(tidx-1)*n+1:tidx*n]
+    renewableInj += R0[(tidx-1)*n+1:tidx*n]
 
     busInj = (G0+ - D0)[(tidx-1)*n+1:tidx*n] + α[idx][tidx]*psData.k + renewableInj
 
@@ -38,8 +38,8 @@ function generateDot(name,
         psData.t,
         lineFlow,
         psData.Plim,
-    dim)
-
+    	dim
+		)
     #return busInj,renewableInj
 end
 

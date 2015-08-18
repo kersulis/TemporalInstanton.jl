@@ -72,15 +72,15 @@ end
 """ Generate the vector b of power balance constraints.
 Assumes G0 and D are nT-by-1 vectors.
 """
-function tmp_inst_b(n,T,G0,P0,D; pad=true)
+function tmp_inst_b(n,T,G0,R0,D0; pad=true)
     b = FloatingPoint[]
-    netGen = G0 + P0 - D
+    netGen = G0 + R0 - D0
 
     for t = 1:T
         start = (t-1)*n + 1
         stop = start + n - 1
         append!(b,netGen[start:stop])
-        push!(b,0.)
+        push!(b,0.0)
     end
     if pad
         # Not sure when I would ever not want to do this...
