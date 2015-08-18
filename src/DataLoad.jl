@@ -56,7 +56,7 @@ function mat2tmpinst(name)
     x = mpc["branch"][:,4]              # reactance, pu
     b = mpc["branch"][:,5]              # susceptance, pu
 
-    Y = createY(f,t,r,x,b,true)
+    Y = createY(f,t,x)
 
     Gp = zeros(length(bus_i))
     for i in bus_i
@@ -111,21 +111,31 @@ function mat2tmpinst(name)
             line_lengths, line_conductors
 end
 
-""" Create an admittance matrix from three vectors: from, to, and adm. value
-Note: 'f' and 't' must be integer vectors.
-DC if s == true
+""" Create an admittance matrix for AC power flow.
 """
-function createY(f,t,r,x,b,s)
-    if s
-        y = 1./x
-        return sparse([f; t; t; f],[t; f; t; f],[-y; -y; y; y])
-    else
-        G = 1./r
-        G[G.==Inf] = 0
-        B = 1./x
-        y = complex(G,B)
-        return sparse([f; t; t; f],[t; f; t; f],[-y; -y; y + b./2; y + b./2])
-    end
+function createY(
+    f::Vector{Int64},
+    t::Vector{Int64},
+    r::Vector{Float64},
+    x::Vector{Float64},
+    b::Vector{Float64}
+    )
+    G = 1./r
+    G[G.==Inf] = 0
+    B = 1./x
+    y = complex(G,B)
+    return sparse([f; t; t; f],[t; f; t; f],[-y; -y; y + b./2; y + b./2])
+end
+
+""" Create an admittance matrix for DC power flow.
+"""
+function createY(
+    f::Vector{Int64},
+    t::Vector{Int64},
+    x::Vector{Float64}
+    )
+    y = 1./x
+    sparse([f; t; t; f],[t; f; t; f],[-y; -y; y; y])
 end
 
 """ Use bus voltage level to determine appropriate conductor type. TODO: replace with Jon's conductor interpolation code.

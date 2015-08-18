@@ -116,7 +116,7 @@ function readRTS96Data()
     Nr = length(find(Rp))
     Ng = length(find(Gp))
 
-    Y = createY(f,t,r,x,b,true)
+    Y = createY(f,t,x)
 
     return  Sb, f, t, r, x, b, Y, bustype,
             Gp, Gq, Dp, Dq, Rp, Rq,

@@ -29,23 +29,6 @@ type powerSystemData
     k
 end
 
-function createY(f,t,r,x,b,s)
-    # Create an admittance matrix from three vectors: from, to, and adm. value
-    # Note: 'f' and 't' must be integer vectors.
-    # DC if s == true
-
-    if s == true
-        y = 1./x
-        return sparse([f; t; t; f],[t; f; t; f],[-y; -y; y; y])
-    else
-        G = 1./r
-        G[G.==Inf] = 0
-        B = 1./x
-        y = complex(G,B)
-        return sparse([f; t; t; f],[t; f; t; f],[-y; -y; y + b./2; y + b./2])
-    end
-end
-
 function unpack_psDL(psDL)
 # code used to unpack psDL type instance:
 return (psDL.Sb,
