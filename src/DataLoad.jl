@@ -2,6 +2,36 @@
 using JLD, MatpowerCases
 include("tmp_inst_rts96.jl")
 
+type InstantonInputData
+    Ridx::Vector{Int64}
+    Y::SparseMatrixCSC{Float64,Int64}
+    G0::Vector{Float64}
+    D0::Vector{Float64}
+    R0::Vector{Float64}
+    Sb::Float64
+    ref::Int64
+    lines::Array{Tuple{Int64,Int64},1}
+    res::Vector{Float64}
+    reac::Vector{Float64}
+    k::Vector{Float64}
+    line_lengths::Vector{Float64}
+    line_conductors::Vector{ASCIIString}
+    Tamb::Float64
+    T0::Float64
+    int_length::Float64
+    time_values
+    corr::Array{Float64,2}
+end
+
+type InstantonOutputData
+    score::Vector{Float64}
+    x::Vector{Vector{Vector{Float64}}}
+    θ::Vector{Vector{Vector{Float64}}}
+    α::Vector{Vector{Float64}}
+    diffs::Vector{Vector{Float64}}
+    xopt::Vector{Vector{Float64}}
+end
+
 function load_rts96_data(;return_as_type=false)
     ####### LOAD DATA ########
     psData = psDataLoad()
@@ -21,11 +51,11 @@ function load_rts96_data(;return_as_type=false)
     ####### LINK DATA ########
     # Static
     Ridx = find(Rp) # Vector of renewable nodes
-    Y = full(Y) # Full admittance matrix (ref not removed)
+    Y = Y # Full admittance matrix (ref not removed)
     ref = 1 # Index of ref node
     k = k # Conventional generator participation factors
     lines = [(f[i],t[i]) for i in 1:length(f)]
-    lines = convert(Array{Tuple{Int64,Int64}},lines)
+    lines = convert(Array{Tuple{Int64,Int64},1},lines)
     line_lengths = load("../data/RTS-96\ Data/line_lengths.jld", "line_lengths")
 
     mpc = loadcase("case96",describe=false)
@@ -35,8 +65,25 @@ function load_rts96_data(;return_as_type=false)
     line_conductors = return_line_conductors(busIdx,bus_voltages,from,to)
 
     if return_as_type
-        return InstantonInputData(Ridx,Y,Gp,Dp,Rp,Sb,ref,
-            lines,res,reac,k,line_lengths,line_conductors,NaN,NaN,NaN,NaN,[])
+        return InstantonInputData(
+            Ridx,
+            Y,
+            Gp,
+            Dp,
+            Rp,
+            Sb,
+            ref,
+            lines,
+            res,
+            reac,
+            k,
+            line_lengths,
+            line_conductors,
+            NaN,
+            NaN,
+            NaN,
+            NaN,
+            Array{Float64,2}())
     else
         return Ridx,Y,Gp,Dp,Rp,Sb,ref,lines,res,reac,k,line_lengths,line_conductors
     end
@@ -80,7 +127,7 @@ function mat2tmpinst(name)
     ref = 1
 
     lines = [(f[i],t[i]) for i in 1:length(f)]
-    lines = convert(Array{Tuple{Int64,Int64}},lines)
+    lines = convert(Array{Tuple{Int64,Int64},1},lines)
 
     res = r
     reac = x
@@ -134,8 +181,7 @@ function createY(
     x::Vector{Float64}
     )
     y = 1./x
-    sparse([f; t; t; f],[t; f; t; f],[-y; -y; y; y])
-    return Y
+    return sparse([f; t; t; f],[t; f; t; f],[-y; -y; y; y])
 end
 
 """ Use bus voltage level to determine appropriate conductor type. TODO: replace with Jon's conductor interpolation code.
