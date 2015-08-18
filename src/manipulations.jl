@@ -1,13 +1,12 @@
-# @iprofile begin
-function partition_A(A,Qobj,T)
-    """ Return A1, A2, A3 where:
-    * A1 corresponds to wind
-    * A2 corresponds to angles + mismatch
-    * A3 corresponds to angle difference vars
+""" Return A1, A2, A3 where:
+* A1 corresponds to wind
+* A2 corresponds to angles + mismatch
+* A3 corresponds to angle difference vars
 
-    Used to find x_star, the min-norm solution to
-    Ax=b such that x_star[idx3] = 0.
-    """
+Used to find x_star, the min-norm solution to
+Ax=b such that x_star[idx3] = 0.
+"""
+function partition_A(A,Qobj,T)
     n = size(A,2)
     idx1 = find(diag(Qobj))
     idx2 = setdiff(1:n-T,idx1)
@@ -17,16 +16,16 @@ function partition_A(A,Qobj,T)
     return A1,A2,idx1,idx2,idx3
 end
 
-function find_x_star(A1,A2,idx1,idx2,n,b)
-    """ x_star is the n-vector by which the problem must
-    be translated in the first step of the temporal
-    instanton QCQP solution.
+""" x_star is the n-vector by which the problem must
+be translated in the first step of the temporal
+instanton QCQP solution.
 
-    x_star is chosen to be the point in the set Ax=b
-    nearest to the origin such that x_star[idx3] = 0.
-    This condition ensures no linear term is introduced
-    into the quadratic constraint.
-    """
+x_star is chosen to be the point in the set Ax=b
+nearest to the origin such that x_star[idx3] = 0.
+This condition ensures no linear term is introduced
+into the quadratic constraint.
+"""
+function find_x_star(A1,A2,idx1,idx2,n,b)
     x_star = zeros(n)
 
     try
@@ -41,18 +40,18 @@ function find_x_star(A1,A2,idx1,idx2,n,b)
     return x_star
 end
 
+""" This function performs the change of variables from x to z,
+where z = x - x_star. (For translating a quadratic problem.)
+Returns triple H_of_x consisting of matrix H, vector h, constant kh.
+
+Arguments
+G_of_x consists of matrix G, vector g, constant kg.
+x_star is translation.
+
+Used to perform second step of temporal instanton solution method,
+assuming x_star is min-norm solution of Ax=b.
+"""
 function translate_quadratic(G_of_x,x_star)
-    """ This function performs the change of variables from x to z,
-    where z = x - x_star. (For translating a quadratic problem.)
-    Returns triple H_of_x consisting of matrix H, vector h, constant kh.
-
-    Arguments
-    G_of_x consists of matrix G, vector g, constant kg.
-    x_star is translation.
-
-    Used to perform second step of temporal instanton solution method,
-    assuming x_star is min-norm solution of Ax=b.
-    """
     G,g,kg = G_of_x
     if g == 0
         g = zeros(size(G,1),1)
@@ -63,11 +62,11 @@ function translate_quadratic(G_of_x,x_star)
     return (H,h,kh[1])
 end
 
+""" Find an orthonormal basis for the nullspace of A.
+This matrix may be used to rotate a temporal instanton
+problem instance to eliminate all but nullity(A) elements.
+"""
 function kernel_rotation(A; spqr=true)
-    """ Find an orthonormal basis for the nullspace of A.
-    This matrix may be used to rotate a temporal instanton
-    problem instance to eliminate all but nullity(A) elements.
-    """
     m,n = size(A)
 
     # Assume A always has full row rank of m.
@@ -105,10 +104,10 @@ function kernel_rotation_sparse(A; dim_N_only=true)
     N = convert(Array,SparseMatrix.SPQR.qmult(SparseMatrix.SPQR.QX, F, SparseMatrix.CHOLMOD.Dense(B)))
 end
 
+""" Rotate quadratic G_of_x by
+rotation matrix R.
+"""
 function rotate_quadratic(G_of_x,R)
-    """ Rotate quadratic G_of_x by
-    rotation matrix R.
-    """
     G,g,kg = G_of_x
     return (R*G*R',R*g,kg)
 end
@@ -121,10 +120,10 @@ function rotate_vector(G,R)
     R*g
 end
 
+""" Return K, the diagonal matrix whose elements are
+square roots of eigenvalues of the given matrix D.
+"""
 function return_K(D)
-    """ Return K, the diagonal matrix whose elements are
-    square roots of eigenvalues of the given matrix D.
-    """
     K = ones(length(D))
     K[find(D)] = sqrt(D[find(D)])
     return spdiagm(K)
@@ -156,15 +155,13 @@ function find_w(v,D,d)
     return w
 end
 
+""" Reverse rotations and translations to map
+secular equation solution back to original problem
+space.
+"""
 function return_xopt(w2opt,B11,B12,b1,N,U,K,x_star)
-    """ Reverse rotations and translations to map
-    secular equation solution back to original problem
-    space.
-    """
     w1opt = -B11\(B12*w2opt + b1/2)
     wopt = [w1opt;w2opt]
     xopt = N*U*diagm(1./diag(K))*wopt + x_star
     return xopt
 end
-
-# end # @iprofile begin
