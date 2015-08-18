@@ -43,6 +43,8 @@ function load_rts96_data(; return_as_type::Bool = false)
     Vg,Vceiling,Vfloor,
     busIdx,N,Nr,Ng,k) = unpack_psDL(psData)
 
+    busIdx = convert(Vector{Int64},busIdx)
+
     Sb = 100e6 # overwrite "100.0"
 
     res = r
@@ -59,8 +61,10 @@ function load_rts96_data(; return_as_type::Bool = false)
     line_lengths = load("../data/RTS-96\ Data/line_lengths.jld", "line_lengths")
 
     mpc = loadcase("case96",describe=false)
-    from = mpc["branch"][:,1]
-    to = mpc["branch"][:,2]
+    from = convert(Vector{Int64},mpc["branch"][:,1])
+    to = convert(Vector{Int64},mpc["branch"][:,2])
+
+
     bus_voltages = mpc["bus"][:,10]
     line_conductors = return_line_conductors(busIdx,bus_voltages,from,to)
 
@@ -216,13 +220,15 @@ function return_line_conductors(
     to::Vector{Int64}
     )
     numLines = length(from)
-    node2voltage(node) = bus_voltages[find(bus_names.==node)][1]
+    function node2voltage(node,bus_names,bus_voltages)
+        bus_voltages[find(bus_names.==node)][1]
+    end
     volt2cond(volt) = volt < 300 ? "waxwing" : "dove"
     line_voltages = Array(Float64,0)
 
     for i in 1:numLines
-        Vfrom = node2voltage(from[i])
-        Vto = node2voltage(to[i])
+        Vfrom = node2voltage(from[i],bus_names,bus_voltages)
+        Vto = node2voltage(to[i],bus_names,bus_voltages)
         Vline = max(Vfrom,Vto)
         push!(line_voltages, Vline)
     end
