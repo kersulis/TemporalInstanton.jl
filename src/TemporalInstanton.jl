@@ -1,7 +1,5 @@
 module TemporalInstanton
 
-#using MAT, MatpowerCases, JLD#, IProfile, HDF5, ProgressMeter
-
 export
     solve_instanton_qcqp, solve_temporal_instanton, LineParams,
     ConductorParams, load_rts96_data, load_polish_data, createY,
@@ -46,7 +44,7 @@ Thus, an equivalent problem expression is:
 
 The solution method is due in part to Dr. Dan
 Bienstock of Columbia University. It involves
-translating and rotating the problem, using
+translating and rotating the problem, applying
 partial KKT conditions, and solving the
 resulting secular equation.
 
