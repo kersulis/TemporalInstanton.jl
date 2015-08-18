@@ -15,13 +15,13 @@ function maxTempInstanton(
     Y::Array,
     ref::Int,
     G0::Vector,
-    P0::Vector,
+    R0::Vector,
     D0::Vector,
     k::Vector,
     tau::Float64,
     lines::Array,
     c::Float64)
-    
+
     n = size(Y,1)
     nr = length(Ridx)
     T = int(length(G0)/n) # infer number of time steps
@@ -31,7 +31,7 @@ function maxTempInstanton(
     Qobj = tmp_inst_pad_Q(full(Qobj),T)
     A1 = full(tmp_inst_A(Ridx,T,Y,ref,k))
     A1 = [A1 zeros((n+1)*T,T)]
-    b = tmp_inst_b(n,T,G0,P0,D0)
+    b = tmp_inst_b(n,T,G0,R0,D0)
     # Augment b with new elements:
     tmp_inst_pad_b(b,T)
     Qtheta = tmp_inst_Qtheta(n,nr,T)#,tau)
@@ -60,7 +60,7 @@ function maxTempInstanton(
         A = [A1; A2]
 
         # Create solver model
-        m,z,LinearConstrs = maxTempModel(Qobj,A,b,Qtheta,P0,c)
+        m,z,LinearConstrs = maxTempModel(Qobj,A,b,Qtheta,R0,c)
 
         # Solve
         status = solve(m)
@@ -90,11 +90,11 @@ function maxTempInstanton(
     return score,result,x,θ,α,diffs
 end
 
-function maxTempModel(Qobj,A,b,Qtheta,P0,c)
+function maxTempModel(Qobj,A,b,Qtheta,R0,c)
     # Build a model:
     m = Model(solver = IpoptSolver()) # Use MOSEK to solve model
     numRows,numVars = size(A)
-    Nr = length(find(P0))
+    Nr = length(find(R0))
     @defVar(m,z[1:numVars])
     setObjective(m,:Max,sum([(Qtheta[i,i]*z[i]^2) for i in 1:size(Qtheta,1)]))
 
@@ -104,7 +104,7 @@ function maxTempModel(Qobj,A,b,Qtheta,P0,c)
     end
 
     windPos = find(diag(Qobj))
-    windVal = P0[find(P0)]
+    windVal = R0[find(R0)]
     @defConstrRef windLims[1:length(windPos)]
     for i = 1:length(windPos)
         windLims[i] = @addConstraint(m, -c*windVal[i] <= z[windPos[i]] <= c*windVal[i])
