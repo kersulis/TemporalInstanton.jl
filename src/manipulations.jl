@@ -86,24 +86,6 @@ function kernel_rotation(A; spqr=true)
     end
 end
 
-""" Find an orthonormal basis for the nullspace of A.
-This matrix may be used to rotate a temporal instanton
-problem instance to eliminate all but nullity(A) elements.
-"""
-function kernel_rotation_sparse(A; dim_N_only=true)
-    m,n = size(A)
-    # Assume A always has full row rank of m.
-    # It may be possible for this assumption to fail
-    # due to numerics, but a rank() check is expensive.
-    dim_N = n - m # dimension of nullspace of A
-
-    # qr factorization of A using fill-reducing permutation:
-    F = qrfact(sparse(A'))
-    # B selects last dim_N cols of Q:
-    B = [zeros(size(A,2)-dim_N,dim_N); eye(dim_N)]
-    N = convert(Array,SparseMatrix.SPQR.qmult(SparseMatrix.SPQR.QX, F, SparseMatrix.CHOLMOD.Dense(B)))
-end
-
 """ Rotate quadratic G_of_x by
 rotation matrix R.
 """
