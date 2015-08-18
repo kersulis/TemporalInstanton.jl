@@ -6,6 +6,7 @@ export
     solve_instanton_qcqp, solve_temporal_instanton, LineParams,
     ConductorParams, load_rts96_data, load_polish_data, createY,
     process_instanton_results, InstantonInputData, InstantonOutputData,
+    mat2tmpinst,
 
     # temporary:
     tmp_inst_Qobj,tmp_inst_A1,tmp_inst_b,tmp_inst_Qtheta,

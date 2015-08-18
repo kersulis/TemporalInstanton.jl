@@ -32,7 +32,7 @@ type InstantonOutputData
     xopt::Vector{Vector{Float64}}
 end
 
-function load_rts96_data(;return_as_type=false)
+function load_rts96_data(; return_as_type::Bool = false)
     ####### LOAD DATA ########
     psData = psDataLoad()
 
@@ -85,36 +85,57 @@ function load_rts96_data(;return_as_type=false)
             NaN,
             Array{Float64,2}())
     else
-        return Ridx,Y,Gp,Dp,Rp,Sb,ref,lines,res,reac,k,line_lengths,line_conductors
+        return Ridx,Y,Gp,Dp,Rp,Sb,ref,
+            lines,res,reac,k,
+            line_lengths,line_conductors
     end
 end
 
-function mat2tmpinst(name)
+""" Load (and generate) everything needed to perform
+temporal instanton analysis for any network
+supported by MatpowerCases
+"""
+function mat2tmpinst(name::ASCIIString; return_as_type::Bool = false)
     mpc = loadcase(name,describe=false)
-    bus_i = mpc["bus"][:,1]
+
+    bus_orig = mpc["bus"][:,1]
+    bus_simple = collect(1:length(bus_orig))
+
     genBus = mpc["gen"][:,1]
-    Sb = mpc["baseMVA"]
+    for i in bus_simple
+        genBus[genBus.==bus_orig[i]] = bus_simple[i]
+    end
+
+    try
+        Sb = mpc["baseMVA"]
+    catch
+        Sb = 100.0
+    end
     Gp_long = mpc["gen"][:,2]
 
     f = round(Int64,mpc["branch"][:,1]) # "from bus" ...
     t = round(Int64,mpc["branch"][:,2]) # ... "to bus"
+    for i in bus_simple
+        f[f.==bus_orig[i]] = bus_simple[i]
+        t[t.==bus_orig[i]] = bus_simple[i]
+    end
     r = mpc["branch"][:,3]              # resistance, pu
     x = mpc["branch"][:,4]              # reactance, pu
     b = mpc["branch"][:,5]              # susceptance, pu
 
     Y = createY(f,t,x)
 
-    Gp = zeros(length(bus_i))
-    for i in bus_i
+    Gp = zeros(length(bus_simple))
+    for i in bus_simple
         Gp[convert(Int64,i)] = sum(Gp_long[find(genBus.==i)])/Sb
     end
 
     Dp = mpc["bus"][:,3]./Sb
 
-    # convert half the generators into wind farms:
+    # convert generators into wind farms:
     Rp = zeros(length(Gp))
     for i in 1:length(Gp)
-        if Gp[i] < mean(Gp)
+        if Gp[i] < mean(Gp[find(Gp)])
             Rp[i] = Gp[i]
             Gp[i] = 0
         end
@@ -127,7 +148,6 @@ function mat2tmpinst(name)
     ref = 1
 
     lines = [(f[i],t[i]) for i in 1:length(f)]
-    lines = convert(Array{Tuple{Int64,Int64},1},lines)
 
     res = r
     reac = x
@@ -143,18 +163,21 @@ function mat2tmpinst(name)
     end
 
     # use RTS-96 line lengths to generate similar line lengths
-    line_lengths = load("../data/polish_line_lengths.jld",
-        "line_lengths")[1:length(lines)]
+    line_lengths = load("../data/polish_line_lengths.jld","line_lengths")[1:length(lines)]
 
     # temporary (re-use rts-96 line conductor parameters)
     line_conductors = fill("waxwing",length(line_lengths))
-    convert(Array{ASCIIString},line_conductors)
 
-    return  Ridx, Y,
-            Gp, Dp, Rp,
-            Sb, ref, lines,
-            res, reac, k,
-            line_lengths, line_conductors
+    if return_as_type
+        return InstantonInputData(Ridx,Y,Gp,Dp,Rp,Sb,ref,
+            lines,res,reac,k,
+            line_lengths,line_conductors,
+            NaN,NaN,NaN,NaN,Array{Float64,2}())
+    else
+        return Ridx,Y,Gp,Dp,Rp,Sb,ref,
+            lines,res,reac,k,
+            line_lengths,line_conductors
+    end
 end
 
 """ Create an admittance matrix for AC power flow.
@@ -186,7 +209,12 @@ end
 
 """ Use bus voltage level to determine appropriate conductor type. TODO: replace with Jon's conductor interpolation code.
 """
-function return_line_conductors(bus_names,bus_voltages,from,to)
+function return_line_conductors(
+    bus_names::Vector{Int64},
+    bus_voltages::Vector{Float64},
+    from::Vector{Int64},
+    to::Vector{Int64}
+    )
     numLines = length(from)
     node2voltage(node) = bus_voltages[find(bus_names.==node)][1]
     volt2cond(volt) = volt < 300 ? "waxwing" : "dove"
