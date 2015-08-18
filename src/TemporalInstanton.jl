@@ -171,23 +171,24 @@ Interpreting `score`:
 * `score[i]::NaN`: no secular equation intersection for line `i`
 """
 function solve_temporal_instanton(
-    Ridx,
-    Y,
-    G0,
-    P0,
-    D0,
-    Sb,
-    ref,
+    Ridx::Vector{Int64},
+    Y::Array{Float64,2},
+    G0::Vector{Float64},
+    P0::Vector{Float64},
+    D0::Vector{Float64},
+    Sb::Float64,
+    ref::Int64,
     lines,
-    res,
-    reac,
-    k,
-    line_lengths,
+    res::Vector{Float64},
+    reac::Vector{Float64},
+    k::Vector{Float64},
+    line_lengths::Vector{Float64},
     line_conductors,
-    Tamb,
-    T0,
-    int_length,
-    corr=[])
+    Tamb::Float64,
+    T0::Float64,
+    int_length::Float64,
+    corr = Array{Float64,2}()::Array{Float64,2}
+    )
 
     # why does all allocation happen here?
     # (parallel question)
