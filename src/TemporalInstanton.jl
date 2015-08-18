@@ -19,37 +19,6 @@ export
     # plot:
     temperatureTrajectory
 
-type InstantonInputData
-    Ridx
-    Y
-    G0
-    D0
-    R0
-    Sb
-    ref
-    lines
-    res
-    reac
-    k
-    line_lengths
-    line_conductors
-    Tamb
-    T0
-    int_length
-    time_values
-    corr
-
-    #InstantonInputData(Ridx, Y, G0, D0, R0, Sb, ref, lines, res, reac, k, line_lengths, line_conductors) = InstantonInputData(Ridx, Y, G0, D0, R0, Sb, ref, lines, res, reac, k, line_lengths, line_conductors, [], [], [])
-end
-
-type InstantonOutputData
-    score
-    x
-    θ
-    α
-    diffs
-    xopt
-end
 include("DataLoad.jl")
 include("PowerFlow.jl")
 include("ThermalModel.jl")
@@ -150,7 +119,7 @@ Inputs:
 * `Ridx`            Vector: indices of nodes that have wind farms
 * `Y`               Admittance matrix
 * `G0`              Conventional generation dispatch
-* `P0`              Renewable generation forecast
+* `R0`              Renewable generation forecast
 * `D0`              Conventional demand
 * `Sb`              System base voltage
 * `ref`             Index of system angle reference bus
@@ -172,13 +141,13 @@ Interpreting `score`:
 """
 function solve_temporal_instanton(
     Ridx::Vector{Int64},
-    Y::Array{Float64,2},
+    Y::SparseMatrixCSC{Float64,Int64},
     G0::Vector{Float64},
-    P0::Vector{Float64},
+    R0::Vector{Float64},
     D0::Vector{Float64},
     Sb::Float64,
     ref::Int64,
-    lines::Array{Tuple{Int64,Int64}},
+    lines::Array{Tuple{Int64,Int64},1},
     res::Vector{Float64},
     reac::Vector{Float64},
     k::Vector{Float64},
@@ -187,14 +156,14 @@ function solve_temporal_instanton(
     Tamb::Float64,
     T0::Float64,
     int_length::Float64,
-    corr = Array{Float64,2}()::Array{Float64,2}
+    corr::Array{Float64,2} = Array{Float64,2}()
     )
 
     # why does all allocation happen here?
     # (parallel question)
     n = length(k)
     nr = length(Ridx)
-    T = round(Int64,length(find(P0))/nr)
+    T = round(Int64,length(find(R0))/nr)
     numLines = length(lines)
 
     # Form objective quadratic:
@@ -205,7 +174,7 @@ function solve_temporal_instanton(
     # changes during line loop):
     A1 = tmp_inst_A1(Ridx,T,Y,ref,k; pad=true)
 
-    b = tmp_inst_b(n,T,G0,P0,D0; pad=true)
+    b = tmp_inst_b(n,T,G0,R0,D0; pad=true)
     Qtheta = tmp_inst_Qtheta(n,nr,T)
 
     # Exclude lines with zero length:
@@ -282,19 +251,19 @@ solve_temporal_instanton(inputData::InstantonInputData) = solve_temporal_instant
 )
 
 function process_instanton_results(
-    results,
-    n,
-    nr,
-    T;
-    return_as_type = false
+    results::Array{Tuple{Array{Float64,1},Float64},1},
+    n::Int64,
+    nr::Int64,
+    T::Int64;
+    return_as_type::Bool = false
     )
-    # Store results in more human-readable form:
-    score = Float64[]
-    α = Array(Vector{Float64},0)
-    θ = Array(Array,0)
-    x = Array(Array,0)
-    diffs = Array(Array,0)
-    xopt = Array(Array,0)
+    # Store results in human-readable form:
+    score   = Vector{Float64}()
+    x       = Vector{Vector{Vector{Float64}}}()
+    θ       = Vector{Vector{Vector{Float64}}}()
+    α       = Vector{Vector{Float64}}()
+    diffs   = Vector{Vector{Float64}}()
+    xopt    = Vector{Vector{Float64}}()
 
     for i in 1:size(results,1)
         xvec,sol = results[i]
