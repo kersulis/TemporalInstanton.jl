@@ -4,21 +4,6 @@ include("tmp_inst_rts96.jl")
 include("readPolishData.jl")
 
 function load_rts96_data(;return_as_type=false)
-    function return_line_conductors(bus_names,bus_voltages,from,to)
-        numLines = length(from)
-        node2voltage(node) = bus_voltages[find(bus_names.==node)][1]
-        volt2cond(volt) = volt < 300 ? "waxwing" : "dove" # waxwing for 138, dove for 200+
-        line_voltages = Array(Float64,0)
-
-        for i in 1:numLines
-            Vfrom = node2voltage(from[i])
-            Vto = node2voltage(to[i])
-            Vline = max(Vfrom,Vto)
-            push!(line_voltages, Vline)
-        end
-        line_conductors = [volt2cond(volt) for volt in line_voltages]
-    end
-
     ####### LOAD DATA ########
     psData = psDataLoad()
 
@@ -48,15 +33,15 @@ function load_rts96_data(;return_as_type=false)
     from = mpc["branch"][:,1]
     to = mpc["branch"][:,2]
     bus_voltages = mpc["bus"][:,10]
-    line_conductors = return_line_conductors(busIdx,bus_voltages,from,to);
+    line_conductors = return_line_conductors(busIdx,bus_voltages,from,to)
 
     if return_as_type
-        return InstantonInputData(Ridx,Y,Gp,Dp,Rp,Sb,ref,lines,res,reac,k,line_lengths,line_conductors,NaN,NaN,NaN,NaN,[])
+        return InstantonInputData(Ridx,Y,Gp,Dp,Rp,Sb,ref,
+            lines,res,reac,k,line_lengths,line_conductors,NaN,NaN,NaN,NaN,[])
     else
         return Ridx,Y,Gp,Dp,Rp,Sb,ref,lines,res,reac,k,line_lengths,line_conductors
     end
 end
-
 
 function mat2tmpinst(name)
     mpc = loadcase(name,describe=false)
@@ -112,10 +97,12 @@ function mat2tmpinst(name)
     end
 
     # use RTS-96 line lengths to generate similar line lengths
-    line_lengths = load("../data/polish_line_lengths.jld","line_lengths")[1:length(lines)]
+    line_lengths = load("../data/polish_line_lengths.jld",
+        "line_lengths")[1:length(lines)]
 
     # temporary (re-use rts-96 line conductor parameters)
     line_conductors = fill("waxwing",length(line_lengths))
+    convert(Array{ASCIIString},line_conductors)
 
     return  Ridx, Y,
             Gp, Dp, Rp,
@@ -139,4 +126,22 @@ function createY(f,t,r,x,b,s)
         y = complex(G,B)
         return sparse([f; t; t; f],[t; f; t; f],[-y; -y; y + b./2; y + b./2])
     end
+end
+
+""" Use bus voltage level to determine appropriate conductor type. TODO: replace with Jon's conductor interpolation code.
+"""
+function return_line_conductors(bus_names,bus_voltages,from,to)
+    numLines = length(from)
+    node2voltage(node) = bus_voltages[find(bus_names.==node)][1]
+    volt2cond(volt) = volt < 300 ? "waxwing" : "dove"
+    line_voltages = Array(Float64,0)
+
+    for i in 1:numLines
+        Vfrom = node2voltage(from[i])
+        Vto = node2voltage(to[i])
+        Vline = max(Vfrom,Vto)
+        push!(line_voltages, Vline)
+    end
+    line_conductors = [volt2cond(volt) for volt in line_voltages]
+    convert(Array{ASCIIString},line_conductors)
 end
