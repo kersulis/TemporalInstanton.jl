@@ -183,7 +183,7 @@ function solve_temporal_instanton(
     reac::Vector{Float64},
     k::Vector{Float64},
     line_lengths::Vector{Float64},
-    line_conductors,
+    line_conductors::Vector{ASCIIString},
     Tamb::Float64,
     T0::Float64,
     int_length::Float64,
@@ -281,7 +281,13 @@ solve_temporal_instanton(inputData::InstantonInputData) = solve_temporal_instant
     inputData.corr
 )
 
-function process_instanton_results(results,n,nr,T;return_as_type=false)
+function process_instanton_results(
+    results,
+    n,
+    nr,
+    T;
+    return_as_type = false
+    )
     # Store results in more human-readable form:
     score = Float64[]
     α = Array(Vector{Float64},0)
