@@ -1,6 +1,4 @@
-# Data loading and manipulation:
-using JLD, MatpowerCases
-include("tmp_inst_rts96.jl")
+using JLD, MAT, MatpowerCases
 
 type InstantonInputData
     Ridx::Vector{Int64}
@@ -33,43 +31,98 @@ type InstantonOutputData
 end
 
 function load_rts96_data(; return_as_type::Bool = false)
-    ####### LOAD DATA ########
-    psData = psDataLoad()
+    path="../src/caseRTS96.mat" # Assumes current dir is nbs
+    caseRTS96 = matread(path) # import MATLAB workspace
 
-    # unpack psDL (boilerplate):
-    (Sb,f,t,r,x,b,Y,bustype,
-    Gp,Gq,Dp,Dq,Rp,Rq,
-    Pmax,Pmin,Qmax,Qmin,Plim,
-    Vg,Vceiling,Vfloor,
-    busIdx,N,Nr,Ng,k) = unpack_psDL(psData)
+    # Connect relevant MATLAB variables to Julia
+    bus_i = caseRTS96["bus_i"][:,1] # vector of unique bus indices (73)
+    bus = caseRTS96["bus"][:,1] # vector of generator bus indices (99)
+    Sb = caseRTS96["Sb"]::Float64 # base MVA
+    bustype = round(Int64,caseRTS96["type"][:,1])::Vector{Int64}
 
-    busIdx = convert(Vector{Int64},busIdx)
+    Gp_long = caseRTS96["Pg"] # conventional active power output, divide by Sb later
+    Gq_long = caseRTS96["Qg"] # conventional reactive power output, divide by Sb later
 
-    Sb = 100e6 # overwrite "100.0"
+    Rp = (caseRTS96["Wind"]./Sb)[:,1] # renewable active generation, has zero where no farm exists
 
-    res = r
-    reac = x
+    Dp = caseRTS96["Pd"]./Sb + Rp # I previously subtracted wind from active demand
+    Dp = Dp[:,1]
+    f = round(Int64,caseRTS96["fbus"][:,1])::Vector{Int64} # "from bus" ...
+    t = round(Int64,caseRTS96["tbus"][:,1])::Vector{Int64} # ... "to bus"
+    r = caseRTS96["r"][:,1]::Vector{Float64} # resistance, pu
+    x = caseRTS96["x"][:,1]::Vector{Float64} # reactance, pu
 
-    ####### LINK DATA ########
-    # Static
-    Ridx = find(Rp) # Vector of renewable nodes
-    Y = Y # Full admittance matrix (ref not removed)
-    ref = 1 # Index of ref node
-    k = k # Conventional generator participation factors
+    # map bus numbers to 1:73
+    for i = 1:length(f)
+        if f[i] < 201
+            f[i] -= 100
+        elseif f[i] < 301
+            f[i] -= 176
+        else
+            f[i] -= 252
+        end
+    end
+    for i = 1:length(t)
+        if t[i] < 201
+            t[i] -= 100
+        elseif t[i] < 301
+            t[i] -= 176
+        else
+            t[i] -= 252
+        end
+    end
+
+    busidx = Int64[1]
+    for i = 2:length(bus)
+        if bus[i] < 201
+            push!(busidx, bus[i]-100)
+        elseif bus[i] < 301
+            push!(busidx, bus[i]-176)
+        else
+            push!(busidx, bus[i]-252)
+        end
+    end
+    busidx = convert(Vector{Int64},busidx)
+
+    # area 1: buses 1-24
+    # area 2: buses 25-48
+    # area 3: buses 49-73
+
+    Gp = zeros(length(bus_i))
+
+    for i in unique(busidx)
+        Gp[i] = sum(Gp_long[find(busidx .== i)])/Sb
+    end
+    # Now Gp and Gq reflect active and reactive generation at buses 1:73 consecutively.
+
+    Ridx = find(Rp)
+    Y = createY(f,t,x)::SparseMatrixCSC{Float64,Int64}
+
+    # Allow each generator to participate equally in droop response.
+    # Note: this only applies to analysis types with droop response!
+    k = Vector{Float64}()
+    for i = 1:length(Gp)
+        if Gp[i] != 0.0
+            push!(k, 1/length(find(Gp)))
+        else
+            push!(k,0.0)
+        end
+    end
+
+    ref = 1 # index of reference node
     lines = [(f[i],t[i]) for i in 1:length(f)]
     lines = convert(Array{Tuple{Int64,Int64},1},lines)
     line_lengths = load("../data/RTS-96\ Data/line_lengths.jld", "line_lengths")
+    Sb = 100e6 # overwrite "100.0"
 
     mpc = loadcase("case96",describe=false)
     from = convert(Vector{Int64},mpc["branch"][:,1])
     to = convert(Vector{Int64},mpc["branch"][:,2])
-
-
     bus_voltages = mpc["bus"][:,10]
-    line_conductors = return_line_conductors(busIdx,bus_voltages,from,to)
+    line_conductors = return_line_conductors(round(Int64,bus_i),bus_voltages,from,to)
 
     if return_as_type
-        return InstantonInputData(
+        return  InstantonInputData(
             Ridx,
             Y,
             Gp,
@@ -78,8 +131,8 @@ function load_rts96_data(; return_as_type::Bool = false)
             Sb,
             ref,
             lines,
-            res,
-            reac,
+            r,
+            x,
             k,
             line_lengths,
             line_conductors,
@@ -87,11 +140,12 @@ function load_rts96_data(; return_as_type::Bool = false)
             NaN,
             NaN,
             NaN,
-            Array{Float64,2}())
-    else
-        return Ridx,Y,Gp,Dp,Rp,Sb,ref,
-            lines,res,reac,k,
-            line_lengths,line_conductors
+            Array{Float64,2}()
+            )
+        else
+            return Ridx,Y,Gp,Dp,Rp,Sb,ref,
+                lines,r,x,k,
+                line_lengths,line_conductors
     end
 end
 
