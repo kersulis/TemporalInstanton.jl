@@ -139,7 +139,7 @@ function load_rts96_data(; return_as_type::Bool = false)
             NaN,
             NaN,
             NaN,
-            NaN,
+            0.0:0.0,
             Array{Float64,2}()
             )
         else
