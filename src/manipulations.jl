@@ -61,16 +61,15 @@ x_star is translation.
 
 Used to perform second step of temporal instanton solution method,
 assuming x_star is min-norm solution of Ax=b.
+
+This method does not check for dimension mismatches.
 """
 function translate_quadratic(
-    G_of_x::Tuple{Array{Float64,2},Vector{Float64},Float64},
+    G_of_x::Tuple{SparseMatrixCSC{Float64,Int64},Vector{Float64},Float64},
     x_star::Vector{Float64}
     )
 
     G,g,kg = G_of_x
-    if g == 0
-        g = zeros(size(G,1),1)
-    end
     H = G
     h = g + 2*G*x_star
     kh = kg + x_star'*G*x_star + g'*x_star
@@ -102,11 +101,11 @@ function kernel_rotation(A::SparseMatrixCSC{Float64,Int64}; spqr=true)
 end
 
 """ Rotate quadratic G_of_x by
-rotation matrix R.
+rotation matrix R. Sparse.
 """
-function rotate_quadratic(
-    G_of_x::Tuple{Array{Float64,2},Vector{Float64},Float64},
-    R::Array{Float64,2}
+function rotate_quadratic{T<:AbstractArray}(
+    G_of_x::Tuple{T,Vector{Float64},Float64},
+    R::Union(Array{Float64,2},SparseMatrixCSC{Float64,Int64})
     )
 
     G,g,kg = G_of_x
