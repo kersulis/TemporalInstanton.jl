@@ -30,9 +30,9 @@ Returns A, which is (n+1)*T-by-(nr+n+1)*T
 """
 function fixed_wind_A(T,Y,ref,k)
     function ei(n,i)
-        e = zeros(n)
-        e[i] = 1.
-        return e
+        v = zeros(n)
+        v[i] = 1.0
+        return v
     end
 
     n = size(Y,1)
