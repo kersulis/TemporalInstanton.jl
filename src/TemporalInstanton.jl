@@ -52,8 +52,8 @@ resulting secular equation.
 between the secular equation and horizontal line. *
 """
 function solve_instanton_qcqp(
-    G_of_x::Tuple,
-    Q_of_x::Tuple,
+    G_of_x::Tuple{SparseMatrixCSC{Float64,Int64},Vector{Float64},Float64},
+    Q_of_x::Tuple{SparseMatrixCSC{Float64,Int64},Vector{Float64},Float64},
     A::SparseMatrixCSC{Float64,Int64},
     b::Vector{Float64},
     T::Int64
@@ -173,7 +173,7 @@ function solve_temporal_instanton(
 
     # Form objective quadratic:
     Qobj = tmp_inst_Qobj(n,nr,T,corr; pad=true)
-    G_of_x = (Qobj,0,0)
+    G_of_x = (Qobj,zeros(size(Qobj,1)),0.0)
 
     # Create A1 (only A2, the bottom part,
     # changes during line loop):
@@ -208,7 +208,7 @@ function solve_temporal_instanton(
 
             # thermal constraint, Q(z) = 0:
             kQtheta = (therm_a/therm_c)*(conductor_params.Tlim - therm_f)
-            Q_of_x = (Qtheta,0,kQtheta)
+            Q_of_x = (Qtheta,zeros(size(Qtheta,1)),kQtheta)
 
             # Create A2 based on chosen line:
             A2 = tmp_inst_A2(n,Ridx,T,line,therm_a,int_length)
