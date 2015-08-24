@@ -1,24 +1,24 @@
 """ Parameters that depend on which line is chosen.
 """
 type LineParams
-    from    # node
-    to      # node
-    rij     # [pu] resistance
-    xij     # [pu] reactance
-    length  # [m]
+    from::Int64     # node
+    to::Int64       # node
+    rij::Float64    # [pu] resistance
+    xij::Float64    # [pu] reactance
+    length::Float64 # [m]
 end
 
 """ Parameters that vary only with conductor material.
 """
 type ConductorParams
-    D0      # [m] conductor diameter
-    mCp     # [J/m-C] line heat capacity
-    Ilim    # [A] max. allowable current
-    r       # [pu] line resistance
-    Tlim    # [C] highest allowable line temperature
-    ηc      # [W/m-C] conductive heat loss rate coefficient
-    ηr      # [W/m-C^4] radiative heat loss rate coefficient
-    qs      # [W/m] solar heat gain rate
+    D0::Float64     # [m] conductor diameter
+    mCp::Float64    # [J/m-C] line heat capacity
+    Ilim::Float64   # [A] max. allowable current
+    r::Float64      # [pu] line resistance
+    Tlim::Float64   # [C] highest allowable line temperature
+    ηc::Float64     # [W/m-C] conductive heat loss rate coefficient
+    ηr::Float64     # [W/m-C^4] radiative heat loss rate coefficient
+    qs::Float64     # [W/m] solar heat gain rate
 end
 
 """ Returns instance of `ConductorParams` filled with
@@ -28,9 +28,9 @@ Accepts "waxwing" and "dove" as arguments.
 """
 function return_conductor_params(conductor::String)
     if conductor == "waxwing"
-        return ConductorParams(15.5e-3,383.,439.,110e-6,65.,0.955,2.207e-9,14.4)
+        return ConductorParams(15.5e-3,383.0,439.0,110e-6,65.0,0.955,2.207e-9,14.4)
     elseif conductor == "dove"
-        return ConductorParams(23.5e-3,916.,753.,60e-6,69.,1.179,3.346e-9,21.9)
+        return ConductorParams(23.5e-3,916.0,753.0,60e-6,69.0,1.179,3.346e-9,21.9)
     end
 end
 
