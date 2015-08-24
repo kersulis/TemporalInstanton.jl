@@ -97,9 +97,9 @@ function tmp_inst_b(
     netGen = G0 + R0 - D0
 
     for t = 1:T
-        start = (t-1)*n + 1
-        stop = start + n - 1
-        append!(b,netGen[start:stop])
+        startidx = (t-1)*n + 1
+        stopidx = startidx + n - 1
+        append!(b,netGen[startidx:stopidx])
         push!(b,0.0)
     end
     if pad
