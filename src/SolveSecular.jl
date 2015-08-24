@@ -30,7 +30,7 @@ function solve_secular(D,d,c)
                 stall = true
                 break
             end
-            if diff > 0
+            if currentdiff > 0
                 high = v
             else
                 low = v
