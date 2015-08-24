@@ -59,10 +59,10 @@ function fixed_wind_b(n,T,G0,Pnet,D)
     netGen = G0 + Pnet - D
 
     for t = 1:T
-        start = (t-1)*n + 1
-        stop = start + n - 1
-        append!(b,netGen[start:stop])
-        push!(b,0.)
+        startidx = (t-1)*n + 1
+        stopidx = startidx + n - 1
+        append!(b,netGen[startidx:stopidx])
+        push!(b,0.0)
     end
     return b
 end
