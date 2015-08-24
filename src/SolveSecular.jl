@@ -22,11 +22,11 @@ function solve_secular(D,d,c)
         # Initialize v:
         v = (high + low)/2
         w = find_w(v,D,d)
-        diff = (w'*w)[1] - c
-        diff_old = 0
+        currentdiff = (w'*w)[1] - c
+        olddiff = 0
         stall = false
-        while abs(diff) > tinynumber
-            if diff == diff_old
+        while abs(currentdiff) > tinynumber
+            if currentdiff == olddiff
                 stall = true
                 break
             end
@@ -37,8 +37,8 @@ function solve_secular(D,d,c)
             end
             v = (high + low)/2
             w = find_w(v,D,d)
-            diff_old = diff
-            diff = (w'*w)[1] - c
+            olddiff = currentdiff
+            currentdiff = (w'*w)[1] - c
         end
         if !stall
             push!(solutions,v)
@@ -57,23 +57,23 @@ function solve_secular(D,d,c)
 
         v = (high + low)/2
         w = find_w(v,D,d)
-        diff = (w'*w)[1] - c
-        diff_old = 0
+        currentdiff = (w'*w)[1] - c
+        olddiff = 0
         stall = false
-        while abs(diff) > tinynumber
-            if diff == diff_old
+        while abs(currentdiff) > tinynumber
+            if currentdiff == olddiff
                 stall = true
                 break
             end
-            if diff > 0
+            if currentdiff > 0
                 high = v
             else
                 low = v
             end
             v = (high + low)/2
             w = find_w(v,D,d)
-            diff_old = diff
-            diff = (w'*w)[1] - c
+            olddiff = currentdiff
+            currentdiff = (w'*w)[1] - c
         end
         if !stall
             push!(solutions,v)
