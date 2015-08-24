@@ -53,9 +53,9 @@ function tmp_inst_A1(
     pad::Bool = true
     )
     function ei(n::Int64,i::Int64)
-        e = spzeros(n,1)
-        e[i] = 1.
-        return e
+        v = spzeros(n,1)
+        v[i] = 1.0
+        return v
     end
 
     n = size(Y,1)
