@@ -1,7 +1,7 @@
 """ Solve the secular equation via binary search.
 """
 function solve_secular(D,d,c)
-    eps = 1e-8
+    tinynumber = 1e-8
     solutions = Float64[]
     vectors = Array(Vector{Float64},0)
     poles = sort(unique(round(diag(D),10)))
@@ -25,7 +25,7 @@ function solve_secular(D,d,c)
         diff = (w'*w)[1] - c
         diff_old = 0
         stall = false
-        while abs(diff) > eps
+        while abs(diff) > tinynumber
             if diff == diff_old
                 stall = true
                 break
@@ -60,7 +60,7 @@ function solve_secular(D,d,c)
         diff = (w'*w)[1] - c
         diff_old = 0
         stall = false
-        while abs(diff) > eps
+        while abs(diff) > tinynumber
             if diff == diff_old
                 stall = true
                 break
