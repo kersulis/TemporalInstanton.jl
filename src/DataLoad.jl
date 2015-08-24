@@ -17,7 +17,7 @@ type InstantonInputData
     Tamb::Float64
     T0::Float64
     int_length::Float64
-    time_values
+    time_values::FloatRange{Float64}
     corr::Array{Float64,2}
 end
 
