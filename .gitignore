@@ -11,6 +11,7 @@ paper/images
 *.out
 *.bbl
 *.blg
+*.pdf
 images/traj_anim/*.png
 poster
 src/tags
