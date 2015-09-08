@@ -1,6 +1,6 @@
-""" Generate the objective function matrix
-Qobj from the problem dimensions.
-Assume no correlation between wind sites.
+""" Generate the objective function matrix Qobj given problem dimensions.
+Output Qobj is square with dimension (nr + n + 2)*T (equal to number of
+variables in QCQP).
 """
 function tmp_inst_Qobj(
     n::Int64,
