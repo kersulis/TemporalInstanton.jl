@@ -1,23 +1,249 @@
-\documentclass[journal]{IEEEtran}
+% *** Authors should verify (and, if needed, correct) their LaTeX system  ***
+% *** with the testflow diagnostic prior to trusting their LaTeX platform ***
+% *** with production work. IEEE's font choices and paper sizes can       ***
+% *** trigger bugs that do not appear when using other class files.       ***                          ***
+% The testflow support page is at:
+% http://www.michaelshell.org/tex/testflow/
 
-\IEEEoverridecommandlockouts %To add sponsors and index terms
+\documentclass[journal,twoside]{IEEEtran}
 
+% Some very useful LaTeX packages include:
+% (uncomment the ones you want to load)
+
+% *** CITATION PACKAGES ***
+%
 \usepackage{cite}
+% cite.sty was written by Donald Arseneau
+% V1.6 and later of IEEEtran pre-defines the format of the cite.sty package
+% \cite{} output to follow that of IEEE. Loading the cite package will
+% result in citation numbers being automatically sorted and properly
+% "compressed/ranged". e.g., [1], [9], [2], [7], [5], [6] without using
+% cite.sty will become [1], [2], [5]--[7], [9] using cite.sty. cite.sty's
+% \cite will automatically add leading space, if needed. Use cite.sty's
+% noadjust option (cite.sty V3.8 and later) if you want to turn this off
+% such as if a citation ever needs to be enclosed in parenthesis.
+% cite.sty is already installed on most LaTeX systems. Be sure and use
+% version 5.0 (2009-03-20) and later if using hyperref.sty.
+% The latest version can be obtained at:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/cite/
+% The documentation is contained in the cite.sty file itself.
 
+% *** GRAPHICS RELATED PACKAGES ***
+%
 \ifCLASSINFOpdf
    \usepackage[pdftex]{graphicx}
   % declare the path(s) where your graphic files are
-%   \graphicspath{{../images/}}
+   \graphicspath{{./images/}}
   % and their extensions so you won't have to specify these with
   % every instance of \includegraphics
    \DeclareGraphicsExtensions{.pdf,.jpeg,.png}
 \else
+  % or other class option (dvipsone, dvipdf, if not using dvips). graphicx
+  % will default to the driver specified in the system graphics.cfg if no
+  % driver is specified.
+  % \usepackage[dvips]{graphicx}
+  % declare the path(s) where your graphic files are
+  % \graphicspath{{../eps/}}
+  % and their extensions so you won't have to specify these with
+  % every instance of \includegraphics
+  % \DeclareGraphicsExtensions{.eps}
 \fi
+% graphicx was written by David Carlisle and Sebastian Rahtz. It is
+% required if you want graphics, photos, etc. graphicx.sty is already
+% installed on most LaTeX systems. The latest version and documentation
+% can be obtained at: 
+% http://www.ctan.org/tex-archive/macros/latex/required/graphics/
+% Another good source of documentation is "Using Imported Graphics in
+% LaTeX2e" by Keith Reckdahl which can be found at:
+% http://www.ctan.org/tex-archive/info/epslatex/
+%
+% latex, and pdflatex in dvi mode, support graphics in encapsulated
+% postscript (.eps) format. pdflatex in pdf mode supports graphics
+% in .pdf, .jpeg, .png and .mps (metapost) formats. Users should ensure
+% that all non-photo figures use a vector format (.eps, .pdf, .mps) and
+% not a bitmapped formats (.jpeg, .png). IEEE frowns on bitmapped formats
+% which can result in "jaggedy"/blurry rendering of lines and letters as
+% well as large increases in file sizes.
+%
+% You can find documentation about the pdfTeX application at:
+% http://www.tug.org/applications/pdftex
 
+% *** MATH PACKAGES ***
+%
 \usepackage[cmex10]{amsmath}
-%\usepackage[hidelinks]{hyperref}
-\usepackage{nohyperref}
+% A popular package from the American Mathematical Society that provides
+% many useful and powerful commands for dealing with mathematics. If using
+% it, be sure to load this package with the cmex10 option to ensure that
+% only type 1 fonts will utilized at all point sizes. Without this option,
+% it is possible that some math symbols, particularly those within
+% footnotes, will be rendered in bitmap form which will result in a
+% document that can not be IEEE Xplore compliant!
+%
+% Also, note that the amsmath package sets \interdisplaylinepenalty to 10000
+% thus preventing page breaks from occurring within multiline equations. Use:
+%\interdisplaylinepenalty=2500
+% after loading amsmath to restore such page breaks as IEEEtran.cls normally
+% does. amsmath.sty is already installed on most LaTeX systems. The latest
+% version and documentation can be obtained at:
+% http://www.ctan.org/tex-archive/macros/latex/required/amslatex/math/
+
+% *** SPECIALIZED LIST PACKAGES ***
+%
+%\usepackage{algorithmic}
+% algorithmic.sty was written by Peter Williams and Rogerio Brito.
+% This package provides an algorithmic environment fo describing algorithms.
+% You can use the algorithmic environment in-text or within a figure
+% environment to provide for a floating algorithm. Do NOT use the algorithm
+% floating environment provided by algorithm.sty (by the same authors) or
+% algorithm2e.sty (by Christophe Fiorio) as IEEE does not use dedicated
+% algorithm float types and packages that provide these will not provide
+% correct IEEE style captions. The latest version and documentation of
+% algorithmic.sty can be obtained at:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/algorithms/
+% There is also a support site at:
+% http://algorithms.berlios.de/index.html
+% Also of interest may be the (relatively newer and more customizable)
+% algorithmicx.sty package by Szasz Janos:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/algorithmicx/
+
+% *** ALIGNMENT PACKAGES ***
+%
+\usepackage{array}
+% Frank Mittelbach's and David Carlisle's array.sty patches and improves
+% the standard LaTeX2e array and tabular environments to provide better
+% appearance and additional user controls. As the default LaTeX2e table
+% generation code is lacking to the point of almost being broken with
+% respect to the quality of the end results, all users are strongly
+% advised to use an enhanced (at the very least that provided by array.sty)
+% set of table tools. array.sty is already installed on most systems. The
+% latest version and documentation can be obtained at:
+% http://www.ctan.org/tex-archive/macros/latex/required/tools/
+
+
+% IEEEtran contains the IEEEeqnarray family of commands that can be used to
+% generate multiline equations as well as matrices, tables, etc., of high
+% quality.
+
+% *** SUBFIGURE PACKAGES ***
+%\ifCLASSOPTIONcompsoc
+%  \usepackage[caption=false,font=normalsize,labelfont=sf,textfont=sf]{subfig}
+%\else
+%  \usepackage[caption=false,font=footnotesize]{subfig}
+%\fi
+% subfig.sty, written by Steven Douglas Cochran, is the modern replacement
+% for subfigure.sty, the latter of which is no longer maintained and is
+% incompatible with some LaTeX packages including fixltx2e. However,
+% subfig.sty requires and automatically loads Axel Sommerfeldt's caption.sty
+% which will override IEEEtran.cls' handling of captions and this will result
+% in non-IEEE style figure/table captions. To prevent this problem, be sure
+% and invoke subfig.sty's "caption=false" package option (available since
+% subfig.sty version 1.3, 2005/06/28) as this is will preserve IEEEtran.cls
+% handling of captions.
+% Note that the Computer Society format requires a larger sans serif font
+% than the serif footnote size font used in traditional IEEE formatting
+% and thus the need to invoke different subfig.sty package options depending
+% on whether compsoc mode has been enabled.
+%
+% The latest version and documentation of subfig.sty can be obtained at:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/subfig/
+
+% *** FLOAT PACKAGES ***
+%
+%\usepackage{fixltx2e}
+% fixltx2e, the successor to the earlier fix2col.sty, was written by
+% Frank Mittelbach and David Carlisle. This package corrects a few problems
+% in the LaTeX2e kernel, the most notable of which is that in current
+% LaTeX2e releases, the ordering of single and double column floats is not
+% guaranteed to be preserved. Thus, an unpatched LaTeX2e can allow a
+% single column figure to be placed prior to an earlier double column
+% figure. The latest version and documentation can be found at:
+% http://www.ctan.org/tex-archive/macros/latex/base/
+
+%\usepackage{stfloats}
+% stfloats.sty was written by Sigitas Tolusis. This package gives LaTeX2e
+% the ability to do double column floats at the bottom of the page as well
+% as the top. (e.g., "\begin{figure*}[!b]" is not normally possible in
+% LaTeX2e). It also provides a command:
+%\fnbelowfloat
+% to enable the placement of footnotes below bottom floats (the standard
+% LaTeX2e kernel puts them above bottom floats). This is an invasive package
+% which rewrites many portions of the LaTeX2e float routines. It may not work
+% with other packages that modify the LaTeX2e float routines. The latest
+% version and documentation can be obtained at:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/sttools/
+% Do not use the stfloats baselinefloat ability as IEEE does not allow
+% \baselineskip to stretch. Authors submitting work to the IEEE should note
+% that IEEE rarely uses double column equations and that authors should try
+% to avoid such use. Do not be tempted to use the cuted.sty or midfloat.sty
+% packages (also by Sigitas Tolusis) as IEEE does not format its papers in
+% such ways.
+% Do not attempt to use stfloats with fixltx2e as they are incompatible.
+% Instead, use Morten Hogholm'a dblfloatfix which combines the features
+% of both fixltx2e and stfloats:
+%
+% \usepackage{dblfloatfix}
+% The latest version can be found at:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/dblfloatfix/
+
+%\ifCLASSOPTIONcaptionsoff
+%  \usepackage[nomarkers]{endfloat}
+% \let\MYoriglatexcaption\caption
+% \renewcommand{\caption}[2][\relax]{\MYoriglatexcaption[#2]{#2}}
+%\fi
+% endfloat.sty was written by James Darrell McCauley, Jeff Goldberg and 
+% Axel Sommerfeldt. This package may be useful when used in conjunction with 
+% IEEEtran.cls'  captionsoff option. Some IEEE journals/societies require that
+% submissions have lists of figures/tables at the end of the paper and that
+% figures/tables without any captions are placed on a page by themselves at
+% the end of the document. If needed, the draftcls IEEEtran class option or
+% \CLASSINPUTbaselinestretch interface can be used to increase the line
+% spacing as well. Be sure and use the nomarkers option of endfloat to
+% prevent endfloat from "marking" where the figures would have been placed
+% in the text. The two hack lines of code above are a slight modification of
+% that suggested by in the endfloat docs (section 8.4.1) to ensure that
+% the full captions always appear in the list of figures/tables - even if
+% the user used the short optional argument of \caption[]{}.
+% IEEE papers do not typically make use of \caption[]'s optional argument,
+% so this should not be an issue. A similar trick can be used to disable
+% captions of packages such as subfig.sty that lack options to turn off
+% the subcaptions:
+% For subfig.sty:
+% \let\MYorigsubfloat\subfloat
+% \renewcommand{\subfloat}[2][\relax]{\MYorigsubfloat[]{#2}}
+% However, the above trick will not work if both optional arguments of
+% the \subfloat command are used. Furthermore, there needs to be a
+% description of each subfigure *somewhere* and endfloat does not add
+% subfigure captions to its list of figures. Thus, the best approach is to
+% avoid the use of subfigure captions (many IEEE journals avoid them anyway)
+% and instead reference/explain all the subfigures within the main caption.
+% The latest version of endfloat.sty and its documentation can obtained at:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/endfloat/
+%
+% The IEEEtran \ifCLASSOPTIONcaptionsoff conditional can also be used
+% later in the document, say, to conditionally put the References on a 
+% page by themselves.
+
+% *** PDF, URL AND HYPERLINK PACKAGES ***
+%
 \usepackage{url}
+% url.sty was written by Donald Arseneau. It provides better support for
+% handling and breaking URLs. url.sty is already installed on most LaTeX
+% systems. The latest version and documentation can be obtained at:
+% http://www.ctan.org/tex-archive/macros/latex/contrib/url/
+% Basically, \url{my_url_here}.
+
+% *** Do not adjust lengths that control margins, column widths, etc. ***
+% *** Do not use packages that alter fonts (such as pslatex).         ***
+% There should be no need to do such things with IEEEtran.cls V1.6 and later.
+% (Unless specifically asked to do so by the journal or conference you plan
+% to submit to, of course. )
+
+% correct bad hyphenation here
+\hyphenation{op-tical net-works semi-conduc-tor}
+
+% ***ADDED BY JONAS***
+\usepackage{url}
+\usepackage{nohyperref}
 %for columns spanning multiple rows in tables
 \usepackage{multirow}
 %use the booktabs package to get (much!) better vertical spacing above and below "rules" (horizontal lines), resulting in a much more professional look of your tables.
@@ -25,80 +251,99 @@
 \usepackage{booktabs,colortbl}
 
 \usepackage{amsfonts}
-
-% correct bad hyphenation here
-\hyphenation{op-tical net-works semi-conduc-tor}
-
-  \renewcommand\footnoterule{\vspace*{-3pt}%
-     \hrule width 2in height 0.4pt
-     \vspace*{2.6pt}}
+% ********************
 
 \begin{document}
 %
 % paper title
-% can use linebreaks \\ within to get better formatting as desired
+% Titles are generally capitalized except for words such as a, an, and, as,
+% at, but, by, for, in, nor, of, on, or, the, to and up, which are usually
+% not capitalized unless they are the first or last word of the title.
+% Linebreaks \\ can be used within to get better formatting as desired.
+% Do not put math or special symbols in the title.
 \title{Temporal Instanton Analysis:\\
 Development and Implementation}
-
-
-% author names and affiliations
-% use a multiple column layout for up to two different
-% affiliations
-\author{%
-
-\IEEEauthorblockN{Jonas Kersulis,\\ Ian Hiskens}
-%\IEEEauthorblockA{Electrical Engineering and Computer Science\\
-\IEEEauthorblockA{Elec. Eng. and Computer Science \\
-University of Michigan\\
-Ann Arbor, MI, United States\\}
-\and
-\IEEEauthorblockN{Michael Chertkov,\\Scott Backhaus}
-%\IEEEauthorblockA{Center for Nonlinear Studies\\
-\IEEEauthorblockA{Center for Nonlinear Studies\\
-Los Alamos National Laboratory\\
-Los Alamos, NM, United States\\
-}
-\and
-\IEEEauthorblockN{Daniel Bienstock\\ \hspace{1pt} }
-%\IEEEauthorblockA{Industrial Engineering and Operations Research\\
-\IEEEauthorblockA{Ind. Eng. and Operations Research\\
-Columbia University\\
-New York, NY, United States\\
-}
-
+%
+%
+% author names and IEEE memberships
+% note positions of commas and nonbreaking spaces ( ~ ) LaTeX will not break
+% a structure at a ~ so this keeps an author's name from being broken across
+% two lines.
 % use \thanks{} to gain access to the first footnote area
 % a separate \thanks must be used for each paragraph as LaTeX2e's \thanks
 % was not built to handle multiple paragraphs
+%
 
-% Who are our sponsors?
-%\thanks{Identify applicable sponsor/s here. \emph{(sponsors)}}%
-\thanks{The authors acknowledge the support of the Los Alamos National Laboratory Grid Science Program, subcontract 270958.}%
-}
+\author{Jonas~Kersulis,~\IEEEmembership{Student~Member,~IEEE,}
+        and~Ian~Hiskens,~\IEEEmembership{Fellow,~IEEE}% <-this % stops a space
+\thanks{The authors are with the Department of Electrical Engineering and Computer Science, University of Michigan, Ann Arbor, MI 48104 USA (e-mail: 
+kersulis@umich.edu; hiskens@umich.edu)}%
+\thanks{This work was supported by the Los Alamos National Laboratory Grid Science Program, subcontract 270958.}}
+%\thanks{Manuscript received ____; revised __.}}
+
+% note the % following the last \IEEEmembership and also \thanks - 
+% these prevent an unwanted space from occurring between the last author name
+% and the end of the author line. i.e., if you had this:
+% 
+% \author{....lastname \thanks{...} \thanks{...} }
+%                     ^------------^------------^----Do not want these spaces!
+%
+% a space would be appended to the last name and could cause every name on that
+% line to be shifted left slightly. This is one of those "LaTeX things". For
+% instance, "\textbf{A} \textbf{B}" will typeset as "A B" not "AB". To get
+% "AB" then you have to do: "\textbf{A}\textbf{B}"
+% \thanks is no different in this regard, so shield the last } of each \thanks
+% that ends a line with a % and do not let a space in before the next \thanks.
+% Spaces after \IEEEmembership other than the last one are OK (and needed) as
+% you are supposed to have spaces between the names. For what it is worth,
+% this is a minor point as most people would not even notice if the said evil
+% space somehow managed to creep in.
+
+% The paper headers
+\markboth{IEEE Transactions on Power Systems,~Vol.~--, No.~-, ---~201-}%
+{Kersulis and Hiskens: Temporal Instanton Analysis}
+% The only time the second header will appear is for the odd numbered pages
+% after the title page when using the twoside option.
+% 
+% *** Note that you probably will NOT want to include the author's ***
+% *** name in the headers of peer review papers.                   ***
+% You can use \ifCLASSOPTIONpeerreview for conditional compilation here if
+% you desire.
 
 % make the title area
 \maketitle
 
-%ABSTRACT
+% As a general rule, do not put math, special symbols or citations
+% in the abstract or keywords.
 \begin{abstract}
 %A time-coupled instanton method for characterizing transmission network vulnerability to wind generation fluctuation is presented. To extend prior instanton work to multiple-time-step analysis, line constraints are specified in terms of temperature rather than current. An optimization formulation is developed to express the minimum wind forecast deviation such that at least one line is driven to its thermal limit. Results are shown for an IEEE RTS-96 system with several wind-farms.
 A previously-developed method for studying a transmission network's vulnerability to wind forecast inaccuracy is expanded. This method uses optimization to find a wind generation pattern close to the forecast that violates a specified line. Repeating the optimization for all lines in the network yields a set of generation patterns which may be sorted by likelihood. Instanton analysis thus yields insight into the potential effects of wind forecast inaccuracy at the system level.
 % To demonstrate the practicability of this method, we present results for the RTS-96 and show how the method scales to larger networks.
 \end{abstract}
 
-%INDEX TERMS
-% The author shall provide up to 4 keywords (in alphabetical order) to help identify the major topics of the paper. The thesaurus of IEEE indexing keywords is posted at http://www.ieee.org/organizations/pubs/ani_prod/keywrd98.txt
+% Note that keywords are not normally used for peerreview papers.
 \begin{IEEEkeywords}
 Forecast uncertainty, Optimization, Transmission operations, Wind energy
 \end{IEEEkeywords}
 
+% For peer review papers, you can put extra information on the cover
+% page as needed:
+% \ifCLASSOPTIONpeerreview
+% \begin{center} \bfseries EDICS Category: 3-BBND \end{center}
+% \fi
+%
+% For peerreview papers, this IEEEtran command inserts a page break and
+% creates the second title. It will be ignored for other modes.
+\IEEEpeerreviewmaketitle
 
 \section{Introduction}\label{sec:intro}
+\IEEEPARstart{A}{wind} forecast error that was once inconsequential can now be vexatious. As wind has grown into a major transmission-scale energy source, system operators find themselves frequently dealing with wind-induced network congestion \cite{rogers2010}. In certain cases this congestion may cause a transmission line to overheat and sag. System operators use wind forecast data to steer the network away from such scenarios, but wind forecasts are significantly less accurate than generation and demand predictions \cite{parsons2004}. How might forecast inaccuracies compound across a network to overheat transmission lines? How likely is this to occur? Temporal instanton analysis addresses these questions by identifying sag-inducing wind patterns and ranking them according to likelihood. The intersection of likely wind patterns with those that cause excessive line heating is of interest to system operators and planners, who may use this information to better prepare for renewable generation uncertainty.
 
-The impact of wind forecast inaccuracy is greater than ever in grids around the world. As reliance on wind generation increases, changes in weather can induce network congestion. In certain cases this congestion may even cause a transmission line to overheat and sag. System operators use wind forecast data to steer the network away from these scenarios, but wind forecasts are significantly less accurate than generation and demand predictions. How might forecast inaccuracies compound across the network to overheat transmission lines? How likely is this to occur? Temporal instanton analysis helps answer these questions by identifying troublesome wind patterns and ranking them according to likelihood. With this information, system operators and planners may better prepare for renewable generation uncertainty.
+Instanton analysis belongs to the family of ``distance to failure'' algorithms. It was introduced by \cite{chertkov2011} and \cite{chertkov2011a}, where the DC power flow approximation was used to represent a network's feasible operating region as a set of linear constraints. These constraints form the faces of a high-dimensional polytope; any feasible generation pattern corresponds to a point inside this geometric object. In this setting, distance to failure is intuitively understood to be the shortest distance between a given forecast operating point and the surface of the polytope. As shown in \cite{chertkov2011a}, one can use convex optimization to quickly find the unique shift in wind generation (if one exists) that will drive the network to a chosen face of the feasible region. Once every polytope face has been considered, the wind pattern corresponding to the shortest distance is termed the instanton; it is the smallest shift in wind generation that will drive the network to the brink of infeasibility.
 
-The instanton problem was initially considered in \cite{chertkov2011} and \cite{chertkov2011a} where a DC power flow approximation was used to turn instanton analysis into a convex problem with an analytic solution. The physically accurate AC power flow formulation was used in \cite{baghsorkhi2012}, with an iterative scheme required for finding instanton candidates. Current instanton research is exploring the trade-off between problem complexity and solution accuracy, with the goal of developing the most accurate model that remains convex (and therefore guarantees a solution).  Instanton work to date has focused on instantaneous vulnerability by seeking to find the smallest wind generation change that drives a line to its power or current limit. Thus, the troublesome wind patterns uncovered by such instanton analysis may be fleeting.
+Subsequent instanton analysis research falls into two categories. The first is exploration of the trade-off between accuracy and algorithm complexity. Replacing the DC power flow approximation with AC power balance, for instance, results in greater accuracy at the cost of convexity. There are no analytic solutions in this setting, so an iterative scheme is required \cite{baghsorkhi2012}. Between the DC and AC extremes are various power flow approximations (see \cite{coffrin2012,hijazi2013,coffrin2014} for examples) which may be used to enhance instanton analysis accuracy while maintaining problem convexity (and therefore solution guarantees). Regardless of the power flow model used, research in this category is ultimately focused on instantaneous vulnerability: find the smallest wind generation shift that drives a line to its power or current limit. This method uncovers previously hidden grid vulnerability, but raises a new question: would an instanton scenario persist until a transmission line sags, or might the network simply touch the boundary of the feasible region before returning to safe operation? This paper belongs to the category of temporal instanton analysis, whose aim is to answer this question.
 
-It is safe to temporarily operate a line above its current limit. Transmission system operators know this and periodically allow lines to operate above their limits to promote smooth operation under heavy, though temporary, flow patterns (see the introduction of \cite{banakar2005} for a history of dynamic line rating starting in the 1970s). It takes time for line conductors to heat sufficiently that they sag to an unacceptable level (as defined by statute and nearby tree limbs). As long as the line is allowed to cool before reaching this point, no harm will be done. If an operator is comfortable with temporarily overloaded lines, information from existing instanton analysis may be too conservative to aid decision making.
+It is safe to temporarily operate a line above its current limit. Transmission system operators know this and periodically allow lines to operate above their limits to promote smooth operation during congestion \cite{banakar2005}. It takes persistent extreme temperatures for line conductors to sag to an unacceptable level (as defined by statute and nearby tree limbs). As long as the line is allowed to cool before reaching this point, no harm will be done. Thus, if an operator is comfortable with temporarily overloaded lines, information from instantaneous instanton analysis may be too conservative to aid decision making.
 
 In this paper we expound on temporal instanton analysis. The line temperature model we use is derived from \cite{ieee2013}. Ohmic loss heating is related to power flow angle differences according to a relationship from \cite{almassalkhi2014}. By modeling line temperature over an appropriate time horizon, the proposed method discovers multiple-time-step wind patterns that are both likely to occur and sure to induce excessive sag for at least one line in the network.
 
@@ -110,10 +355,9 @@ We expand on prior work by providing a more detailed treatment of the objective 
 Temporal instanton analysis entwines three physical phenomena, each with its own model. Transmission line temperature requires a heat balance model; forecast error likelihood is quantified via a statistical model; and the feasible region of network operation is delineated using a network model. This section describes the three models in detail. The next section combines them into a quadratically-constrained quadratic program, a purely mathematical expression of the temporal instanton analysis goal. A full analysis entails solving this QCQP for each line in the given network.
 
 \subsection{Transmission Line Heating}\label{sec:models-heat}
-
 To find wind patterns that cause a transmission line to sag, we must connect power flows to line temperatures, and constrain a particular line's temperature to be equal to its limit value by the last time step of optimization.
 
-Transmission line temperature dynamics are  Our heating model is derived from \cite{ieee2013}. It is a recursive relationship between initial and final line temperatures based on angle differences at all time steps under consideration. The appendix, Section \ref{sec:temp}, acts as a bridge between our model and \cite{ieee2013}.
+Transmission line temperature dynamics are  Our heating model is derived from \cite{ieee2013}. It is a recursive relationship between initial and final line temperatures based on angle differences at all time steps under consideration. The appendix acts as a bridge between our model and \cite{ieee2013}.
 
 Consider a time horizon with $T$ intervals, each on the order of ten minutes long. Power flow data is updated after each interval, but all other parameters remain constant. Choose a single transmission line in the network ---suppose it lies between nodes $i$ and $j$--- and let this line's thermal limit be represented by $T_\text{lim}$ ($^\circ$C). We can constrain the line's temperature at the end of the $T$-th interval to be equal to this limiting value by enforcing the second-order constraint
 \begin{align}\label{eq:tempconstraint}
@@ -185,7 +429,6 @@ where
 \end{itemize}
 
 \subsection{Wind Forecast Inaccuracy}\label{sec:models-wind}
-
 The output of temporal instanton analysis is a set of wind patterns, each of which is the most likely pattern to overheat a particular line in the network. A wind pattern is generally more likely to occur the closer it is to the forecast, but spatial and temporal correlation prevent us from using this intuitive model.
 
 Consider several wind farms scattered across a transmission grid. Each wind site has a forecast power output. Let the error in this forecast be represented by a zero-mean Gaussian random variable.\footnote{Forecast errors are commonly assumed to be Gaussian, but in reality they are better modeled by Cauchy distributions; see \cite{hodge2011}.} Then for any instant in time, the collection of wind forecast errors across the network takes the form of a Gaussian random vector. Elements of this vector are correlated due to spatial relationships between wind sites: if wind speed increases at one site, for instance, a simultaneous decrease at a neighboring site is unlikely. Temporal instanton analysis considers multiple time steps, which introduces temporal correlation. Increased wind at one site during the current time interval may be correlated with greater wind speed at downwind sites during the following interval. Other sources of uncertainty (e.g. hydro generation, demand) may be considered as readily as wind, but may not exhibit spatial or temporal correlation. Thus, the model we use may be simplified to consider other sources of uncertainty.
@@ -289,13 +532,11 @@ where $\mathbf{Q}=\mathbf{C}^{-1}$ is the precision matrix. There are many ways 
 %% </REPLACE THIS SECTION BY THE PARAMETRIZED Q(\theta) SUMMARY>
 
 \subsection{Network Model}\label{sec:models-network}
-
 Undesirable scenarios found by temporal instanton analysis are of no consequence if they are infeasible. We use the DC power flow assumptions to model power balance and ensure all generation patterns are realistic. These assumptions imply a flat voltage profile, negligible line resistance (though resistance values are used to calculate line temperatures), and linearity of the sine function. The other noteworthy detail of our power network model is distributed slack. The mismatch between total power generation and demand at any time step is divided over multiple generators according to a vector of participation factors. This slack model is more realistic than the single slack bus, which assumes one generator compensates for all mismatch. (Of course, there is still an angle reference bus $\theta_{ref}$.)
 
 The three models described in this section are sufficient to express temporal instanton analysis mathematically. The next section combines them into a QCQP.
 
 \section{Temporal Instanton QCQP}\label{sec:qcqp}
-
 The following quadratically constrained quadratic program is a concise expression of our desire to find feasible, likely wind patterns that will cause one transmission line in the network to reach its temperature limit by the end of a certain time horizon:
 \begin{subequations}\label{eq:qcqp}
 \begin{align}
@@ -387,26 +628,15 @@ Solving \eqref{eq:qcqp} for each line in the network yields a set of instanton c
 
 
 \section{QCQP Solution Method}\label{sec:solution}
-
 Temporal instanton analysis is fundamentally more complicated than the instantaneous variety. In the instantaneous setting, a line's power flow is constrained (not its temperature). All constraints are therefore linear. Instead of a QCQP like \eqref{eq:qcqp} one obtains a quadratic program (QP) whose solution matches that of its KKT conditions. Heat-constrained temporal instanton analysis, by contrast, cannot be formulated as a QP. There is no linear expression for resistive losses ---even our approximation \eqref{eq:lossapprox} is second-order in angle difference--- so a line temperature constraint like \eqref{eq:qcqp-temp} must be at least second-order. This means temporal instanton analysis cannot be formulated as anything simpler than a quadratically-constrained quadratic program (QCQP). QCQPs are NP-hard in general; reasonable solutions may exist, but unless the quadratic constraint matrices are positive-definite there is no solution guarantee (see \cite{mehanna2014}). Fortunately, the structure of \eqref{eq:qcqp} permits us to develop a non-iterative solution method.
 
 
 % TODO: define auxiliary angle variables.
 
-%Variables may be stacked in any order. One convenient ordering is $T$
-%groups of $(N+N_R+1)$ variables, with the $T$ auxiliary angle
-%difference variables at the end. At a particular time step $t$, the
-%group of $(N+N_R+1)$ variables is $[dev_t^\top ~~ \theta_t^\top ~~
-%  \alpha_t ]^\top$, with $dev_t$ representing deviations from forecast
-%at the $N_R$ wind nodes, $\theta_t$ is the column of $N$ angle
-%variables at time $t$, and $\alpha_t$ is the mismatch between
-%generation and demand at time $t$.
-
 
 The structure of \eqref{eq:opt} is similar to that of the well-known trust region subproblem. Here we describe a four-step solution method based in part on \cite{bienstock2014}. Several changes of variables may be used to obtain an equivalent form of \eqref{eq:opt} whose solution is straightforward.
 
 \subsection{Translation}\label{sec:solution-translation}
-
 The first step is to change variables from $z$ to $y=z-z^*$, where
 $z^*\in\{z:Az=b\}$. This translation transforms $Az=b$ into $Ay=0$. To
 prevent the change from introducing a linear term into the quadratic
@@ -427,8 +657,7 @@ translation, the problem becomes
 \end{align}
 \end{subequations}
 
-\subsection{Kernel Mapping}\label{sec:solution-kernel}
-
+\subsection{Kernel mapping}\label{sec:solution-kernel}
 The form of \eqref{opt2:lin} suggests an intuitive explanation: any
 solution to \eqref{opt2} must lie in the nullspace (kernel) of $A$. If
 $\dim \mathcal{N}(A) =k$ is the dimension of this nullspace, we can
@@ -451,8 +680,7 @@ allows \eqref{opt2} to be written,
 All feasible solutions to \eqref{opt3} lie in the nullspace of $A$, so
 the linear constraints are now implicit.
 
-\subsection{Obtaining a Norm Constraint}\label{sec:solution-norm}
-
+\subsection{Obtaining a norm constraint}\label{sec:solution-norm}
 After kernel mapping, the quadratic constraint is no longer a norm
 constraint. This can be corrected in two steps. First, perform an
 eigendecomposition $N_3^\top N_3 = UDU^\top$ and let $\hat{x} = U^\top
@@ -506,7 +734,6 @@ of $w$. This will allow us to write the objective in terms of $w_2$
 only.
 
 \subsection{Eliminating $w_1$}\label{sec:solution-w1}
-
 Note that $w_1$ is unconstrained in \eqref{opt4}. For a fixed $w_2$, we can use the KKT
 conditions to find $w_1$ such that the objective is minimized. Begin by
 expanding the objective:
@@ -554,8 +781,7 @@ This is a QCQP in $T$ dimensions with a single norm constraint. It is
 straightforward to obtain solutions to this problem, as the next
 subsection shows.
 
-\subsection{Solution Via Enumeration}\label{sec:solution-enumeration}
-
+\subsection{Solution via Enumeration}\label{sec:solution-enumeration}
 A straightforward method of solving \eqref{opt5} involves initially
 diagonalizing $\hat{B}$ through an eigendecomposition. It will be
 assumed that step has been completed. Let $v$ be the Lagrange multiplier associated with \eqref{opt5:quad} and write the first-order optimality condition for \eqref{opt5}:
@@ -598,7 +824,6 @@ Temporal instanton analysis consists of solving a number of nearly-identical QCQ
 Translation, the first step of the QCQP solution method, is computationally expensive and relies on the $A$ matrix having full row rank. Unfortunately, $A$ can have linearly dependent rows for some lines in certain networks.
 
 \section{Results}\label{sec:results}
-
 We used data from \cite{pandzic} to demonstrate temporal instanton
 analysis on a wind-augmented RTS-96 network model. 
 %Consider a scenario
@@ -640,8 +865,7 @@ analysis on a wind-augmented RTS-96 network model.
 %\end{figure}
 
 
-\section{Conclusions}
-
+\section{Conclusion}\label{sec:conclusion}
 %The paper has extended instanton analysis to consider the temperature
 %dynamics of overloaded lines. The resulting formulation is a
 %quadratically constrained quadratic program (QCQP)\@. A
@@ -652,10 +876,136 @@ analysis on a wind-augmented RTS-96 network model.
 %effects of ambient conditions in greater detail, and test the limits
 %of the algorithm using larger networks with many time steps.
 
-\section{Appendix: line temperature model}\label{sec:temp}
 
-\subsection{The heat balance equation}
+% needed in second column of first page if using \IEEEpubid
+%\IEEEpubidadjcol
 
+
+
+% An example of a floating figure using the graphicx package.
+% Note that \label must occur AFTER (or within) \caption.
+% For figures, \caption should occur after the \includegraphics.
+% Note that IEEEtran v1.7 and later has special internal code that
+% is designed to preserve the operation of \label within \caption
+% even when the captionsoff option is in effect. However, because
+% of issues like this, it may be the safest practice to put all your
+% \label just after \caption rather than within \caption{}.
+%
+% Reminder: the "draftcls" or "draftclsnofoot", not "draft", class
+% option should be used if it is desired that the figures are to be
+% displayed while in draft mode.
+%
+%\begin{figure}[!t]
+%\centering
+%\includegraphics[width=2.5in]{myfigure}
+% where an .eps filename suffix will be assumed under latex, 
+% and a .pdf suffix will be assumed for pdflatex; or what has been declared
+% via \DeclareGraphicsExtensions.
+%\caption{Simulation results for the network.}
+%\label{fig_sim}
+%\end{figure}
+
+% Note that IEEE typically puts floats only at the top, even when this
+% results in a large percentage of a column being occupied by floats.
+
+
+% An example of a double column floating figure using two subfigures.
+% (The subfig.sty package must be loaded for this to work.)
+% The subfigure \label commands are set within each subfloat command,
+% and the \label for the overall figure must come after \caption.
+% \hfil is used as a separator to get equal spacing.
+% Watch out that the combined width of all the subfigures on a 
+% line do not exceed the text width or a line break will occur.
+%
+%\begin{figure*}[!t]
+%\centering
+%\subfloat[Case I]{\includegraphics[width=2.5in]{box}%
+%\label{fig_first_case}}
+%\hfil
+%\subfloat[Case II]{\includegraphics[width=2.5in]{box}%
+%\label{fig_second_case}}
+%\caption{Simulation results for the network.}
+%\label{fig_sim}
+%\end{figure*}
+%
+% Note that often IEEE papers with subfigures do not employ subfigure
+% captions (using the optional argument to \subfloat[]), but instead will
+% reference/describe all of them (a), (b), etc., within the main caption.
+% Be aware that for subfig.sty to generate the (a), (b), etc., subfigure
+% labels, the optional argument to \subfloat must be present. If a
+% subcaption is not desired, just leave its contents blank,
+% e.g., \subfloat[].
+
+
+% An example of a floating table. Note that, for IEEE style tables, the
+% \caption command should come BEFORE the table and, given that table
+% captions serve much like titles, are usually capitalized except for words
+% such as a, an, and, as, at, but, by, for, in, nor, of, on, or, the, to
+% and up, which are usually not capitalized unless they are the first or
+% last word of the caption. Table text will default to \footnotesize as
+% IEEE normally uses this smaller font for tables.
+% The \label must come after \caption as always.
+%
+%\begin{table}[!t]
+%% increase table row spacing, adjust to taste
+%\renewcommand{\arraystretch}{1.3}
+% if using array.sty, it might be a good idea to tweak the value of
+% \extrarowheight as needed to properly center the text within the cells
+%\caption{An Example of a Table}
+%\label{table_example}
+%\centering
+%% Some packages, such as MDW tools, offer better commands for making tables
+%% than the plain LaTeX2e tabular which is used here.
+%\begin{tabular}{|c||c|}
+%\hline
+%One & Two\\
+%\hline
+%Three & Four\\
+%\hline
+%\end{tabular}
+%\end{table}
+
+
+% Note that the IEEE does not put floats in the very first column
+% - or typically anywhere on the first page for that matter. Also,
+% in-text middle ("here") positioning is typically not used, but it
+% is allowed and encouraged for Computer Society conferences (but
+% not Computer Society journals). Most IEEE journals/conferences use
+% top floats exclusively. 
+% Note that, LaTeX2e, unlike IEEE journals/conferences, places
+% footnotes above bottom floats. This can be corrected via the
+% \fnbelowfloat command of the stfloats package.
+
+
+
+
+% if have a single appendix:
+\appendix[Line Temperature Model]
+% or
+%\appendix  % for no appendix heading
+% do not use \section anymore after \appendix, only \section*
+% is possibly needed
+
+% use \appendices with more than one appendix
+% then use \section to start each appendix
+% you must declare a \section before using any
+% \subsection or using \label (\appendices by itself
+% starts a section numbered zero.)
+%
+
+
+%\appendices
+%\section{Proof of the First Zonklar Equation}
+%Appendix one text goes here.
+%
+%% you can choose not to have a title for an appendix
+%% if you want by leaving the argument blank
+%\section{}
+%Appendix two text goes here.
+%
+
+
+\subsection{Heat Balance Equation}
 The change in temperature of any object may be expressed as a differential equation called the heat balance equation, which relates temperature change to a sum of various sources of heating. The IEEE 738 standard \cite{ieee2013} provides the following heat balance equation for a transmission line:
 
 \begin{align}\label{eq:heatbalance}
@@ -692,8 +1042,7 @@ where
 %\frac{dT_\text{avg}}{dt} &= \frac{1}{mC_p}\left( r_{ij}\frac{\theta_{ij}^2}{x_{ij}^2}\frac{S_b}{3L_{ij}} - q_c - q_r + q_s\right)
 %\end{align}
 
-\subsection{Linearization of radiation heat rate}
-
+\subsection{Linearization of Radiation Heat Rate}
 When \eqref{eq:heatbalance} is combined with an initial temperature $T_0$, the resulting initial value problem makes it possible to determine the temperature at any later time. We substitute \eqref{eq:qc} and \eqref{eq:qr} into \eqref{eq:heatbalance} and attempt to solve for temperature:
 \begin{multline}\label{eq:heatbalance_approx}
 \frac{dT}{dt} = \frac{1}{mC_p}\big[ f_{ij}^\text{loss} - \eta_c\left( T(t) - T_\text{amb}\right) \\ - \eta_r\left((T(t) + 273)^4 - (T_\text{amb} + 273)^4\right) + q_s \big]
@@ -703,16 +1052,8 @@ Suppose that power flow, ambient temperature, and solar heat rate are constant d
 \begin{multline}\label{eq:approx_rad}
 \tilde{q}_r = \eta_r  \left( (T_\text{mid} + 273)^4 - (T_\text{amb} + 273)^4\right) + \\ 4\eta_r(T_\text{mid} + 273)^3\cdot(T(t) - T_\text{mid})
 \end{multline}
-%\begin{figure}[h]
-%\centering
-%\includegraphics[width=0.9\linewidth]{../images/rad_approx}
-%\caption{Comparison of fourth-order radiation heat rate $q_r$ \eqref{eq:qr} with conservative linearization $\tilde{q}_r$ across a range of temperatures. Ambient temperature is 35$^\circ$C and the conductor thermal limit is 65$^\circ$C.}
-%\label{fig:rad_approx}
-%\end{figure}
-%
-%The green trace is the linearization of $q_r$ about $T_\text{mid}$, the midpoint between the ambient and limit temperatures. Let's replace $q_r$ by this linear approximation $\tilde{q}_r$:
 
-\subsection{Line temperature as recursive relationship}
+\subsection{Line Temperature as Recursive Relationship}
 Substitution of \eqref{eq:approx_rad} into \eqref{eq:heatbalance_approx} yields the approximate heat balance equation
 \begin{align}\label{eq:diffeq}
 \frac{dT}{dt} &= aT(t) + b~,
@@ -898,23 +1239,106 @@ The only variables in \eqref{eq:tivp} are initial temperature and angle differen
 \end{center}
 \end{table}
 
-
-
 % The paper will close with a discussion of how other
 %components, such as voltage regulators, may affect the formulation.
 
-%\section*{Acknowledgment}
+% use section* for acknowledgment
+\section*{Acknowledgment}
 
-%\section*{References}
 
-% can use a bibliography generated by  as a .bbl file
+The authors would like to thank...
+
+
+% Can use something like this to put references on a page
+% by themselves when using endfloat and the captionsoff option.
+\ifCLASSOPTIONcaptionsoff
+  \newpage
+\fi
+
+
+
+% trigger a \newpage just before the given reference
+% number - used to balance the columns on the last page
+% adjust value as needed - may need to be readjusted if
+% the document is modified later
+%\IEEEtriggeratref{8}
+% The "triggered" command can be changed if desired:
+%\IEEEtriggercmd{\enlargethispage{-5in}}
+
+% references section
+
+% can use a bibliography generated by BibTeX as a .bbl file
 % BibTeX documentation can be easily obtained at:
 % http://www.ctan.org/tex-archive/biblio/bibtex/contrib/doc/
 % The IEEEtran BibTeX style support page is at:
 % http://www.michaelshell.org/tex/ieeetran/bibtex/
 \bibliographystyle{IEEEtran}
 % argument is your BibTeX string definitions and bibliography database(s)
-%\bibliography{IEEEabrv,../bib/paper}
 \bibliography{bib}
+%
+% <OR> manually copy in the resultant .bbl file
+% set second argument of \begin to the number of references
+% (used to reserve space for the reference number labels box)
+%\begin{thebibliography}{1}
+%
+%\bibitem{IEEEhowto:kopka}
+%H.~Kopka and P.~W. Daly, \emph{A Guide to \LaTeX}, 3rd~ed.\hskip 1em plus
+%  0.5em minus 0.4em\relax Harlow, England: Addison-Wesley, 1999.
+%
+%\end{thebibliography}
 
+% biography section
+% 
+% If you have an EPS/PDF photo (graphicx package needed) extra braces are
+% needed around the contents of the optional argument to biography to prevent
+% the LaTeX parser from getting confused when it sees the complicated
+% \includegraphics command within an optional argument. (You could create
+% your own custom macro containing the \includegraphics command to make things
+% simpler here.)
+%\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{mshell}}]{Michael Shell}
+% or if you just want to reserve a space for a photo:
+
+\begin{IEEEbiography}{Jonas Kersulis}
+(S'12) received the B.S. degree in electrical engineering from the University of Missouri-St. Louis, St. Louis, MO USA. His research is currently focused on using mathematical programming techniques to characterize transmission network vulnerability to fluctuations in renewable energy.
+\end{IEEEbiography}
+
+\begin{IEEEbiography}{Ian A. Hiskens}
+(S'77--M'80--SM'96--F'06) received the B.Eng. degree in electrical engineering and the B.App.Sc. degree in mathematics from the Capricornia Institute of Advanced Education, Rockhampton,
+Australia, in 1980 and 1983 respectively, and the Ph.D. degree in electrical engineering from
+the University of Newcastle, Australia, in 1991. He is the Vennema Professor of Engineering
+in the Department of Electrical Engineering and Computer Science, University of Michigan, Ann
+Arbor, MI, USA. He has held prior appointments in the Queensland electricity supply industry, and various universities in Australia and the United States. His research interests lie at the intersection of power system analysis and systems theory, with recent activity focused largely on
+integration of renewable generation and controllable loads. Dr. Hiskens is actively involved in various IEEE societies, and is VP-Finance of the IEEE Systems Council. He is a Fellow of Engineers Australia, and a Chartered Professional Engineer in Australia.
+\end{IEEEbiography}
+
+% if you will not have a photo at all:
+%\begin{IEEEbiographynophoto}{John Doe}
+%Biography text here.
+%\end{IEEEbiographynophoto}
+
+% insert where needed to balance the two columns on the last page with
+% biographies
+%\newpage
+
+%\begin{IEEEbiographynophoto}{Jane Doe}
+%Biography text here.
+%\end{IEEEbiographynophoto}
+
+% You can push biographies down or up by placing
+% a \vfill before or after them. The appropriate
+% use of \vfill depends on what kind of text is
+% on the last page and whether or not the columns
+% are being equalized.
+
+%\vfill
+
+% Can be used to pull up biographies so that the bottom of the last one
+% is flush with the other column.
+%\enlargethispage{-5in}
+
+
+
+% that's all folks
 \end{document}
+
+
