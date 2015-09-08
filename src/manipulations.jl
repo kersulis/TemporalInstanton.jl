@@ -144,19 +144,6 @@ function return_Bhat(
     return round(Bhat,10),bhat
 end
 
-function find_w(
-    v::Float64,
-    D::Array{Float64,2},
-    d::Vector{Float64}
-    )
-    if v == 0.0
-        w = float([-d[i]/(D[i,i]) for i in 1:length(d)])
-    else
-        w = float([d[i]/(v - D[i,i]) for i in 1:length(d)])
-    end
-    return w
-end
-
 """ Reverse rotations and translations to map
 secular equation solution back to original problem
 space.
@@ -173,6 +160,6 @@ function return_xopt(
     )
     w1opt = -B11\(B12*w2opt + b1/2)
     wopt = [w1opt;w2opt]
-    xopt = N*U*diagm(1./diag(K))*wopt + x_star
+    xopt = N*sparse(U)*spdiagm(1./diag(K))*wopt + x_star
     return xopt
 end
