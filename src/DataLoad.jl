@@ -167,6 +167,7 @@ function mat2tmpinst(name::ASCIIString; return_as_type::Bool = false)
     try
         Sb = mpc["baseMVA"]
     catch
+        warn("Base MVA missing from mpc data.")
         Sb = 100.0
     end
     Gp_long = mpc["gen"][:,2]
@@ -206,7 +207,8 @@ function mat2tmpinst(name::ASCIIString; return_as_type::Bool = false)
     ref = 1
 
     lines = [(f[i],t[i]) for i in 1:length(f)]
-
+    lines = convert(Array{Tuple{Int64,Int64},1},lines)
+    
     res = r
     reac = x
 
