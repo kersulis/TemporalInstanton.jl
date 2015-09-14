@@ -52,34 +52,33 @@ resulting secular equation.
 between the secular equation and horizontal line. *
 """
 function solve_instanton_qcqp(
-    G_of_x::Tuple{SparseMatrixCSC{Float64,Int64},Vector{Float64},Float64},
-    Q_of_x::Tuple{SparseMatrixCSC{Float64,Int64},Vector{Float64},Float64},
+    Qobj::Tuple{SparseMatrixCSC{Float64,Int64},Vector{Float64},Float64},
+    Qconstr::Tuple{SparseMatrixCSC{Float64,Int64},Vector{Float64},Float64},
     A::SparseMatrixCSC{Float64,Int64},
     b::Vector{Float64},
     T::Int64
     )
     m,n = size(A)
-    Qobj = G_of_x[1]
-    c = - Q_of_x[3]
+    Qobj_orig = Qobj[1]
 
     opt = Array(Vector{Float64},0)
 
     # Partition A:
-    A1,A2,idx1,idx2,idx3 = partition_A(A,Qobj,T)
+    A1,A2,idx1,idx2,idx3 = partition_A(A,Qobj[1],T)
 
     # Find translation point:
     x_star = find_x_star(A1,A2,idx1,idx2,n,b)
 
     # Translate quadratics:
-    G_of_y = translate_quadratic(G_of_x,x_star)
-    Q_of_y = translate_quadratic(Q_of_x,x_star)
+    Qobj = translate_quadratic(Qobj,x_star)
+    Qconstr = translate_quadratic(Qconstr,x_star)
 
     N = kernel_rotation(A, spqr=true) # take only cols spanning N(A)
 
-    G_of_z = rotate_quadratic(G_of_y,N')
-    Q_of_z = rotate_quadratic(Q_of_y,N')
+    Qobj = rotate_quadratic(Qobj,N')
+    Qconstr = rotate_quadratic(Qconstr,N')
 
-    D,U = eig(full(Q_of_z[1]))
+    D,U = eig(full(Qconstr[1]))
     # eigs won't work because nev cannot be size(Q,1):
     # D,U = eigs(Q_of_z[1],nev=size(Q_of_z[1],1))
     D = round(D,10)
@@ -87,10 +86,10 @@ function solve_instanton_qcqp(
     K = return_K(D)
     Kinv = diagm(1./diag(K))
 
-    G_of_w = rotate_quadratic(G_of_z,(U*Kinv)')
-    Q_of_w = rotate_quadratic(Q_of_z,(U*Kinv)')
+    Qobj = rotate_quadratic(Qobj,(U*Kinv)')
+    Qconstr = rotate_quadratic(Qconstr,(U*Kinv)')
 
-    B11,B12,B21,B22,b1,b2 = partition_B(G_of_w,Q_of_w)
+    B11,B12,B21,B22,b1,b2 = partition_B(Qobj,Qconstr)
 
     # testing only:
     # println(round(cond(B11)))
@@ -104,14 +103,13 @@ function solve_instanton_qcqp(
 
     tinynumber = 1e-8
     w0 = find_w(0.0,Bhat,bhat/2)
-
+    c = -Qconstr[3]
     if abs((w0'*w0) - c)[1] < tinynumber
         println("v=0 works!")
     end
 
     num = bhat/2
     poles = unique(round(diag(Bhat),10))
-    c = -Q_of_w[3]
     # save("secular.jld","num",num,"poles",poles,"c",c)
     # println("max poles = $(maximum(poles))")
     # println("max num = $(maximum(num))")
@@ -125,7 +123,7 @@ function solve_instanton_qcqp(
     for i in 1:length(vectors)
         w2 = vectors[i]
         xvec = return_xopt(w2,B11,B12,b1,N,U,K,x_star)
-        sol[i] = (xvec'*Qobj*xvec)[1]
+        sol[i] = (xvec'*Qobj_orig*xvec)[1]
         push!(opt,xvec)
     end
     if isempty(sol)
