@@ -121,6 +121,8 @@ function return_K(d::Vector{Float64})
     return spdiagm(K)
 end
 
+""" Use diagonal elements of `Q_of_w[1]` to divide `G_of_w[1]` into four blocks and `G_of_w[2]` into two blocks.
+"""
 function partition_B(G_of_w::Tuple,Q_of_w::Tuple)
     B,b = G_of_w[1],G_of_w[2]
     Q = round(Q_of_w[1])
@@ -141,7 +143,10 @@ function return_Bhat(
     )
     Bhat = B22 - (B12'/B11)*B12
     bhat = b2 - (B12'/B11)*b1
-    return round(Bhat,10),bhat
+    # why round? may be causing problems
+    # UPDATE: shown to be unnecessary
+    # return round(Bhat,10),bhat
+    return Bhat,bhat
 end
 
 """ Reverse rotations and translations to map
