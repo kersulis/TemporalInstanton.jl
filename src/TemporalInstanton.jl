@@ -80,7 +80,7 @@ function solve_instanton_qcqp(
     Q_of_z = rotate_quadratic(Q_of_y,N')
 
     D,U = eig(full(Q_of_z[1]))
-    # won't work because nev cannot be size(Q,1):
+    # eigs won't work because nev cannot be size(Q,1):
     # D,U = eigs(Q_of_z[1],nev=size(Q_of_z[1],1))
     D = round(D,10)
 
@@ -92,7 +92,15 @@ function solve_instanton_qcqp(
 
     B11,B12,B21,B22,b1,b2 = partition_B(G_of_w,Q_of_w)
 
+    # testing only:
+    # println(round(cond(B11)))
+
     Bhat,bhat = return_Bhat(B11,B12,B22,b1,b2)
+
+    # testing only:
+    # if !(isdiag(Bhat))
+    #     println("Bhat is not diagonal")
+    # end
 
     tinynumber = 1e-8
     w0 = find_w(0.0,Bhat,bhat/2)
@@ -101,17 +109,28 @@ function solve_instanton_qcqp(
         println("v=0 works!")
     end
 
-    solutions, vectors = solve_secular(Bhat,bhat/2,-Q_of_w[3])
-    if isempty(solutions)
+    num = bhat/2
+    poles = unique(round(diag(Bhat),10))
+    c = -Q_of_w[3]
+    # save("secular.jld","num",num,"poles",poles,"c",c)
+    # println("max poles = $(maximum(poles))")
+    # println("max num = $(maximum(num))")
+    if maxabs(num) > 1/tinynumber
+        warn("No solution for secular equation")
         return [],NaN
+    end
+
+    solutions, vectors = solvesecular(num,poles,c)
+    sol = zeros(length(vectors))
+    for i in 1:length(vectors)
+        w2 = vectors[i]
+        xvec = return_xopt(w2,B11,B12,b1,N,U,K,x_star)
+        sol[i] = (xvec'*Qobj*xvec)[1]
+        push!(opt,xvec)
+    end
+    if isempty(sol)
+        return [], NaN
     else
-        sol = zeros(length(vectors))
-        for i in 1:length(vectors)
-            w2 = vectors[i]
-            xvec = return_xopt(w2,B11,B12,b1,N,U,K,x_star)
-            sol[i] = (xvec'*Qobj*xvec)[1]
-            push!(opt,xvec)
-        end
         return opt[indmin(sol)],minimum(sol)
     end
 end
@@ -185,11 +204,14 @@ function solve_temporal_instanton(
     # Exclude lines with zero length:
     nz_line_idx = find(line_lengths.!=0)
 
+    # truncate to go through subset of lines (testing only):
+    # nz_line_idx = nz_line_idx[1:10]
+
     # loop through lines (having non-zero length)
     results = @parallel (vcat) for idx in nz_line_idx
         if res[idx] == 0.
             # power flow cannot influence line temp, so skip
-            xvec,sol = ([],Inf)
+            xvec,sol = (Array{Float64,1}(),Inf)
         else
             line = lines[idx]
             conductor_name = line_conductors[idx]
@@ -215,6 +237,10 @@ function solve_temporal_instanton(
             # Stack A1 and A2:
             A = [A1; A2]::SparseMatrixCSC{Float64,Int64}
 
+            # report current line finished (testing only):
+            if idx % 10 == 0
+                println("finished $(idx)/$(length(nz_line_idx))")
+            end
             # Computationally expensive part: solving QCQP
             #try
             xvec,sol = solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
