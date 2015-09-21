@@ -73,10 +73,21 @@ function solve_instanton_qcqp(
     Qobj = translate_quadratic(Qobj,x_star)
     Qconstr = translate_quadratic(Qconstr,x_star)
 
-    N = kernel_rotation(A, spqr=true) # take only cols spanning N(A)
+    N = kernel_rotation(A) # take only cols spanning N(A)
 
     Qobj = rotate_quadratic(Qobj,N')
     Qconstr = rotate_quadratic(Qconstr,N')
+
+    # testing to see if I can make the eig() argument smaller
+    #
+    # # partition N in the same way I partitioned A:
+    # N3 = N[idx3,:]
+    # d,v = eigs(N3'*N3; nev=T)
+    # # There will be NR*n EVAs, but at most n will be nonzero.
+    #
+    #
+    # Qconstr[1] ==
+    ########
 
     D,U = eig(full(Qconstr[1]))
     # eigs won't work because nev cannot be size(Q,1):
@@ -91,15 +102,7 @@ function solve_instanton_qcqp(
 
     B11,B12,B21,B22,b1,b2 = partition_B(Qobj,Qconstr)
 
-    # testing only:
-    # println(round(cond(B11)))
-
     Bhat,bhat = return_Bhat(B11,B12,B22,b1,b2)
-
-    # testing only:
-    # if !(isdiag(Bhat))
-    #     println("Bhat is not diagonal")
-    # end
 
     tinynumber = 1e-8
     w0 = find_w(0.0,Bhat,bhat/2)
@@ -110,9 +113,6 @@ function solve_instanton_qcqp(
 
     num = bhat/2
     poles = unique(round(diag(Bhat),10))
-    # save("secular.jld","num",num,"poles",poles,"c",c)
-    # println("max poles = $(maximum(poles))")
-    # println("max num = $(maximum(num))")
     if maxabs(num) > 1/tinynumber
         warn("No solution for secular equation")
         return [],NaN
@@ -178,7 +178,8 @@ function solve_temporal_instanton(
     Tamb::Float64,
     T0::Float64,
     int_length::Float64,
-    corr::Array{Float64,2} = Array{Float64,2}()
+    corr::Array{Float64,2} = Array{Float64,2}();
+    maxlines::Int64 = 0
     )
 
     # why does all allocation happen here?
@@ -199,67 +200,51 @@ function solve_temporal_instanton(
     b = tmp_inst_b(n,T,G0,R0,D0; pad=true)
     Qtheta = tmp_inst_Qtheta(n,nr,T)
 
-    # Exclude lines with zero length:
-    nz_line_idx = find(line_lengths.!=0)
+    # Exclude lines with zero length or zero resistance:
+    nz_line_idx = intersect(find(line_lengths),find(res))
 
     # truncate to go through subset of lines (testing only):
-    # nz_line_idx = nz_line_idx[1:10]
+    if maxlines > 0 && maxlines < length(nz_line_idx)
+        nz_line_idx = nz_line_idx[1:maxlines]
+    end
 
     # loop through lines (having non-zero length)
     results = @parallel (vcat) for idx in nz_line_idx
-        if res[idx] == 0.
-            # power flow cannot influence line temp, so skip
-            xvec,sol = (Array{Float64,1}(),Inf)
-        else
-            line = lines[idx]
-            conductor_name = line_conductors[idx]
-            conductor_params = return_conductor_params(conductor_name)
+        line = lines[idx]
+        conductor_name = line_conductors[idx]
+        conductor_params = return_conductor_params(conductor_name)
+        # if current line uses a different conductor than previous,
+        # re-compute conductor_params:
+        # if line_conductors[idx] != conductor_name
+        #     conductor_name = line_conductors[idx]
+        #     conductor_params = return_conductor_params(conductor_name)
+        # end
+        # compute line_params based on current line:
+        line_params = LineParams(line[1],line[2],res[idx],reac[idx],line_lengths[idx])
 
-            # if current line uses a different conductor than previous,
-            # re-compute conductor_params:
-            # if line_conductors[idx] != conductor_name
-            #     conductor_name = line_conductors[idx]
-            #     conductor_params = return_conductor_params(conductor_name)
-            # end
-            # compute line_params based on current line:
-            line_params = LineParams(line[1],line[2],res[idx],reac[idx],line_lengths[idx])
+        (therm_a,therm_c,therm_d,therm_f) = return_thermal_constants(line_params,conductor_params,Tamb,Sb,int_length,T,T0)
 
-            (therm_a,therm_c,therm_d,therm_f) = return_thermal_constants(line_params,conductor_params,Tamb,Sb,int_length,T,T0)
+        # thermal constraint, Q(z) = 0:
+        kQtheta = (therm_a/therm_c)*(conductor_params.Tlim - therm_f)
+        Q_of_x = (Qtheta,zeros(size(Qtheta,1)),kQtheta)
 
-            # thermal constraint, Q(z) = 0:
-            kQtheta = (therm_a/therm_c)*(conductor_params.Tlim - therm_f)
-            Q_of_x = (Qtheta,zeros(size(Qtheta,1)),kQtheta)
+        # Create A2 based on chosen line:
+        A2 = tmp_inst_A2(n,Ridx,T,line,therm_a,int_length)
+        # Stack A1 and A2:
+        A = [A1; A2]::SparseMatrixCSC{Float64,Int64}
 
-            # Create A2 based on chosen line:
-            A2 = tmp_inst_A2(n,Ridx,T,line,therm_a,int_length)
-            # Stack A1 and A2:
-            A = [A1; A2]::SparseMatrixCSC{Float64,Int64}
-
-            # report current line finished (testing only):
-            if idx % 10 == 0
-                println("finished $(idx)/$(length(nz_line_idx))")
-            end
-            # Computationally expensive part: solving QCQP
-            #try
-            xvec,sol = solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
-            if isempty(xvec)
-                xvec,sol = zeros(size(Qobj,1)),sol
-            end
-            # this is what will be concatenated into `results`:
+        # Computationally expensive part: solving QCQP
+        xvec,sol = solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
+        if isempty(xvec)
+            xvec,sol = zeros(size(Qobj,1)),sol
         end
-        #catch
-        #    save("bad_matrices.jld","line",line)
-        #end
-        # is anything happening? report as each line is finished:
-        # println("$(idx)/$(length(lines))")
-
+        # this is what will be concatenated into `results`:
         xvec,sol
     end
-
     return results
 end
 
-solve_temporal_instanton(inputData::InstantonInputData) = solve_temporal_instanton(
+solve_temporal_instanton(inputData::InstantonInputData,maxlines::Int64 = 0) = solve_temporal_instanton(
     inputData.Ridx,
     inputData.Y,
     inputData.G0,
@@ -276,7 +261,8 @@ solve_temporal_instanton(inputData::InstantonInputData) = solve_temporal_instant
     inputData.Tamb,
     inputData.T0,
     inputData.int_length,
-    inputData.corr
+    inputData.corr,
+    maxlines = maxlines
 )
 
 function process_instanton_results(
