@@ -55,8 +55,8 @@ function mat2tmpinst(
     # convert generators into wind farms:
     windsize = sum(Gp)*wind_penetration/num_wind_farms
 #     Ridx = rand(1:length(Gp),num_wind_farms)
-    Ridx = sortperm(Gp + Dp)[1:num_wind_farms]
-
+    # Ridx = rand(bus_simple,num_wind_farms)#sortperm(Dp)[1:num_wind_farms]
+    Ridx = randperm(length(bus_simple))[1:num_wind_farms]
     Rp = zeros(length(Gp))
     Rp[Ridx] = windsize
 
@@ -81,7 +81,7 @@ function mat2tmpinst(
     end
 
     # use RTS-96 line lengths to generate similar line lengths
-    line_lengths = load("../data/polish_line_lengths.jld","line_lengths")[1:length(lines)]
+    line_lengths = load("../data/7k_line_lengths.jld","line_lengths")[1:length(lines)]
 
     # temporary (re-use rts-96 line conductor parameters)
     line_conductors = fill("waxwing",length(line_lengths))
