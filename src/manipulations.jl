@@ -101,7 +101,7 @@ function kernel_rotation(A::SparseMatrixCSC{Float64,Int64}; spqr=true)
 end
 
 """ Rotate quadratic G_of_x by
-rotation matrix R. Sparse.
+rotation matrix R. Sparse or dense.
 """
 function rotate_quadratic{T<:AbstractArray}(
     G_of_x::Tuple{T,Vector{Float64},Float64},
