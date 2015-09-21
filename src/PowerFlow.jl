@@ -1,7 +1,9 @@
 # The following five functions are used to run power flow
 # with fixed decision variable values.
 
-""" Expand renewable generation vector with zeros.
+"""
+    expand_renewable_vector(x,Ridx,N,T) -> P
+Starting with `x`, a `length(Ridx)*T` vector containing generation forecast for all nodes and time steps, insert zeros to produce an `N*T`-long vector.
 """
 function expand_renewable_vector(x,Ridx,N,T)
     idx = Array(Integer,0)
@@ -13,20 +15,21 @@ function expand_renewable_vector(x,Ridx,N,T)
     return P
 end
 
-""" Generate the power balance constraint A matrix
-from problem dimensions, admittance matrix,
-and generator participation factors.
+"""
+    fixed_wind_A(T,Y,ref,k) -> A
+Generate the power balance constraint A matrix from problem dimensions, admittance matrix, and generator participation factors. Use this function when variable (renewable) injections are known, to run power flow and determine angle differences throughout the network.
+
 Assumes the admittance matrix is n-by-n.
 
-Returns A, which is (n+1)*T-by-(nr+n+1)*T
+Returns A, which is (n+1)T -by- (nr+n+1)T
 
-* nr is the number of wind farms in the network
-* n is the number of nodes in the network
-* Ridx is a vector indicating wind farm locations
-* T is the number of time steps
-* Y is the admittance matrix (n-by-n)
-* ref is the index of the angle reference bus
-* k is the vector of generator participation factors
+* `nr` is the number of wind farms in the network
+* `n` is the number of nodes in the network
+* `Ridx` is a vector indicating wind farm locations
+* `T` is the number of time steps
+* `Y` is the admittance matrix (n-by-n)
+* `ref` is the index of the angle reference bus
+* `k` is the vector of generator participation factors
 """
 function fixed_wind_A(T,Y,ref,k)
     function ei(n,i)
@@ -51,8 +54,10 @@ function fixed_wind_A(T,Y,ref,k)
     return full(A)
 end
 
-""" Generate the vector b of power balance constraints.
-Assumes G0 and D are nT-by-1 vectors.
+"""
+    fixed_wind_b(n,T,G0,Pnet,D) -> b
+Generate the vector `b` of power balance constraints.
+Assumes `G0` and `D` are nT -by- 1 vectors.
 """
 function fixed_wind_b(n,T,G0,Pnet,D)
     b = FloatingPoint[]
@@ -67,6 +72,10 @@ function fixed_wind_b(n,T,G0,Pnet,D)
     return b
 end
 
+"""
+    return_angles(fixed_x,N,T) -> angles,alpha
+Given fixed injections, the number of nodes in the network, and the number of time steps, return the set of voltage angles and mismatches.
+"""
 function return_angles(fixed_x,N,T)
     angles = Array(Vector,0)
     alpha = FloatingPoint[]
@@ -77,6 +86,10 @@ function return_angles(fixed_x,N,T)
     return angles,alpha
 end
 
+"""
+    return_angle_diffs(angles,line)
+Compute the angle differences across a particular line `(from,to)` across all time steps.
+"""
 function return_angle_diffs(angles,line)
     angle_diffs = FloatingPoint[]
     f = line[1]

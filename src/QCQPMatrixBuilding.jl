@@ -1,5 +1,6 @@
-""" Generate the objective function matrix Qobj given problem dimensions.
-Output Qobj is square with dimension (nr + n + 2)*T (equal to number of
+"""
+Generate the objective function matrix given problem dimensions.
+Output `Qobj` is square with dimension (nr + n + 2)T (equal to number of
 variables in QCQP).
 """
 function tmp_inst_Qobj(
@@ -30,13 +31,14 @@ function tmp_inst_Qobj(
     end
 end
 
-""" Generate the power balance constraint A matrix
+"""
+Generate the power balance constraint A matrix
 from problem dimensions, admittance matrix,
 and generator participation factors.
 Assumes the admittance matrix is n-by-n.
 
-Returns A, which is (n+1)*T-by-(nr+n+1)*T
-(or (n+1)*T-by-(nr+n+2)*T if pad=true)
+Returns A, which is (n+1)T -by- (nr+n+2)T
+(or (n+1)T -by- (nr+n+1)T if pad=false)
 
 * nr is the number of wind farms in the network
 * n is the number of nodes in the network
@@ -79,12 +81,15 @@ function tmp_inst_A1(
     if !pad
         return A
     else
-        # pad A with T columns of zeros (rows added during line loop)
+        # pad A with T columns of zeros
+        # (rows having coefficients for these new variables
+        # depend on the line and are added during the big for loop)
         return [A spzeros((n+1)*T,T)]
     end
 end
 
-""" Generate the vector b of power balance constraints.
+"""
+Generate the vector b of power balance constraints.
 Assumes G0 and D are nT-by-1 vectors.
 """
 function tmp_inst_b(
@@ -111,12 +116,10 @@ function tmp_inst_b(
     return b
 end
 
-""" Generate Q_theta in the temperature constraint
-of a temporal instanton problem instance.
-"line" has the form (i,k), where i and k refer to
-the endpoints of the chosen line.
 """
-function tmp_inst_Qtheta(
+Generate `Qconstr` in the temperature constraint of a temporal instanton problem instance.
+"""
+function tmp_inst_Qconstr(
     n::Int64,
     nr::Int64,
     T::Int64
@@ -124,11 +127,12 @@ function tmp_inst_Qtheta(
     blkdiag(spzeros((nr+n+1)*T,(nr+n+1)*T),speye(T))
 end
 
-""" Augment A with T additional rows relating
+"""
+Augment `A` with `T` additional rows relating
 angle difference variables to angle variables.
 
-Returns a T-by-(n+nr+2)*T matrix that may be
-concatenated with the output of temp_inst_A
+Returns a T -by- (n+nr+2)T matrix that may be
+concatenated with the output of `temp_inst_A`
 
 Arguments:
 * n is the number of nodes in the network
@@ -159,7 +163,6 @@ function tmp_inst_A2(
     coefs = [sqrt(-exp(therm_a*int_length)^(T-t+1) +
         exp(therm_a*int_length)^(T-t)) for t in 1:T]
 
-    #display((therm_a,i,k))
     sparse(
     repmat(1:T,3),
     [pos+i;pos+k;one_pos],

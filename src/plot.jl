@@ -1,3 +1,6 @@
+"""
+Return temperature trajectories corresponding to instances of `InstantonInputData` and `InstantonOutputData`. `eidx` is the event index, with 1 denoting the instanton.
+"""
 function temperatureTrajectory(
     i::InstantonInputData,
     o::InstantonOutputData,

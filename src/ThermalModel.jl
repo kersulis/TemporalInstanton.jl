@@ -1,30 +1,46 @@
-""" Parameters that depend on which line is chosen.
+"""
+Line parameters that vary with the line (not inherent to conductor material).
 """
 type LineParams
-    from::Int64     # node
-    to::Int64       # node
-    rij::Float64    # [pu] resistance
-    xij::Float64    # [pu] reactance
-    length::Float64 # [m]
+    "Line 'from' node"
+    from::Int64
+    "Line 'to' node"
+    to::Int64
+    "pu line resistance"
+    rij::Float64
+    "pu line reactance"
+    xij::Float64
+    "Line length in meters"
+    length::Float64
 end
 
-""" Parameters that vary only with conductor material.
+"""
+Line parameters that depend on conductor material.
 """
 type ConductorParams
-    D0::Float64     # [m] conductor diameter
-    mCp::Float64    # [J/m-C] line heat capacity
-    Ilim::Float64   # [A] max. allowable current
-    r::Float64      # [pu] line resistance
-    Tlim::Float64   # [C] highest allowable line temperature
-    ηc::Float64     # [W/m-C] conductive heat loss rate coefficient
-    ηr::Float64     # [W/m-C^4] radiative heat loss rate coefficient
-    qs::Float64     # [W/m] solar heat gain rate
+    "[m] conductor diameter"
+    D0::Float64
+    "[J/m-C] line heat capacity"
+    mCp::Float64
+    "[A] max. allowable current"
+    Ilim::Float64
+    "[pu] line resistance"
+    r::Float64
+    "[C] highest allowable line temperature"
+    Tlim::Float64
+    "[W/m-C] conductive heat loss rate coefficient"
+    ηc::Float64
+    "[W/m-C^4] radiative heat loss rate coefficient"
+    ηr::Float64
+    "[W/m] solar heat gain rate"
+    qs::Float64
 end
 
-""" Returns instance of `ConductorParams` filled with
+"""
+Returns instance of `ConductorParams` filled with
 conductor parameters. Data from Mads's MPC paper.
 
-Accepts "waxwing" and "dove" as arguments.
+Currently accepts "waxwing" and "dove" as arguments.
 """
 function return_conductor_params(conductor::String)
     if conductor == "waxwing"
@@ -34,7 +50,8 @@ function return_conductor_params(conductor::String)
     end
 end
 
-""" Return (a,c,d,f) thermal constants used in line temperature IVP. Arguments:
+"""
+Return (a,c,d,f) thermal constants used in line temperature IVP. Arguments:
 
 * `lp` instance of LineParams
 * `cp` instance of ConductorParams
@@ -48,7 +65,8 @@ function return_thermal_constants(lp,cp,Tamb,Sb,int_length,n,T0)
     return a,c,d,f
 end
 
-""" Returns constant `a` [1/s]. Arguments:
+"""
+Returns constant `a` [1/s]. Arguments:
 
 * `mCp` [J/m-C] is line heat capacity
 * `ηc` [W/m-C] is conductive heat loss rate coefficient
@@ -61,7 +79,8 @@ function compute_a(mCp,ηc,ηr,Tamb,Tlim)
     return mCp\(-ηc - 4*ηr*(Tmid + 273)^3)
 end
 
-""" Return constant `c` [W/m]. Arguments:
+"""
+Return constant `c` [W/m]. Arguments:
 
 * `mCp` [J/m-C] is line heat capacity
 * `r` [pu] is line resistance
@@ -73,7 +92,8 @@ function compute_c(mCp,r,x,Sb,L)
     return r*Sb/(3*mCp*L*(x^2))
 end
 
-""" Returns constant `d` [W/m]. Arguments:
+"""
+Returns constant `d` [W/m]. Arguments:
 
 * `mCp` [J/m-C] is line heat capacity
 * `ηc` [W/m-C] is conductive heat loss rate coefficient
@@ -87,7 +107,8 @@ function compute_d(mCp,ηc,ηr,Tamb,Tlim,q_solar)
     return mCp\(ηc*Tamb - ηr*((Tmid + 273)^4 - (Tamb + 273)^4) + 4*ηr*Tmid*(Tmid+273)^3 + q_solar)
 end
 
-""" Returns constant `f` [C]. Arguments:
+"""
+Returns constant `f` [C]. Arguments:
 
 * `il` [s] is time interval length
 * `a` [1/s] is a constant
@@ -101,7 +122,8 @@ function compute_f(il,a,d,n,T0)
 end
 
 
-""" Return line's final temperature. Arguments:
+"""
+Return line's final temperature. Arguments:
 
 * `int_length` [s] is length of each interval
 * `a` [1/s] is a constant

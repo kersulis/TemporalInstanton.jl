@@ -34,7 +34,7 @@ function maxTempInstanton(
     b = tmp_inst_b(n,T,G0,R0,D0)
     # Augment b with new elements:
     tmp_inst_pad_b(b,T)
-    Qtheta = tmp_inst_Qtheta(n,nr,T)#,tau)
+    Qtheta = tmp_inst_Qconstr(n,nr,T)#,tau)
 
     score = Float64[]
     result = Symbol[]

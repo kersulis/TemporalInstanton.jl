@@ -1,36 +1,69 @@
 using JLD, MAT, MatpowerCases
 
+"""
+Contains fields for all data required to perform temporal instanton analysis. Rather than passing a list of arguments to `solve_temporal_instanton`, one can simply pass an instance of this type.
+"""
 type InstantonInputData
+    "Bus indices having variable (renewable) generation"
     Ridx::Vector{Int64}
+    "Admittance matrix, entries in pu"
     Y::SparseMatrixCSC{Float64,Int64}
+    "Conventional (fixed) generation injections at all nodes and time steps; pu"
     G0::Vector{Float64}
+    "Demands at all nodes and time steps; pu"
     D0::Vector{Float64}
+    "Wind injection forecasts for all nodes and time steps; pu"
     R0::Vector{Float64}
+    "System base MVA, in VA"
     Sb::Float64
+    "Index of system angle reference bus (need not be slack bus)"
     ref::Int64
+    "Each line is represented as a tuple of the form (from,to)"
     lines::Array{Tuple{Int64,Int64},1}
+    "Resistance of each line in `lines`; pu"
     res::Vector{Float64}
+    "Reactance of each line in `lines`; pu"
     reac::Vector{Float64}
+    "Conventional generator participation factors; must sum to 1.0"
     k::Vector{Float64}
+    "Lengths of all lines in `lines`; meters"
     line_lengths::Vector{Float64}
+    "Conductor type for all lines in `lines`"
     line_conductors::Vector{ASCIIString}
+    "System ambient temperature in degrees C"
     Tamb::Float64
+    "Initial transmission line temperature in degrees C"
     T0::Float64
+    "Length of optimization horizon in seconds"
     int_length::Float64
+    "Times at which generator dispatch, demand, and wind forecast are updated"
     time_values::FloatRange{Float64}
+    "Variable (renewable) generation correlation matrix"
     corr::Array{Float64,2}
 end
 
+"""
+Contains all data coming out of temporal instanton analysis. `process_instanton_results` returns an instance of this type by default to keep the workspace clean.
+"""
 type InstantonOutputData
+    "Score vector; each entry corresponds to entry of `lines`"
     score::Vector{Float64}
+    "Variable (renewable) generation forecast deviation vectors"
     x::Vector{Vector{Vector{Float64}}}
+    "Voltage angles at all nodes and time steps"
     θ::Vector{Vector{Vector{Float64}}}
+    "Mismatch between generation dispatch + forecast and demand (amount that must be taken up by droop response)"
     α::Vector{Vector{Float64}}
+    "Angle difference between endpoints of instanton candidate line across all time steps"
     diffs::Vector{Vector{Float64}}
+    "Vector containing all solution information in raw form; used for debugging"
     xopt::Vector{Vector{Float64}}
 end
 
-function load_rts96_data(; return_as_type::Bool = false)
+"""
+Loads RTS-96 data from Jenny's ARPA-E data, supplements with conductor type and line length information, and returns as an instance of `InstantonInputData`.
+"""
+function load_rts96_data(; return_as_type::Bool = true)
     path="../src/caseRTS96.mat" # Assumes current dir is nbs
     caseRTS96 = matread(path) # import MATLAB workspace
 
@@ -149,11 +182,13 @@ function load_rts96_data(; return_as_type::Bool = false)
     end
 end
 
-""" Load (and generate) everything needed to perform
-temporal instanton analysis for any network
-supported by MatpowerCases
 """
-function mat2tmpinst(name::ASCIIString; return_as_type::Bool = false)
+    mat2tmpinst(name) -> d
+
+Loads (and generates) everything needed to perform
+temporal instanton analysis for any network supported by [MatpowerCases.jl](https://github.com/kersulis/MatpowerCases.jl). `d` is an instance of `InstantonOutputData`.
+"""
+function mat2tmpinst(name::ASCIIString)
     mpc = loadcase(name,describe=false)
 
     bus_orig = mpc["bus"][:,1]
@@ -208,7 +243,7 @@ function mat2tmpinst(name::ASCIIString; return_as_type::Bool = false)
 
     lines = [(f[i],t[i]) for i in 1:length(f)]
     lines = convert(Array{Tuple{Int64,Int64},1},lines)
-    
+
     res = r
     reac = x
 
@@ -228,19 +263,15 @@ function mat2tmpinst(name::ASCIIString; return_as_type::Bool = false)
     # temporary (re-use rts-96 line conductor parameters)
     line_conductors = fill("waxwing",length(line_lengths))
 
-    if return_as_type
-        return InstantonInputData(Ridx,Y,Gp,Dp,Rp,Sb,ref,
+    return InstantonInputData(Ridx,Y,Gp,Dp,Rp,Sb,ref,
             lines,res,reac,k,
             line_lengths,line_conductors,
             NaN,NaN,NaN,NaN,Array{Float64,2}())
-    else
-        return Ridx,Y,Gp,Dp,Rp,Sb,ref,
-            lines,res,reac,k,
-            line_lengths,line_conductors
-    end
 end
 
-""" Create an admittance matrix for AC power flow.
+"""
+    createY(f,t,r,x,b) -> Y
+Create an admittance matrix for AC power flow.
 """
 function createY(
     f::Vector{Int64},
@@ -256,7 +287,9 @@ function createY(
     return sparse([f; t; t; f],[t; f; t; f],[-y; -y; y + b./2; y + b./2])
 end
 
-""" Create an admittance matrix for DC power flow.
+"""
+    createY(f,t,x) -> Y
+Create an admittance matrix for DC power flow.
 """
 function createY(
     f::Vector{Int64},
@@ -267,7 +300,8 @@ function createY(
     return sparse([f; t; t; f],[t; f; t; f],[-y; -y; y; y])
 end
 
-""" Use bus voltage level to determine appropriate conductor type. TODO: replace with Jon's conductor interpolation code.
+"""
+Use bus voltage level to determine appropriate conductor type. TODO: replace with Jon's conductor interpolation code.
 """
 function return_line_conductors(
     bus_names::Vector{Int64},

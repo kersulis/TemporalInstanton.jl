@@ -1,4 +1,5 @@
-""" Return vector w satisfying
+"""
+Return vector w satisfying
 w = (num)./(v - poles)
 """
 function find_w(
@@ -14,17 +15,20 @@ function find_w(
     return w
 end
 
-""" Solve the secular equation by returning `v` satisfying
-s(v) = w'*w = c,
+"""
+Solve the secular equation by returning `v` satisfying
+s(v) = w'\*w = c,
 
-where w = num./(v - poles)
+where `w = num./(v - poles)`
 
 Inputs:
+
 * `num` is a diagonal matrix with numerator
 * `poles` is a vector of poles (no need to sort them)
 * `c` is the target constant; we return solutions s(v) = c.
 
 Output:
+
 * `vals` is a vector of solutions `v` satisfying s(v) = c
 * `vecs` is a vector of vectors `w` corresponding to `vals`
 """
@@ -92,7 +96,8 @@ function solvesecular(
     return vals, w(vals)
 end
 
-""" Given current pole index, vector of sorted poles, and desired search direction (`left` or right==`!left`), return appropriate initial search distance for `secularintersect`.
+"""
+Given current pole index, vector of sorted poles, and desired search direction (`left` or right==`!left`), return appropriate initial search distance for `secularintersect`.
 """
 function finddist(
     i::Int64,
@@ -112,7 +117,8 @@ function finddist(
     return dist
 end
 
-""" Given c, upper bound, lower bound, function s, and a "tiny" number, return the value v where s(v) = c (if it exists).
+"""
+Given c, upper bound, lower bound, function s, and a "tiny" number, return the value v where s(v) = c (if it exists).
 """
 function secularintersect(
     c::Float64,

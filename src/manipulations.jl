@@ -1,10 +1,12 @@
-""" Return A1, A2, A3 where:
+"""
+Partition A into A1, A2, A3 where:
+
 * A1 corresponds to wind
 * A2 corresponds to angles + mismatch
 * A3 corresponds to angle difference vars
 
 Used to find x_star, the min-norm solution to
-Ax=b such that x_star[idx3] = 0.
+Ax=b such that `x_star[idx3] = 0`.
 """
 function partition_A(
     A::SparseMatrixCSC{Float64,Int64},
@@ -20,7 +22,8 @@ function partition_A(
     return A1,A2,idx1,idx2,idx3
 end
 
-""" x_star is the n-vector by which the problem must
+"""
+x_star is the n-vector by which the problem must
 be translated in the first step of the temporal
 instanton QCQP solution.
 
@@ -51,18 +54,20 @@ function find_x_star(
     return x_star
 end
 
-""" This function performs the change of variables from x to z,
+"""
+This function performs the change of variables from x to z,
 where z = x - x_star. (For translating a quadratic problem.)
-Returns triple H_of_x consisting of matrix H, vector h, constant kh.
+Returns triple `H_of_x` consisting of matrix H, vector h, constant kh.
 
-Arguments
-G_of_x consists of matrix G, vector g, constant kg.
-x_star is translation.
+Arguments:
+
+* `G_of_x` consists of matrix G, vector g, constant kg.
+* `x_star` is translation.
 
 Used to perform second step of temporal instanton solution method,
-assuming x_star is min-norm solution of Ax=b.
+assuming `x_star` is min-norm solution of Ax=b.
 
-This method does not check for dimension mismatches.
+To save time, this method does not check for dimension mismatches.
 """
 function translate_quadratic(
     G_of_x::Tuple{SparseMatrixCSC{Float64,Int64},Vector{Float64},Float64},
@@ -76,7 +81,8 @@ function translate_quadratic(
     return (H,h,kh[1])
 end
 
-""" Find an orthonormal basis for the nullspace of A.
+"""
+Find an orthonormal basis for the nullspace of A.
 This matrix may be used to rotate a temporal instanton
 problem instance to eliminate all but nullity(A) elements.
 """
@@ -100,8 +106,9 @@ function kernel_rotation(A::SparseMatrixCSC{Float64,Int64}; spqr=true)
     end
 end
 
-""" Rotate quadratic G_of_x by
-rotation matrix R. Sparse or dense.
+"""
+Rotate quadratic `G_of_x` by
+rotation matrix `R`. Sparse or dense.
 """
 function rotate_quadratic{T<:AbstractArray}(
     G_of_x::Tuple{T,Vector{Float64},Float64},
@@ -112,8 +119,9 @@ function rotate_quadratic{T<:AbstractArray}(
     return (R*G*R',R*g,kg)
 end
 
-""" Return K, the diagonal matrix whose elements are
-square roots of elements in the given vector d.
+"""
+Return `K`, the diagonal matrix whose elements are
+square roots of elements in the given vector `d`.
 """
 function return_K(d::Vector{Float64})
     K = ones(length(d))
@@ -121,7 +129,8 @@ function return_K(d::Vector{Float64})
     return spdiagm(K)
 end
 
-""" Use diagonal elements of `Q_of_w[1]` to divide `G_of_w[1]` into four blocks and `G_of_w[2]` into two blocks.
+"""
+Use diagonal elements of `Q_of_w[1]` to divide `G_of_w[1]` into four blocks and `G_of_w[2]` into two blocks.
 """
 function partition_B(G_of_w::Tuple,Q_of_w::Tuple)
     B,b = G_of_w[1],G_of_w[2]
@@ -149,7 +158,8 @@ function return_Bhat(
     return Bhat,bhat
 end
 
-""" Reverse rotations and translations to map
+"""
+Reverse rotations and translations to map
 secular equation solution back to original problem
 space.
 """
