@@ -12,11 +12,13 @@ function tmp_inst_Qobj(
     if isempty(corr)
         Qobj = spdiagm(repeat([ones(nr);zeros(n+1)],outer=[T]))
     else
-        corr = sparse(corr)
-        Qobj = blkdiag(corr,spzeros(n+1,n+1))
+        prec = sparse(inv(corr))
+        Qobj = blkdiag(prec,spzeros(n+1,n+1))
         for t = 2:T
-            Qobj = blkdiag(Qobj,blkdiag(corr,spzeros(n+1,n+1)))
+            Qobj = blkdiag(Qobj,blkdiag(prec,spzeros(n+1,n+1)))
         end
+        # ensure the objective matrix has norm 1:
+        scale!(Qobj,1/norm(full(Qobj)))
     end
 
     if !pad
