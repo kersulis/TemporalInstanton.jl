@@ -58,6 +58,8 @@ type InstantonOutputData
     diffs::Vector{Vector{Float64}}
     "Vector containing all solution information in raw form; used for debugging"
     xopt::Vector{Vector{Float64}}
+    "Time taken to solve each line"
+    linetimes::Vector{Float64}
 end
 
 """

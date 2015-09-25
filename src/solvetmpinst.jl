@@ -163,6 +163,7 @@ function solve_temporal_instanton(
 
     # loop through lines (having non-zero length)
     results = @parallel (vcat) for idx in nz_line_idx
+        tic()
         line = lines[idx]
         conductor_name = line_conductors[idx]
         conductor_params = return_conductor_params(conductor_name)
@@ -191,8 +192,9 @@ function solve_temporal_instanton(
         if isempty(xvec)
             xvec,sol = zeros(size(Qobj,1)),sol
         end
+
         # this is what will be concatenated into `results`:
-        xvec,sol
+        xvec,sol,toq()
     end
     return results
 end
@@ -231,7 +233,7 @@ Accepts `results` output from `solve_temporal_instanton`, returns output data in
 * `T` is the number of time steps in the analysis
 """
 function process_instanton_results(
-    results::Array{Tuple{Array{Float64,1},Float64},1},
+    results::Array{Tuple{Array{Float64,1},Float64,Float64},1},
     n::Int64,
     nr::Int64,
     T::Int64;
@@ -244,9 +246,10 @@ function process_instanton_results(
     α       = Vector{Vector{Float64}}()
     diffs   = Vector{Vector{Float64}}()
     xopt    = Vector{Vector{Float64}}()
+    linetimes = Vector{Float64}()
 
     for i in 1:size(results,1)
-        xvec,sol = results[i]
+        xvec,sol,linetime = results[i]
         # array of vectors with Float64 values:
         deviations = Array(Vector{Float64},0)
         angles = Array(Vector{Float64},0)
@@ -277,6 +280,7 @@ function process_instanton_results(
         push!(θ,angles)
         push!(α,alpha)
         push!(xopt,xvec)
+        push!(linetimes,linetime)
     end
-    return InstantonOutputData(score,x,θ,α,diffs,xopt)
+    return InstantonOutputData(score,x,θ,α,diffs,xopt,linetimes)
 end
