@@ -158,7 +158,8 @@ function solve_temporal_instanton(
 
     # truncate to go through subset of lines (testing only):
     if maxlines > 0 && maxlines < length(nz_line_idx)
-        nz_line_idx = nz_line_idx[1:maxlines]
+        # nz_line_idx = nz_line_idx[1:maxlines]
+        nz_line_idx = nz_line_idx[randperm(length(nz_line_idx))[1:maxlines]]
     end
 
     # loop through lines (having non-zero length)
