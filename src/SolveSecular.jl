@@ -65,7 +65,7 @@ function solvesecular(
                     intersect = NaN
                     break
                 end
-                warn("expanding $ex")
+                # warn("expanding $ex")
                 lower -= 100*dist
                 intersect = secularintersect(c,upper,lower,s,tiny)
             end
@@ -85,7 +85,7 @@ function solvesecular(
                     intersect = NaN
                     break
                 end
-                warn("expanding $ex")
+                # warn("expanding $ex")
                 lower += 100*dist
                 intersect = secularintersect(c,upper,lower,s,tiny)
             end
