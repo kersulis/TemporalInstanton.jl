@@ -1,3 +1,5 @@
+using JLD
+
 """
     solve_instanton_qcqp(Qobj,Qconstr,A,b,T) -> (optVec,minObj)
 Solve the following quadratically-
@@ -36,22 +38,39 @@ function solve_instanton_qcqp(
     m,n = size(A)
     Qobj_orig = Qobj[1]
 
+    ###### October 13, 2015
+    # Timing analysis
+    # keep track of times:
+    # tTrans    = [ti[1] for ti in t]
+    # tKern     = [ti[2] for ti in t]
+    # tEig      = [ti[3] for ti in t]
+    # tRot      = [ti[4] for ti in t]
+    # tSec      = [ti[5] for ti in t]
+    # tMap      = [ti[6] for ti in t]
+    ######
+
     opt = Array(Vector{Float64},0)
 
     # Partition A:
     A1,A2,idx1,idx2,idx3 = partition_A(A,Qobj[1],T)
 
+    tic()
     # Find translation point:
     x_star = find_x_star(A1,A2,idx1,idx2,n,b)
 
     # Translate quadratics:
     Qobj = translate_quadratic(Qobj,x_star)
     Qconstr = translate_quadratic(Qconstr,x_star)
+    tTrans = toq()
 
+    tic()
     N = kernel_rotation(A) # take only cols spanning N(A)
+    tKern = toq()
 
+    tic()
     Qobj = rotate_quadratic(Qobj,N')
     Qconstr = rotate_quadratic(Qconstr,N')
+    tRot = toq()
 
     # testing to see if I can make the eig() argument smaller
     #
@@ -64,6 +83,7 @@ function solve_instanton_qcqp(
     # Qconstr[1] ==
     ########
 
+    tic()
     D,U = eig(full(Qconstr[1]))
     # eigs won't work because nev cannot be size(Q,1):
     # D,U = eigs(Q_of_z[1],nev=size(Q_of_z[1],1))
@@ -74,6 +94,8 @@ function solve_instanton_qcqp(
 
     Qobj = rotate_quadratic(Qobj,(U*Kinv)')
     Qconstr = rotate_quadratic(Qconstr,(U*Kinv)')
+
+    tEig = toq()
 
     B11,B12,B21,B22,b1,b2 = partition_B(Qobj,Qconstr)
 
@@ -93,19 +115,64 @@ function solve_instanton_qcqp(
         return [],NaN
     end
 
+    tic()
     solutions, vectors = solvesecular(num,poles,c)
+    tSec = toq()
+
+    # tic()
+    # sol = zeros(length(vectors))
+    # for i in 1:length(vectors)
+    #     w2 = vectors[i]
+    #     xvec = return_xopt(w2,B11,B12,b1,N,U,K,x_star)
+    #     sol[i] = (xvec'*Qobj_orig*xvec)[1]
+    #     push!(opt,xvec)
+    # end
+    # tMap = toq()
+    #
+    # times = [tTrans;tKern;tEig;tRot;tSec;tMap]
+    #
+    # if isempty(sol)
+    #     warn("No solution for secular equation; solver returned []")
+    #     return [], NaN, times
+    # else
+    #     if indmin(solutions) != indmin(sol)
+    #         println("smallest lamda NOT smallest obj")
+    #     end
+    #     return opt[indmin(sol)], minimum(sol), times
+    # end
+
+    tic()
+    # compute only once:
+    map_mat = N*sparse(U)*spdiagm(1./diag(K))
+
     sol = zeros(length(vectors))
     for i in 1:length(vectors)
-        w2 = vectors[i]
-        xvec = return_xopt(w2,B11,B12,b1,N,U,K,x_star)
-        sol[i] = (xvec'*Qobj_orig*xvec)[1]
+        w2 = vectors[indmin(solutions)]
+        w1opt = -B11\(B12*w2 + b1/2)
+        wopt = [w1opt;w2]
+        xvec = map_mat*wopt + x_star
+
+        # this multiplies everything on each call
+        # (very expensive!)
+        # xvec = return_xopt(w2,B11,B12,b1,N,U,K,x_star)
+        sol = (xvec'*Qobj_orig*xvec)[1]
         push!(opt,xvec)
     end
+    tMap = toq()
+
+    times = [tTrans;tKern;tEig;tRot;tSec;tMap]
+
     if isempty(sol)
         warn("No solution for secular equation; solver returned []")
-        return [], NaN
+        return [], NaN, times
     else
-        return opt[indmin(sol)],minimum(sol)
+        # hypothesis: smallest lambda always corresponds to
+        # min objective
+        if indmin(solutions) != indmin(sol)
+            println("smallest lamda NOT smallest obj")
+        end
+        # return xvec, sol, times
+        return opt[indmin(sol)],minimum(sol),times
     end
 end
 
@@ -135,6 +202,10 @@ function solve_temporal_instanton(
     maxlines::Int64 = 0
     )
 
+    # aggregate timing results:
+    timeVecs = Vector{Vector{Float64}}()
+
+    tic()
     # why does all allocation happen here?
     # (parallel question)
     n = length(k)
@@ -161,6 +232,8 @@ function solve_temporal_instanton(
         # nz_line_idx = nz_line_idx[1:maxlines]
         nz_line_idx = nz_line_idx[randperm(length(nz_line_idx))[1:maxlines]]
     end
+    tBuild = toq()
+    push!(timeVecs,[tBuild])
 
     # loop through lines (having non-zero length)
     results = @parallel (vcat) for idx in nz_line_idx
@@ -189,14 +262,17 @@ function solve_temporal_instanton(
         A = [A1; A2]::SparseMatrixCSC{Float64,Int64}
 
         # Computationally expensive part: solving QCQP
-        xvec,sol = solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
+        xvec,sol,times = solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
+        # push!(timeVecs,times)
         if isempty(xvec)
             xvec,sol = zeros(size(Qobj,1)),sol
         end
 
         # this is what will be concatenated into `results`:
-        xvec,sol,toq()
+        xvec,sol,toq(),times
     end
+    # export all timing data to JLD file:
+    # save("../data/timing.jld", "timeVecs", results[4])
     return results
 end
 
@@ -234,7 +310,7 @@ Accepts `results` output from `solve_temporal_instanton`, returns output data in
 * `T` is the number of time steps in the analysis
 """
 function process_instanton_results(
-    results::Array{Tuple{Array{Float64,1},Float64,Float64},1},
+    results::Vector{Tuple{Vector{Float64},Float64,Float64,Vector{Float64}}},
     n::Int64,
     nr::Int64,
     T::Int64;
@@ -248,9 +324,11 @@ function process_instanton_results(
     diffs   = Vector{Vector{Float64}}()
     xopt    = Vector{Vector{Float64}}()
     linetimes = Vector{Float64}()
+    timeVecs = [ri[4] for ri in results]
+    save("../data/timing.jld","timeVecs",timeVecs)
 
     for i in 1:size(results,1)
-        xvec,sol,linetime = results[i]
+        xvec,sol,linetime = results[i][1:3]
         # array of vectors with Float64 values:
         deviations = Array(Vector{Float64},0)
         angles = Array(Vector{Float64},0)
