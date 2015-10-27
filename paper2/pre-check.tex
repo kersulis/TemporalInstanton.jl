@@ -1,0 +1,286 @@
+\documentclass[10pt,letterpaper]{article}
+\usepackage[latin1]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{framed}
+\usepackage{pdfpages}
+\usepackage{minted}
+\usepackage{geometry}
+
+\geometry{verbose,tmargin=1in,bmargin=1in,lmargin=1.5in,rmargin=1.5in}
+    
+\author{Jonas Kersulis}
+\title{Singularity Issues and Injection Shift Factors}
+
+\begin{document}
+\date{}
+\maketitle
+
+    \section*{Overview}\label{overview}
+
+For some networks, certain lines can cause the \(A\) matrix to be
+rank-deficient. It turns out that all rank deficiencies may be interpreted using injection shift
+factors. The ISF matrix may be used to filter lines before performing
+temporal instanton analysis.
+
+    \section*{The problem}\label{the-problem}
+
+I first noticed the problem when performing temporal instanton analysis on various Matpower
+networks. The first step in temporal instanton analysis is to translate
+the problem by a vector \(x^*\), where \(A_1x_1^* + A_2x_2^* = 0\). To
+find \(x^*\), I compute the pseudo-inverse of
+\(Z = [A_1~~A_2]^\top\). The line in question is
+
+\begin{minted}{julia}
+x_star[[idx1;idx2]] = (Z/(Z'*Z))*b
+\end{minted}
+
+When analyzing the \texttt{case9} network (and some other networks), I noticed that \(Z^\top Z\)
+was singular in some cases. The error:
+
+\begin{verbatim}
+ERROR: ArgumentError: matrix has one or more zero pivots
+ in ldltfact at sparse/cholmod.jl:1201
+ in ldltfact at sparse/cholmod.jl:1208
+ in factorize at sparse/linalg.jl:651
+ in \ at linalg/generic.jl:314
+ in / at linalg/generic.jl:322
+\end{verbatim}
+
+For \(Z^\top Z\) to be invertible (i.e.~have no zero pivots), it must
+have full rank \((n+2)T\). \textbf{What are the conditions that cause
+\(Z^\top Z\) to be rank-deficient?}
+
+    \section*{Physical intuition}\label{physical-intuition}
+
+A few observations from playing with the \texttt{case9} network. This network has a central ring (4 -\textgreater{} 5
+-\textgreater{} 6 -\textgreater{} 7 -\textgreater{} 8 -\textgreater{} 9
+-\textgreater{} 4) and three dangling nodes (1,2,3). Each dangling node
+has a generator, but in the Matpower data one of the generators (at node
+1) is dispatched to zero. I converted the generator at node 3 into a
+wind farm, so \textbf{the only conventional generation node was node 2}.
+This effectively rendered node 2 the slack bus. If I
+introduced just one wind farm and placed it at node 2, there was no way for renewable generation changes
+to influence any line flows. This seemed to be causing the singularity problem.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.16\linewidth]{"../images/case9graph"}
+\caption{Simple sketch of \texttt{case9} network (ignore edge directions)}
+\label{fig:case9}
+\end{figure}
+
+    \section*{Systematic approach}\label{systematic-approach}
+
+Suppose a network has \(N\) nodes and \(L\) lines. Let \(D_{nz}\) be a
+\(L\times N\) matrix. Now consider each pairing of a line \(l\) with a
+node \(n\). Place a single wind farm at \(n\) and form the \(Z\) matrix.
+If \(Z^\top Z\) is singular, let \(D_{nz}[l,n] = 0\). Otherwise, let
+\(D_{nz}[l,n] = 1\).
+
+Now let's see if we can replicate \(D_{nz}\) using injection shift
+factors. The ISF matrix has the same dimensions as \(D_{nz}\). It
+contains positive and negative elements, and some elements may be fairly
+small. Take the absolute value of the ISF matrix. Now replace every
+element greater than some epsilon by 1, and replace every other element
+with zero. Call this modified ISF matrix \(I_{nz}\). Like \(D_{nz}\), it
+is a \(L\times N\) matrix of zeros and ones.
+
+I computed \(D_{nz}\) and \(I_{nz}\) for \texttt{case9} and
+\texttt{case118}. They were identical in both cases. For \texttt{case9}
+it is easy to add and move generators and change their participation
+factors, so I made a variety of changes. No matter how I moved
+generators around, \(I_{nz}\) exactly matched \(D_{nz}\). This suggests
+that I can use the ISF matrix to predict whether \(Z\) will be
+rank-deficient.
+
+    \section*{Injection shift factors}\label{injection-shift-factors}
+
+An injection shift factor for node \(i\) and line \(j\) is defined as
+the change in flow on \(j\) induced by an injection of 1 pu at node
+\(i\). In the absence of droop response, we have:
+
+\begin{align*}
+P_{ij} &= B_{ij}(\theta_i-\theta_j) \\
+\theta &= B^{-1} P
+\end{align*}
+
+\begin{align*}
+ISF &= B_{flow}B^{-1} \\
+B_{flow}[l,:] &= \begin{bmatrix}
+0 & 0 & B_{ij} & 0 & -B_{ij} \end{bmatrix}
+\end{align*}
+
+\(B_{flow}\) has one row for each line \(l\) in the network. It has
+\(B_{ij}\) in the \(i\)th column and \(-B_{ij}\) in the \(j\)th column.
+
+When we do have droop response, the column of \(B\) corresponding to the
+angle reference node is replaced by the vector of participation factors.
+The column of \(B_{flow}\) corresponding to the reference node is
+replaced by a column of zeros. I wrote a function called \texttt{isf()}
+to return the ISF matrix for a choice of network, reference node, and
+participation vector.
+
+    \section*{Numerical study}\label{numerical-study}
+
+The following cell uses functions I wrote (which may be found at the end
+of the notebook) to compute and compare \(D_{nz}\) and \(I_{nz}\) for
+any Matpower network.
+
+\begin{minted}{julia}
+cname = "case118"
+Dnz = find_rank_deficiencies(cname)
+println("No. of rank-deficient cases: $(length(find(Dnz.==0)))")
+
+i = mat2tmpinst(cname)
+ISF = isf(i.Y,i.lines,i.ref,i.k)
+small = 1e-8
+Inz = convert(Array{Int,2},abs(ISF) .> small)
+
+# Boolean comparison
+println("Dnz == Inz: $(Dnz == Inz)")
+\end{minted}
+Output:
+\begin{verbatim}
+No. of rank-deficient cases: 2222
+Dnz == Inz: true
+\end{verbatim}
+
+    \section*{Conclusion: Pre-check Using Shift Factors}\label{conclusion}
+
+Every rank deficiency for \texttt{case9} is explained by injection shift
+factors. This motivates a pre-check: before performing temporal
+instanton analysis, I will build the ISF matrix and look at columns
+corresponding to renewable nodes. A row of zeros in this matrix
+indicates that the corresponding line is completely insensitive to
+changes in renewable generation. Such a line should be neglected in
+temporal instanton analysis; there is no change in wind that could cause
+it to reach its temperature limit. Having filtered out these lines, I
+can perform temporal instanton analysis on the remaining ones.
+
+\clearpage
+    \section*{Appendix: code}\label{appendix-code}
+
+Following are two functions. The first builds \(D_{nz}\).
+The second returns the ISF matrix (from which \(I_{nz}\) is derived).
+
+\begin{minted}{julia}
+include("../src/TemporalInstanton.jl")
+using TemporalInstanton
+import TemporalInstanton.partition_A
+import TemporalInstanton.createY
+
+"""
+For a matrix with N nodes and L lines, return a L-by-N
+matrix Dnz. Dnz[l,n] = 0 when Z(l,n) is rank-deficient
+(i.e. there are zero pivots while factorizing Z'*Z).
+All other elements of Dnz are equal to 1.
+"""
+function find_rank_deficiencies(cname)
+    i = mat2tmpinst(cname)
+
+    conductor_params = return_conductor_params("waxwing")
+    # Thermal model parameters:
+    i.Tamb = 35. # C
+    i.T0 = 60. #46. # initial line steady-state temp
+
+    i.time_values = 0:30:300 # five minutes in 30-sec steps
+    i.int_length = 300. # seconds = 5 min
+
+    Gp,Dp,Rp = (i.G0, i.D0, i.R0)
+
+    # one time step to keep things simple
+    i.G0 = collect(Gp)
+    i.D0 = collect(Dp)
+    i.R0 = collect(Rp)
+
+    n = length(i.k)
+    nr = length(i.Ridx)
+    T = convert(Int64,length(i.G0)/n)
+    Qobj = tmp_inst_Qobj(n,nr,T,i.corr)
+
+    # figure out where rank deficiencies are occurring
+    defic = zeros(length(i.lines),size(i.Y,1))
+    for idx in 1:length(i.lines)
+        for nodeLoc in 1:size(i.Y,1)
+            # modify the wind node location
+            i.Ridx = collect(nodeLoc)
+
+            line = i.lines[idx]
+            line_params = LineParams(line[1],line[2],i.res[idx],i.reac[idx],i.line_lengths[idx])
+            therm_a, therm_c, therm_d, therm_f = return_thermal_constants(line_params,
+            conductor_params, i.Tamb, i.Sb, i.int_length, T, i.T0)
+
+            A1 = tmp_inst_A1(i.Ridx,T,i.Y,i.ref,i.k)
+            A2 = tmp_inst_A2(n,i.Ridx,T,line,therm_a,i.int_length)
+            # Stack A1 and A2:
+            A = [A1; A2]::SparseMatrixCSC{Float64,Int64}
+
+            # so the problem crops up when we partition A
+            A_1,A_2,idx1,idx2,idx3 = partition_A(A, Qobj, T)
+
+            Z = [A_1 A_2]'
+
+            if rank(full(Z)) == (n+2)*T
+                defic[idx,nodeLoc] = 1
+            end
+        end
+    end
+    return convert(Array{Int64,2},defic)
+end
+
+"""
+Calculate injection shift factor matrix.
+Each row corresponds to a line in the network.
+Each column corresponds to a node.
+Credit to Jonathon Martin for derivation.
+
+Inputs:
+* `Y`: full admittance matrix
+* `lines`: vector of tuples; each tuple encodes a line as (i,j)
+* `ref`: index of angle reference bus
+* `k`: vector of generator participation factors
+"""
+function isf(
+    Y::AbstractArray,
+    lines::Vector{Tuple{Int64,Int64}},
+    ref::Int64,
+    k=[NaN]::Vector{Float64}
+    )
+    
+    Y = full(Y)
+    n,l = (size(Y,1),length(lines))
+    
+    nonref = setdiff(1:n,ref)
+    
+    # build B
+    if length(k) != 1
+        Y[:,ref] = k
+        B = Y
+    else
+        B = Y[nonref,nonref]
+    end
+    
+    # build Bflow
+    Bflow = zeros(l,n)
+    for idx in 1:l
+        i,j = lines[idx]
+        Bflow[idx,i] =  Y[i,j]
+        Bflow[idx,j] = -Y[i,j]
+    end
+    
+    # remove ref col from Bflow
+    if length(k) != 1
+        Bflow[:,ref] = zeros(l)
+    else
+        Bflow = Bflow[:,nonref]
+    end
+    
+    return Bflow/B
+end
+\end{minted}
+
+
+\end{document}
