@@ -1,0 +1,69 @@
+\documentclass[10pt,letterpaper]{article}
+\usepackage[latin1]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{framed}
+\usepackage{pdfpages}
+
+\author{Jonas Kersulis}
+\title{Lagrange multiplier proof}
+
+\begin{document}
+\maketitle
+
+\textbf{Problem}
+\begin{align*}
+&(P) &\min~ & z^\top C z - 2b^\top z & \\
+& s.t. & z^\top z &= s^2
+\end{align*}
+
+\textbf{Claim [Gander 1989]}: $(P)$ is equivalent to
+\begin{align*}
+&(P') & \min~ & \lambda  \\
+& s.t.& z^\top z &= s^2 \\
+&& Cz &= \lambda z + b
+\end{align*}
+In general, there are many solutions $\lambda$ to the first-order conditions
+\begin{subequations}\label{eq:first}
+\begin{align}
+\label{eq:first1}Cz &= \lambda z + b \\
+\label{eq:first2}z^\top z &= s^2
+\end{align}
+\end{subequations}
+Gander's claim is that the objective of $(P)$ is minimized when the \textit{smallest} value of $\lambda$ is chosen. The following proof formalizes this claim.
+
+\textbf{Theorem:} if $(\lambda_1,z_1)$ and $(\lambda_2,z_2)$ solve \eqref{eq:first}, and $\lambda_1 < \lambda_2$, then
+\begin{align*}
+z_1^\top C z_1 - 2b^\top z_1 &< z_2^\top C z_2 - 2b^\top z_2
+\end{align*}
+\textbf{Proof:} Multiply \eqref{eq:first1} by $z_1^\top$ and $z_2^\top$ for both $z_1$ and $z_2$:
+\begin{subequations}
+\begin{align}
+\label{eq:2a}z_1^\top C z_1 &= \lambda_1z_1^\top z_1 + z_1^\top b = \lambda_1 s^2 + z_1^\top b \\
+\label{eq:2b}z_2^\top C z_2 &= \lambda_2z_2^\top z_2 + z_2^\top b = \lambda_2 s^2 + z_2^\top b \\
+\label{eq:2c}z_1^\top C z_2 &= \lambda_2z_1^\top z_2 + z_1^\top b \\
+\label{eq:2d}z_2^\top C z_1 &= \lambda_1z_2^\top z_1 + z_2^\top b
+\end{align}
+\end{subequations}
+Subtract \eqref{eq:2b} from \eqref{eq:2a}:
+\begin{align*}
+(z_1^\top C z_1 - z_1^\top b) - (z_2^\top C z_2 - z_2^\top b) &= (\lambda_1 - \lambda_2)s^2
+\end{align*}
+Add $z_2^\top b$ and subtract $z_1^\top b$:
+\begin{align*}
+(z_1^\top C z_1 - 2z_1^\top b) - (z_2^\top C z_2 - 2z_2^\top b) &= (\lambda_1 - \lambda_2)s^2 - z_1^\top b + z_2^\top b
+\end{align*}
+Substitute \eqref{eq:2c} and \eqref{eq:2d}:
+\begin{align*}
+(z_1^\top C z_1 - 2z_1^\top b) - (z_2^\top C z_2 - 2z_2^\top b) &= (\lambda_1 - \lambda_2)s^2 + (\lambda_2 - \lambda_1) z_1^\top z_2 \\
+&=  (\lambda_1 - \lambda_2)(s^2 - z_1^\top z_2)
+\end{align*}
+But $\lVert z_1 - z_2 \rVert = z_1^\top z_1 + z_2^\top z_2 - 2z_1^\top z_2 = 2s^2 - 2z_1^\top z_2$, so we have
+\begin{align*}
+(z_1^\top C z_1 - 2z_1^\top b) - (z_2^\top C z_2 - 2z_2^\top b) &= \frac{1}{2}(\lambda_1 - \lambda_2)\lVert z_1 - z_2 \rVert
+\end{align*}
+Because $\lambda_1 < \lambda_2$, the right-hand size is negative. The objective value corresponding to $(\lambda_1,z_1)$ is therefore less than that of $(\lambda_2,z_2)$.
+ 
+\end{document}
