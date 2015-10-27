@@ -227,7 +227,14 @@ function solve_temporal_instanton(
     # Exclude lines with zero length or zero resistance:
     nz_line_idx = intersect(find(line_lengths),find(res))
 
-    # truncate to go through subset of lines (testing only):
+    # rule out lines where all renewable shift factors are 0:
+    ISF = isf(Y,lines,ref,k)[:,Ridx]
+    small = 1e-8
+    sing_line_idx = find(1 - [maxabs(ISF[i,:])>small for i in 1:size(ISF,1)])
+    println("ISF pre-check: $(length(sing_line_idx)) insensitive lines found")
+    nz_line_idx = setdiff(nz_line_idx,sing_line_idx)
+
+    # truncate to go through subset of remaining lines (testing only):
     if maxlines > 0 && maxlines < length(nz_line_idx)
         # nz_line_idx = nz_line_idx[1:maxlines]
         nz_line_idx = nz_line_idx[randperm(length(nz_line_idx))[1:maxlines]]
