@@ -42,7 +42,7 @@ conductor parameters. Data from Mads's MPC paper.
 
 Currently accepts "waxwing" and "dove" as arguments.
 """
-function return_conductor_params(conductor::String)
+function return_conductor_params(conductor::AbstractString)
     if conductor == "waxwing"
         return ConductorParams(15.5e-3,383.0,439.0,110e-6,65.0,0.955,2.207e-9,14.4)
     elseif conductor == "dove"
