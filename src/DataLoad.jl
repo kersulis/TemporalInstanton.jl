@@ -268,7 +268,7 @@ function mat2tmpinst(name::ASCIIString)
     return InstantonInputData(Ridx,Y,Gp,Dp,Rp,Sb,ref,
             lines,res,reac,k,
             line_lengths,line_conductors,
-            NaN,NaN,NaN,NaN,Array{Float64,2}())
+            NaN,NaN,NaN,NaN:NaN:NaN,Array{Float64,2}())
 end
 
 """
