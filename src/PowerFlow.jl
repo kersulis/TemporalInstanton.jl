@@ -99,3 +99,53 @@ function return_angle_diffs(angles,line)
     end
     return angle_diffs
 end
+
+"""
+Calculate injection shift factor matrix.
+Each row corresponds to a line in the network.
+Each column corresponds to a node.
+Credit to Jonathon Martin for derivation.
+
+Inputs:
+* `Y`: full admittance matrix
+* `lines`: vector of tuples; each tuple encodes a line as (i,j)
+* `ref`: index of angle reference bus
+* `k`: vector of generator participation factors
+"""
+function isf(
+    Y::AbstractArray,
+    lines::Vector{Tuple{Int64,Int64}},
+    ref::Int64,
+    k=[NaN]::Vector{Float64}
+    )
+
+    Y = full(Y)
+    n,l = (size(Y,1),length(lines))
+
+    nonref = setdiff(1:n,ref)
+
+    # build B
+    if length(k) != 1
+        Y[:,ref] = k
+        B = Y
+    else
+        B = Y[nonref,nonref]
+    end
+
+    # build Bflow
+    Bflow = zeros(l,n)
+    for idx in 1:l
+        i,j = lines[idx]
+        Bflow[idx,i] =  Y[i,j]
+        Bflow[idx,j] = -Y[i,j]
+    end
+
+    # remove ref col from Bflow
+    if length(k) != 1
+        Bflow[:,ref] = zeros(l)
+    else
+        Bflow = Bflow[:,nonref]
+    end
+
+    return Bflow/B
+end
