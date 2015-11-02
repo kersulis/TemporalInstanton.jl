@@ -122,30 +122,21 @@ function isf(
     Y = full(Y)
     n,l = (size(Y,1),length(lines))
 
-    nonref = setdiff(1:n,ref)
-
-    # build B
-    if length(k) != 1
-        Y[:,ref] = k
-        B = Y
-    else
-        B = Y[nonref,nonref]
-    end
-
-    # build Bflow
     Bflow = zeros(l,n)
     for idx in 1:l
         i,j = lines[idx]
         Bflow[idx,i] =  Y[i,j]
         Bflow[idx,j] = -Y[i,j]
     end
-
-    # remove ref col from Bflow
+    
     if length(k) != 1
+        Y[:,ref] = k
+        B = Y
         Bflow[:,ref] = zeros(l)
     else
+        nonref = setdiff(1:n,ref)
+        B = Y[nonref,nonref]
         Bflow = Bflow[:,nonref]
     end
-
     return Bflow/B
 end
