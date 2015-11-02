@@ -47,7 +47,7 @@ Contains all data coming out of temporal instanton analysis. `process_instanton_
 """
 type InstantonOutputData
     "Score vector; each entry corresponds to entry of `lines`"
-    score::Vector{Float64}
+    score::Vector{Tuple{Float64,Int64}}
     "Variable (renewable) generation forecast deviation vectors"
     x::Vector{Vector{Vector{Float64}}}
     "Voltage angles at all nodes and time steps"
@@ -271,36 +271,66 @@ function mat2tmpinst(name::ASCIIString)
             NaN,NaN,NaN,NaN:NaN:NaN,Array{Float64,2}())
 end
 
-"""
-    createY(f,t,r,x,b) -> Y
-Create an admittance matrix for AC power flow.
-"""
-function createY(
-    f::Vector{Int64},
-    t::Vector{Int64},
-    r::Vector{Float64},
-    x::Vector{Float64},
-    b::Vector{Float64}
-    )
-    G = 1./r
-    G[G.==Inf] = 0
-    B = 1./x
-    y = complex(G,B)
-    return sparse([f; t; t; f],[t; f; t; f],[-y; -y; y + b./2; y + b./2])
-end
+# """
+#     createY(f,t,r,x,b) -> Y
+# Create an admittance matrix for AC power flow.
+# """
+# function createY(
+#     f::Vector{Int64},
+#     t::Vector{Int64},
+#     r::Vector{Float64},
+#     x::Vector{Float64},
+#     b::Vector{Float64}
+#     )
+#     G = 1./r
+#     G[G.==Inf] = 0
+#     B = 1./x
+#     y = complex(G,B)
+#     return sparse([f; t; t; f],[t; f; t; f],[-y; -y; y + b./2; y + b./2])
+# end
 
 """
-    createY(f,t,x) -> Y
-Create an admittance matrix for DC power flow.
+    createY(f,t,x [,r,b]) -> Y
+Create an admittance matrix for AC power flow.
+All inputs are real.
+
+* `f`,`t`: vectors encoding all lines (fi,ti)
+* `x`: per-unit reactance xi for all lines
+* `r`: per-unit resistance ri for all lines
+* `b`: per-unit susceptance bi for all lines
 """
 function createY(
     f::Vector{Int64},
     t::Vector{Int64},
-    x::Vector{Float64}
+    x::Vector{Float64},
+    r=0.0::Union{Vector{Float64},Float64},
+    b=0.0::Union{Vector{Float64},Float64}
     )
-    y = 1./x
-    return sparse([f; t; t; f],[t; f; t; f],[-y; -y; y; y])
+    z = r + x*1im
+    y = 1./z
+    b = b*1im
+    Y = sparse([f; t; t; f],[t; f; t; f],[-y; -y; y + b./2; y + b./2])
+
+    # for DC power flow, we typically want a matrix with real entries:
+    if r == 0
+        return imag(Y)
+    else
+        return Y
+    end
 end
+
+# """
+#     createY(f,t,x) -> Y
+# Create an admittance matrix for DC power flow.
+# """
+# function createY(
+#     f::Vector{Int64},
+#     t::Vector{Int64},
+#     x::Vector{Float64}
+#     )
+#     y = 1./x
+#     return sparse([f; t; t; f],[t; f; t; f],[-y; -y; y; y])
+# end
 
 """
 Use bus voltage level to determine appropriate conductor type. TODO: replace with Jon's conductor interpolation code.
