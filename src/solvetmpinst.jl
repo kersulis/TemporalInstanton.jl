@@ -76,7 +76,7 @@ function solve_instanton_qcqp(
     #
     # # partition N in the same way I partitioned A:
     # N3 = N[idx3,:]
-    # d,v = eigs(N3'*N3; nev=T)
+    # d,v = eigs(N3'*N3; nev=T) # DO NOT USE v
     # # There will be NR*n EVAs, but at most n will be nonzero.
     #
     #
@@ -98,82 +98,45 @@ function solve_instanton_qcqp(
     tEig = toq()
 
     B11,B12,B21,B22,b1,b2 = partition_B(Qobj,Qconstr)
-
     Bhat,bhat = return_Bhat(B11,B12,B22,b1,b2)
 
-    tinynumber = 1e-8
-    w0 = find_w(0.0,Bhat,bhat/2)
-    c = -Qconstr[3]
-    if abs((w0'*w0) - c)[1] < tinynumber
-        println("v=0 works!")
-    end
+    # tinynumber = 1e-8
+    # w0 = find_w(0.0,Bhat,bhat/2)
+    # c = -Qconstr[3]
+    # if abs((w0'*w0) - c)[1] < tinynumber
+    #     println("v=0 works!")
+    # end
 
     num = bhat/2
     poles = unique(round(diag(Bhat),10))
-    if maxabs(num) > 1/tinynumber
-        warn("No solution for secular equation; num elements too large")
-        return [],NaN
-    end
+    c = -Qconstr[3]
+    # if maxabs(num) > 1/tinynumber
+    #     warn("No solution for secular equation; num elements too large")
+    #     return [],NaN
+    # end
 
+    # solve secular equation
     tic()
-    solutions, vectors = solvesecular(num,poles,c)
+    v, w2 = solvesecular(num,poles,c)
     tSec = toq()
 
-    # tic()
-    # sol = zeros(length(vectors))
-    # for i in 1:length(vectors)
-    #     w2 = vectors[i]
-    #     xvec = return_xopt(w2,B11,B12,b1,N,U,K,x_star)
-    #     sol[i] = (xvec'*Qobj_orig*xvec)[1]
-    #     push!(opt,xvec)
-    # end
-    # tMap = toq()
-    #
-    # times = [tTrans;tKern;tEig;tRot;tSec;tMap]
-    #
-    # if isempty(sol)
-    #     warn("No solution for secular equation; solver returned []")
-    #     return [], NaN, times
-    # else
-    #     if indmin(solutions) != indmin(sol)
-    #         println("smallest lamda NOT smallest obj")
-    #     end
-    #     return opt[indmin(sol)], minimum(sol), times
-    # end
-
+    # map back to original problem space
     tic()
-    # compute only once:
+    # used to map w back to x space:
     map_mat = N*sparse(U)*spdiagm(1./diag(K))
 
-    sol = zeros(length(vectors))
-    for i in 1:length(vectors)
-        w2 = vectors[indmin(solutions)]
-        w1opt = -B11\(B12*w2 + b1/2)
-        wopt = [w1opt;w2]
-        xvec = map_mat*wopt + x_star
+    w1opt = -B11\(B12*w2 + b1/2)
+    wopt = [w1opt;w2]
+    xvec = map_mat*wopt + x_star
 
-        # this multiplies everything on each call
-        # (very expensive!)
-        # xvec = return_xopt(w2,B11,B12,b1,N,U,K,x_star)
-        sol = (xvec'*Qobj_orig*xvec)[1]
-        push!(opt,xvec)
-    end
+    objVal = (xvec'*Qobj_orig*xvec)[1]
     tMap = toq()
 
+    # concatenate times
     times = [tTrans;tKern;tEig;tRot;tSec;tMap]
 
-    if isempty(sol)
-        warn("No solution for secular equation; solver returned []")
-        return [], NaN, times
-    else
-        # hypothesis: smallest lambda always corresponds to
-        # min objective
-        if indmin(solutions) != indmin(sol)
-            println("smallest lamda NOT smallest obj")
-        end
-        # return xvec, sol, times
-        return opt[indmin(sol)],minimum(sol),times
-    end
+    # return xvec, sol, times
+    return xvec,objVal,times
 end
 
 """
@@ -206,13 +169,15 @@ function solve_temporal_instanton(
     timeVecs = Vector{Vector{Float64}}()
 
     tic()
-    # why does all allocation happen here?
-    # (parallel question)
+
     n = length(k)
     nr = length(Ridx)
     T = round(Int64,length(find(R0))/nr)
     numLines = length(lines)
 
+    ##########################################
+    ##           Matrix Formation           ##
+    ##########################################
     # Form objective quadratic:
     Qobj = tmp_inst_Qobj(n,nr,T,corr; pad=true)
     G_of_x = (Qobj,zeros(size(Qobj,1)),0.0)
@@ -224,26 +189,35 @@ function solve_temporal_instanton(
     b = tmp_inst_b(n,T,G0,R0,D0; pad=true)
     Qtheta = tmp_inst_Qconstr(n,nr,T)
 
+    ##########################################
+    ##           r = 0 Check                ##
+    ##########################################
     # Exclude lines with zero length or zero resistance:
-    nz_line_idx = intersect(find(line_lengths),find(res))
+    analytic_lines = intersect(find(line_lengths),find(res))
+    println("r=0 check: \tremoving $(length(find(res.==0))) lines")
 
+    ##########################################
+    ##        Shift Factor Check            ##
+    ##########################################
     # rule out lines where all renewable shift factors are 0:
     ISF = isf(Y,lines,ref,k)[:,Ridx]
     small = 1e-8
-    sing_line_idx = find(1 - [maxabs(ISF[i,:])>small for i in 1:size(ISF,1)])
-    println("ISF pre-check: $(length(sing_line_idx)) insensitive lines found")
-    nz_line_idx = setdiff(nz_line_idx,sing_line_idx)
+    singular_line_idx = find(1 - [maxabs(ISF[i,:])>small for i in 1:size(ISF,1)])
+    println("ISF pre-check: \tremoving lines $singular_line_idx")
+    analytic_lines = setdiff(analytic_lines,singular_line_idx)
 
     # truncate to go through subset of remaining lines (testing only):
-    if maxlines > 0 && maxlines < length(nz_line_idx)
-        # nz_line_idx = nz_line_idx[1:maxlines]
-        nz_line_idx = nz_line_idx[randperm(length(nz_line_idx))[1:maxlines]]
+    if maxlines > 0 && maxlines < length(analytic_lines)
+        analytic_lines = analytic_lines[randperm(length(analytic_lines))[1:maxlines]]
     end
     tBuild = toq()
     push!(timeVecs,[tBuild])
 
+    ##########################################
+    ##        Begin Line Loop               ##
+    ##########################################
     # loop through lines (having non-zero length)
-    results = @parallel (vcat) for idx in nz_line_idx
+    results = @parallel (vcat) for idx in analytic_lines
         tic()
         line = lines[idx]
         conductor_name = line_conductors[idx]
@@ -276,10 +250,8 @@ function solve_temporal_instanton(
         end
 
         # this is what will be concatenated into `results`:
-        xvec,sol,toq(),times
+        xvec,(sol,idx),toq(),times
     end
-    # export all timing data to JLD file:
-    # save("../data/timing.jld", "timeVecs", results[4])
     return results
 end
 
@@ -317,14 +289,19 @@ Accepts `results` output from `solve_temporal_instanton`, returns output data in
 * `T` is the number of time steps in the analysis
 """
 function process_instanton_results(
-    results::Vector{Tuple{Vector{Float64},Float64,Float64,Vector{Float64}}},
+    results::Vector{Tuple{
+        Vector{Float64},
+        Tuple{Float64,Int64},
+        Float64,
+        Vector{Float64}
+        }},
     n::Int64,
     nr::Int64,
     T::Int64;
     return_as_type::Bool = true
     )
     # Store results in human-readable form:
-    score   = Vector{Float64}()
+    score   = Vector{Tuple{Float64,Int64}}()
     x       = Vector{Vector{Vector{Float64}}}()
     θ       = Vector{Vector{Vector{Float64}}}()
     α       = Vector{Vector{Float64}}()
@@ -342,7 +319,7 @@ function process_instanton_results(
         alpha = Float64[]
 
         push!(score,sol)
-        if isinf(sol)
+        if isinf(sol[1])
             push!(deviations,[])
             push!(angles,[])
             push!(alpha,NaN)
