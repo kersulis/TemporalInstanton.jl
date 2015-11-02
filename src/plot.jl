@@ -1,3 +1,5 @@
+using GraphLayout
+
 """
 Return temperature trajectories corresponding to instances of `InstantonInputData` and `InstantonOutputData`. `eidx` is the event index, with 1 denoting the instanton.
 """
@@ -60,4 +62,25 @@ function temperatureTrajectory(
         T0 = temp_values[end]
     end
     return temp_values
+end
+
+"""
+Use GraphLayout.jl to compute a spring layout
+for the graph corresponding to a provided
+adjacency matrix. Returns Void; useful only
+for quickly obtaining network graphs in an
+interactive environment.
+
+Optional `C` controls spring layout tightness.
+"""
+function simple_graph_adj(adj,C=2.0)
+    loc_x, loc_y = layout_spring_adj(adj,C=C)
+    layout_tree
+    labels = collect(1:size(adj,1))
+
+    draw_layout_adj(adj,loc_x,loc_y,
+    labels=labels,labelc="#000000",
+    arrowlengthfrac=0.0,
+    nodefillc="#FFFFFF",
+    labelsize=2.0)
 end
