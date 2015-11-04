@@ -33,7 +33,8 @@ function solve_instanton_qcqp(
     Qconstr::Tuple{SparseMatrixCSC{Float64,Int64},Vector{Float64},Float64},
     A::SparseMatrixCSC{Float64,Int64},
     b::Vector{Float64},
-    T::Int64
+    T::Int64,
+    x_star::Vector{Float64}
     )
     m,n = size(A)
     Qobj_orig = Qobj[1]
@@ -63,6 +64,9 @@ function solve_instanton_qcqp(
     Qconstr = translate_quadratic(Qconstr,x_star)
     tTrans = toq()
 
+    # store for Eig:
+    Qc = Qconstr[1]
+
     tic()
     N = kernel_rotation(A) # take only cols spanning N(A)
     tKern = toq()
@@ -72,21 +76,11 @@ function solve_instanton_qcqp(
     Qconstr = rotate_quadratic(Qconstr,N')
     tRot = toq()
 
-    # testing to see if I can make the eig() argument smaller
-    #
-    # # partition N in the same way I partitioned A:
-    # N3 = N[idx3,:]
-    # d,v = eigs(N3'*N3; nev=T) # DO NOT USE v
-    # # There will be NR*n EVAs, but at most n will be nonzero.
-    #
-    #
-    # Qconstr[1] ==
-    ########
-
     tic()
     D,U = eig(full(Qconstr[1]))
     # eigs won't work because nev cannot be size(Q,1):
     # D,U = eigs(Q_of_z[1],nev=size(Q_of_z[1],1))
+    # save("Qeig.jld","D",D,"U",U,"Qc",Qc,"N",N,"A",A,"Qconstr",Qconstr[1])
     D = round(D,10)
 
     K = return_K(D)
@@ -96,6 +90,26 @@ function solve_instanton_qcqp(
     Qconstr = rotate_quadratic(Qconstr,(U*Kinv)')
 
     tEig = toq()
+
+    ####### November 3, 2015
+    # Alternative to computing Eig:
+    # re-use existing decomposition.
+    # replaces section commented out above.
+    #
+    # tic()
+    # # D,U = eig(full(Qconstr[1]))
+    # # D = round(D,10)
+    # D = diag(Qc)[m+1:n]
+    # U = (N')[:,m+1:n]
+    #
+    # K = return_K(D)
+    # Kinv = diagm(1./diag(K))
+    #
+    # Qobj = rotate_quadratic(Qobj,(U*Kinv)')
+    # Qconstr = rotate_quadratic(Qconstr,(U*Kinv)')
+    # save("Qconstr.jld","Qconstr",Qconstr)
+    # tEig = toq()
+    ####### End alternative Eig
 
     B11,B12,B21,B22,b1,b2 = partition_B(Qobj,Qconstr)
     Bhat,bhat = return_Bhat(B11,B12,B22,b1,b2)
@@ -213,6 +227,27 @@ function solve_temporal_instanton(
     tBuild = toq()
     push!(timeVecs,[tBuild])
 
+    ###########################################
+    # 2015-11-03
+    # We can find a translation point x_star
+    # that works for each QCQP.
+
+    # Create A2 based on arbitrary line:
+    A2t = tmp_inst_A2(n,Ridx,T,lines[analytic_lines[1]],-1e-4,int_length)
+
+    # Stack A1 and A2:
+    At = [A1; A2t]::SparseMatrixCSC{Float64,Int64}
+
+    # partition A matrix:
+    A1t,A2t,idx1t,idx2t,idx3t = partition_A(At,Qobj,T)
+    save("Apart.jld","A",At,"Qobj",Qobj,"T",T,"b",b)
+
+    # compute x_star that will work for all lines:
+    x_star = find_x_star(A1t,A2t,idx1t,idx2t,size(At,2),b)
+    save("xstar.jld","x_star",x_star)
+
+    ###########################################
+
     ##########################################
     ##        Begin Line Loop               ##
     ##########################################
@@ -243,7 +278,7 @@ function solve_temporal_instanton(
         A = [A1; A2]::SparseMatrixCSC{Float64,Int64}
 
         # Computationally expensive part: solving QCQP
-        xvec,sol,times = solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
+        xvec,sol,times = solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T,x_star)
         # push!(timeVecs,times)
         if isempty(xvec)
             xvec,sol = zeros(size(Qobj,1)),sol
