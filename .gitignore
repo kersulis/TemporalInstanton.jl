@@ -20,3 +20,4 @@ IEEEtran
 src/spr.jl
 paper2/*Items.bib
 data/
+nbs/*.jld
