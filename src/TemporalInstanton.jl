@@ -23,7 +23,7 @@ include("ThermalModel.jl")
 include("QCQPMatrixBuilding.jl")
 include("manipulations.jl")
 include("SolveSecular.jl")
-include("plot.jl")
+# include("plot.jl")
 include("solvetmpinst.jl")
 
 end
