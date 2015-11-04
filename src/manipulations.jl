@@ -42,13 +42,13 @@ function find_x_star(
     )
     x_star = zeros(n)
 
-    try
-        x_star[[idx1;idx2]] = sparse([A1 A2])\b
-    catch
+    # try
+    x_star[[idx1;idx2]] = [A1 A2]\b
+    # catch
         # if [A1 A2] has LD rows, use A2 only
-        A2 = sparse(A2)
-        x_star[idx2] = (b'*A2/(A2'*A2))'
-    end
+        # A2 = sparse(A2)
+    # x_star[idx2] = (b'*A2/(A2'*A2))'[:]
+    # end
     # x_star[idx2] = sparse(A2[1:end-T,:])\(b[1:end-T])
 
     return x_star
@@ -152,9 +152,6 @@ function return_Bhat(
     )
     Bhat = B22 - (B12'/B11)*B12
     bhat = b2 - (B12'/B11)*b1
-    # why round? may be causing problems
-    # UPDATE: shown to be unnecessary
-    # return round(Bhat,10),bhat
     return Bhat,bhat
 end
 
