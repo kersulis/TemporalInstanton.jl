@@ -1,7 +1,10 @@
 using JLD, MAT, MatpowerCases
 
 """
-Contains fields for all data required to perform temporal instanton analysis. Rather than passing a list of arguments to `solve_temporal_instanton`, one can simply pass an instance of this type.
+Contains fields for all data required to perform
+temporal instanton analysis. Rather than passing a
+list of arguments to `solve_temporal_instanton`,
+one can simply pass an instance of this type.
 """
 type InstantonInputData
     "Bus indices having variable (renewable) generation"
@@ -43,7 +46,9 @@ type InstantonInputData
 end
 
 """
-Contains all data coming out of temporal instanton analysis. `process_instanton_results` returns an instance of this type by default to keep the workspace clean.
+Contains all data coming out of temporal instanton analysis.
+`process_instanton_results` returns an instance of this type
+by default to keep the workspace clean.
 """
 type InstantonOutputData
     "Score vector; each entry corresponds to entry of `lines`"
@@ -63,7 +68,9 @@ type InstantonOutputData
 end
 
 """
-Loads RTS-96 data from Jenny's ARPA-E data, supplements with conductor type and line length information, and returns as an instance of `InstantonInputData`.
+Loads RTS-96 data from Jenny's ARPA-E data, supplements with
+conductor type and line length information, and returns as
+an instance of `InstantonInputData`.
 """
 function load_rts96_data(; return_as_type::Bool = true)
     path="../src/caseRTS96.mat" # Assumes current dir is nbs
@@ -188,7 +195,10 @@ end
     mat2tmpinst(name) -> d
 
 Loads (and generates) everything needed to perform
-temporal instanton analysis for any network supported by [MatpowerCases.jl](https://github.com/kersulis/MatpowerCases.jl). `d` is an instance of `InstantonOutputData`.
+temporal instanton analysis for any network supported by
+[MatpowerCases.jl](https://github.com/kersulis/MatpowerCases.jl).
+
+Output `d` is an instance of `InstantonOutputData`.
 """
 function mat2tmpinst(name::ASCIIString)
     mpc = loadcase(name,describe=false)
@@ -272,7 +282,8 @@ function mat2tmpinst(name::ASCIIString)
 end
 
 """
-Use bus voltage level to determine appropriate conductor type. TODO: replace with Jon's conductor interpolation code.
+Use bus voltage level to determine appropriate conductor type.
+TODO: replace with Jon's conductor interpolation code.
 """
 function return_line_conductors(
     bus_names::Vector{Int64},

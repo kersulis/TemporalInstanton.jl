@@ -130,7 +130,8 @@ function return_K(d::Vector{Float64})
 end
 
 """
-Use diagonal elements of `Q_of_w[1]` to divide `G_of_w[1]` into four blocks and `G_of_w[2]` into two blocks.
+Use diagonal elements of `Q_of_w[1]` to divide `G_of_w[1]`
+into four blocks and `G_of_w[2]` into two blocks.
 """
 function partition_B(G_of_w::Tuple,Q_of_w::Tuple)
     B,b = G_of_w[1],G_of_w[2]

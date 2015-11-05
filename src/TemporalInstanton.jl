@@ -5,7 +5,7 @@ export
 
     # power flow:
     expand_renewable_vector,fixed_wind_A,fixed_wind_b,return_angles,
-    return_angle_diffs,
+    return_angle_diffs
 
 include("DataLoad.jl")
 include("PowerFlow.jl")
@@ -17,5 +17,6 @@ include("solvetmpinst.jl")
 end
 
 @doc """
-Top-level module for performing temporal instanton analysis. See individual functions in included files for documentation.
+Top-level module for performing temporal instanton analysis.
+See individual functions in included files for documentation.
 """ -> TemporalInstanton

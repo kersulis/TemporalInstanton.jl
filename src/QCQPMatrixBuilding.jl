@@ -117,7 +117,8 @@ function tmp_inst_b(
 end
 
 """
-Generate `Qconstr` in the temperature constraint of a temporal instanton problem instance.
+Generate `Qconstr` in the temperature constraint of a
+temporal instanton problem instance.
 """
 function tmp_inst_Qconstr(
     n::Int64,

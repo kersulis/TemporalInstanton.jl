@@ -86,8 +86,8 @@ function mat2tmpinst(
     # temporary (re-use rts-96 line conductor parameters)
     line_conductors = fill("waxwing",length(line_lengths))
     if return_as_type
-        return InstantonInputData(Ridx,Y,Gp,Dp,Rp,Sb,ref,lines,r,x,k,line_lengths,line_conductors,
-        NaN,NaN,NaN,0.0:0.0,Array{Float64,2}())
+        return InstantonInputData(Ridx,Y,Gp,Dp,Rp,Sb,ref,lines,r,x,k,
+        line_lengths,line_conductors,NaN,NaN,NaN,0.0:0.0,Array{Float64,2}())
     else
         return Ridx,Y,Gp,Dp,Rp,Sb,ref,lines,r,x,k,line_lengths,line_conductors
     end

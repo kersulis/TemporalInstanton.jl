@@ -154,7 +154,9 @@ function solve_instanton_qcqp(
 end
 
 """
-Perform temporal instanton analysis on many lines in a system at once. If `@addprocs(n)` has been run, computation is parallelized by splitting the vector of lines into n equal-length parts.
+Perform temporal instanton analysis on many lines in a system at once.
+If `@addprocs(n)` has been run, computation is parallelized by
+splitting the vector of lines into n equal-length parts.
 
 Return an instance of `InstantonOutputData`.
 """
@@ -255,14 +257,15 @@ function solve_temporal_instanton(
         # compute line_params based on current line:
         line_params = LineParams(line[1],line[2],res[idx],reac[idx],line_lengths[idx])
 
-        (therm_a,therm_c,therm_d,therm_f) = return_thermal_constants(line_params,conductor_params,Tamb,Sb,int_length,T,T0)
+        (t_a,t_c,t_d,t_f) = return_thermal_constants(line_params,conductor_params
+                                ,Tamb,Sb,int_length,T,T0)
 
         # thermal constraint, Q(z) = 0:
-        kQtheta = (therm_a/therm_c)*(conductor_params.Tlim - therm_f)
+        kQtheta = (t_a/t_c)*(conductor_params.Tlim - t_f)
         Q_of_x = (Qtheta,zeros(size(Qtheta,1)),kQtheta)
 
         # Create A2 based on chosen line:
-        A2 = tmp_inst_A2(n,Ridx,T,line,therm_a,int_length)
+        A2 = tmp_inst_A2(n,Ridx,T,line,t_a,int_length)
         # Stack A1 and A2:
         A = [A1; A2]::SparseMatrixCSC{Float64,Int64}
 
@@ -281,7 +284,8 @@ end
 
 """
     solve_temporal_instanton(d, [maxlines=0]) -> results
-Convenience method for performing temporal instanton analysis on an instance of `InstantonInputData`.
+Convenience method for performing temporal instanton analysis
+on an instance of `InstantonInputData`.
 """
 solve_temporal_instanton(d::InstantonInputData,maxlines::Int64 = 0) = solve_temporal_instanton(
     d.Ridx,
@@ -306,7 +310,9 @@ solve_temporal_instanton(d::InstantonInputData,maxlines::Int64 = 0) = solve_temp
 
 """
     process_instanton_results(results,n,nr,T,[return_as_bool=true]) -> o
-Accepts `results` output from `solve_temporal_instanton`, returns output data in more human-readable form as instance of InstantonOutputData.
+Accepts `results` output from `solve_temporal_instanton`,
+returns output data in more human-readable form as instance of
+InstantonOutputData.
 
 * `n` is the number of nodes in the network
 * `nr` is the number of variable (renewable) generation nodes in the network
