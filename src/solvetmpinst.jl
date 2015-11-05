@@ -232,20 +232,9 @@ function solve_temporal_instanton(
     # We can find a translation point x_star
     # that works for each QCQP.
 
-    # Create A2 based on arbitrary line:
-    A2t = tmp_inst_A2(n,Ridx,T,lines[analytic_lines[1]],-1e-4,int_length)
-
-    # Stack A1 and A2:
-    At = [A1; A2t]::SparseMatrixCSC{Float64,Int64}
-
-    # partition A matrix:
-    A1t,A2t,idx1t,idx2t,idx3t = partition_A(At,Qobj,T)
-    save("Apart.jld","A",At,"Qobj",Qobj,"T",T,"b",b)
-
     # compute x_star that will work for all lines:
-    x_star = find_x_star(A1t,A2t,idx1t,idx2t,size(At,2),b)
-    save("xstar.jld","x_star",x_star)
-
+    # x_star = A1\(b[1:end-T])
+    # save("xstar.jld","x_star",x_star)
     ###########################################
 
     ##########################################
