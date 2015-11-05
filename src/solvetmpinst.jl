@@ -156,7 +156,7 @@ end
 """
 Perform temporal instanton analysis on many lines in a system at once. If `@addprocs(n)` has been run, computation is parallelized by splitting the vector of lines into n equal-length parts.
 
-Return `results`, a vector of tuples that may be processed into a more accessible form by `process_instanton_results`.
+Return an instance of `InstantonOutputData`.
 """
 function solve_temporal_instanton(
     Ridx::Vector{Int64},
@@ -276,7 +276,7 @@ function solve_temporal_instanton(
         # this is what will be concatenated into `results`:
         xvec,(sol,idx),toq(),times
     end
-    return results
+    process_instanton_results(results,n,nr,T)
 end
 
 """
