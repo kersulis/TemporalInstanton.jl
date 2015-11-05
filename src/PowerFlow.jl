@@ -3,7 +3,9 @@
 
 """
     expand_renewable_vector(x,Ridx,N,T) -> P
-Starting with `x`, a `length(Ridx)*T` vector containing generation forecast for all nodes and time steps, insert zeros to produce an `N*T`-long vector.
+Starting with `x`, a `length(Ridx)*T` vector containing
+generation forecast for all nodes and time steps,
+insert zeros to produce an `N*T`-long vector.
 """
 function expand_renewable_vector(x,Ridx,N,T)
     idx = Array(Integer,0)
@@ -17,7 +19,11 @@ end
 
 """
     fixed_wind_A(T,Y,ref,k) -> A
-Generate the power balance constraint A matrix from problem dimensions, admittance matrix, and generator participation factors. Use this function when variable (renewable) injections are known, to run power flow and determine angle differences throughout the network.
+Generate the power balance constraint A matrix from
+problem dimensions, admittance matrix, and generator
+participation factors. Use this function when variable
+(renewable) injections are known, to run power flow
+and determine angle differences throughout the network.
 
 Assumes the admittance matrix is n-by-n.
 
@@ -74,7 +80,9 @@ end
 
 """
     return_angles(fixed_x,N,T) -> angles,alpha
-Given fixed injections, the number of nodes in the network, and the number of time steps, return the set of voltage angles and mismatches.
+Given fixed injections, the number of nodes in the network,
+and the number of time steps, return the set of voltage
+angles and mismatches.
 """
 function return_angles(fixed_x,N,T)
     angles = Array(Vector,0)
@@ -88,7 +96,8 @@ end
 
 """
     return_angle_diffs(angles,line)
-Compute the angle differences across a particular line `(from,to)` across all time steps.
+Compute the angle differences across a particular line
+`(from,to)` across all time steps.
 """
 function return_angle_diffs(angles,line)
     angle_diffs = FloatingPoint[]
