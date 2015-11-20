@@ -41,16 +41,7 @@ function find_x_star(
     b::Vector{Float64}
     )
     x_star = zeros(n)
-
-    # try
     x_star[[idx1;idx2]] = [A1 A2]\b
-    # catch
-        # if [A1 A2] has LD rows, use A2 only
-        # A2 = sparse(A2)
-    # x_star[idx2] = (b'*A2/(A2'*A2))'[:]
-    # end
-    # x_star[idx2] = sparse(A2[1:end-T,:])\(b[1:end-T])
-
     return x_star
 end
 
