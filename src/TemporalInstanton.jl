@@ -5,7 +5,9 @@ export
 
     # power flow:
     expand_renewable_vector,fixed_wind_A,fixed_wind_b,return_angles,
-    return_angle_diffs
+    return_angle_diffs,
+
+    testcase
 
 include("DataLoad.jl")
 include("PowerFlow.jl")
@@ -14,6 +16,7 @@ include("QCQPMatrixBuilding.jl")
 include("manipulations.jl")
 # include("plot.jl")
 include("solvetmpinst.jl")
+include("testcases.jl")
 end
 
 @doc """
