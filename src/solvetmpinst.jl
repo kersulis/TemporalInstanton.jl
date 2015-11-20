@@ -33,8 +33,7 @@ function solve_instanton_qcqp(
     Qconstr::Tuple{SparseMatrixCSC{Float64,Int64},Vector{Float64},Float64},
     A::SparseMatrixCSC{Float64,Int64},
     b::Vector{Float64},
-    T::Int64,
-    x_star::Vector{Float64}
+    T::Int64
     )
     m,n = size(A)
     Qobj_orig = Qobj[1]
@@ -77,14 +76,30 @@ function solve_instanton_qcqp(
     tRot = toq()
 
     tic()
-    D,U = eig(full(Qconstr[1]))
+    # D,U = eig(full(Qconstr[1]))
+
+    ################## Nov. 9, 2015
+    N3 = N[end-T+1:end,:]
+
+    # eig of N3'N3
+    # D,U = eig(full(N3'*N3))
+
+    # svd option:
+    U,Sn,Vn = svd(full(N3'),thin=false)
+    K = ones(size(U,1))
+    K[end-T+1:end] = reverse(Sn)
+    K = spdiagm(K)
+    Kinv = spdiagm(1./diag(K))
+    ###########################
+
     # eigs won't work because nev cannot be size(Q,1):
     # D,U = eigs(Q_of_z[1],nev=size(Q_of_z[1],1))
     # save("Qeig.jld","D",D,"U",U,"Qc",Qc,"N",N,"A",A,"Qconstr",Qconstr[1])
-    D = round(D,10)
 
-    K = return_K(D)
-    Kinv = diagm(1./diag(K))
+    # D = round(D,10)
+
+    # K = return_K(D)
+    # Kinv = diagm(1./diag(K))
 
     Qobj = rotate_quadratic(Qobj,(U*Kinv)')
     Qconstr = rotate_quadratic(Qconstr,(U*Kinv)')
@@ -229,16 +244,6 @@ function solve_temporal_instanton(
     tBuild = toq()
     push!(timeVecs,[tBuild])
 
-    ###########################################
-    # 2015-11-03
-    # We can find a translation point x_star
-    # that works for each QCQP.
-
-    # compute x_star that will work for all lines:
-    # x_star = A1\(b[1:end-T])
-    # save("xstar.jld","x_star",x_star)
-    ###########################################
-
     ##########################################
     ##        Begin Line Loop               ##
     ##########################################
@@ -270,8 +275,7 @@ function solve_temporal_instanton(
         A = [A1; A2]::SparseMatrixCSC{Float64,Int64}
 
         # Computationally expensive part: solving QCQP
-        xvec,sol,times = solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T,x_star)
-        # push!(timeVecs,times)
+        xvec,sol,times = solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
         if isempty(xvec)
             xvec,sol = zeros(size(Qobj,1)),sol
         end
