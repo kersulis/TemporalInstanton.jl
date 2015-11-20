@@ -35,7 +35,7 @@ function temperatureTrajectory(
     diffs_dump = Vector()
 
     if isempty(fixed_wind)
-        fixed_wind = Array(FloatingPoint,0)
+        fixed_wind = Array(Float64,0)
         for t in 1:numSteps
             append!(fixed_wind,o.x[idx][t])
         end

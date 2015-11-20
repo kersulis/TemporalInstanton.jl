@@ -66,7 +66,7 @@ Generate the vector `b` of power balance constraints.
 Assumes `G0` and `D` are nT -by- 1 vectors.
 """
 function fixed_wind_b(n,T,G0,Pnet,D)
-    b = FloatingPoint[]
+    b = Float64[]
     netGen = G0 + Pnet - D
 
     for t = 1:T
@@ -86,7 +86,7 @@ angles and mismatches.
 """
 function return_angles(fixed_x,N,T)
     angles = Array(Vector,0)
-    alpha = FloatingPoint[]
+    alpha = Float64[]
     for i = 1:T
         push!(angles,fixed_x[(N+1)*(i-1)+1:(N+1)*(i-1)+N])
         push!(alpha,fixed_x[(N+1)*(i-1)+N+1])
@@ -100,7 +100,7 @@ Compute the angle differences across a particular line
 `(from,to)` across all time steps.
 """
 function return_angle_diffs(angles,line)
-    angle_diffs = FloatingPoint[]
+    angle_diffs = Float64[]
     f = line[1]
     t = line[2]
     for v in angles
