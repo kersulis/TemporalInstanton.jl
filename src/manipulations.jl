@@ -19,7 +19,7 @@ function partition_A(
     idx3 = n-T+1:n
 
     (A1,A2) = (A[:,idx1],A[:,idx2])
-    return A1,A2,idx1,idx2,idx3
+    return A1,A2,idx1,idx2
 end
 
 """
@@ -32,7 +32,7 @@ nearest to the origin such that x_star[idx3] = 0.
 This condition ensures no linear term is introduced
 into the quadratic constraint.
 """
-function find_x_star(
+function translation_point(
     A1::SparseMatrixCSC{Float64,Int64},
     A2::SparseMatrixCSC{Float64,Int64},
     idx1::Vector{Int64},
@@ -64,11 +64,10 @@ function translate_quadratic(
     G_of_x::Tuple{SparseMatrixCSC{Float64,Int64},Vector{Float64},Float64},
     x_star::Vector{Float64}
     )
-
     G,g,kg = G_of_x
     H = G
     h = g + 2*G*x_star
-    kh = kg + x_star'*G*x_star + g'*x_star
+    kh = kg + x_star'*(G*x_star) + g'*x_star
     return (H,h,kh[1])
 end
 
@@ -77,24 +76,63 @@ Find an orthonormal basis for the nullspace of A.
 This matrix may be used to rotate a temporal instanton
 problem instance to eliminate all but nullity(A) elements.
 """
-function kernel_rotation(A::SparseMatrixCSC{Float64,Int64}; spqr=true)
+function kernel_basis(A::SparseMatrixCSC{Float64,Int64})
+    m,n = size(A)
+    # Assume A has full row rank
+    dim_N = n - m
+    F = qrfact(A')
+    # B selects last dim_N cols of Q:
+    B = [zeros(n-dim_N,dim_N); eye(dim_N)]
+    N = sparse(SparseMatrix.SPQR.qmult(SparseMatrix.SPQR.QX, F, SparseMatrix.CHOLMOD.Dense(B)))
+    return N
+end
+
+"""
+Return a basis for the null space of a dense rectangular m-by-n
+matrix with rank m. Based on "back substitution algorithm"
+as described in Berry 1985 (**DOI: 10.1007/BF01389453**). Input
+`q` represents a column order such that the first m columns of
+`A[:,q]` are linearly independent.
+
+*Note: if `q` does not cause `A[:,1:m]` to have full rank, U1 will be
+singular. The method will fail with a `LAPACKException(k)`, where
+`k` is the index of the first zero on the diagonal of U1.*
+"""
+function kernel_backsubs(
+    A::SparseMatrixCSC{Float64,Int64},
+    q=1:size(A,2)
+    )
     m,n = size(A)
 
-    # Assume A always has full row rank of m.
-    # It may be possible for this assumption to fail
-    # due to numerics, but a rank() check is expensive.
-    dim_N = n - m # dimension of nullspace of A
+    F = lufact(A[:,q])
+    qlu = F[:q]
+    U = F[:U][:,invperm(qlu)]
+    U1 = U[:,1:m]
+    U2 = U[:,m+1:end]
 
-    if spqr
-        F = qrfact(sparse(A'))
-        # B selects last dim_N cols of Q:
-        B = [zeros(size(A,2)-dim_N,dim_N); eye(dim_N)]
-        N = sparse(SparseMatrix.SPQR.qmult(SparseMatrix.SPQR.QX, F, SparseMatrix.CHOLMOD.Dense(B)))
-        return N
-    else
-        q = qr(A'; thin=false)[1]
-        return q[:,end-dim_N+1:end]
+    W = U1\full(U2)
+    B = [-W;eye(n-m)][invperm(q),:] # equiv. to
+    # pre-multiplying by pvec2mat(invperm(q))
+end
+
+"""
+Return a column permutation q for a temporal instanton
+A matrix such that the first m columns of A form a square,
+nonsingular matrix. Useful for finding a null space basis
+matrix via the back substitution method.
+"""
+function permutecols(nr,nb,nt)
+    m = (nb+2)*nt
+    n = (nr+nb+2)*nt
+    q = Vector{Int64}()
+    # take non-decision-var cols across all time steps
+    for t in 1:nt
+        append!(q,collect(nr+1:nr+nb+1)+(t-1)*(nr+nb+1))
     end
+    # append aux. angle variable cols
+    append!(q,collect(n-nt+1:n))
+    q = [q;setdiff(1:n,q)]
+    return q
 end
 
 """
@@ -105,9 +143,8 @@ function rotate_quadratic{T<:AbstractArray}(
     G_of_x::Tuple{T,Vector{Float64},Float64},
     R::Union{Array{Float64,2},SparseMatrixCSC{Float64,Int64}}
     )
-
     G,g,kg = G_of_x
-    return (R*G*R',R*g,kg)
+    return (R*(G*R'),R*g,kg)
 end
 
 """
@@ -124,17 +161,21 @@ end
 Use diagonal elements of `Q_of_w[1]` to divide `G_of_w[1]`
 into four blocks and `G_of_w[2]` into two blocks.
 """
-function partition_B(G_of_w::Tuple,Q_of_w::Tuple)
+function partition_B(G_of_w::Tuple,Q::Vector{Float64})
     B,b = G_of_w[1],G_of_w[2]
-    Q = round(Q_of_w[1])
-    i2 = find(diag(Q))
-    i1 = setdiff(1:size(Q,1),i2)
+    i2 = find(Q)
+    i1 = setdiff(1:length(Q),i2)
+    # i1 = find(diag(Q))
+    # i2 = setdiff(1:size(Q,1),i1)
     B11,B12,B21,B22 = B[i1,i1],B[i1,i2],B[i2,i1],B[i2,i2]
     b1 = b[i1]
     b2 = b[i2]
-    return B11,B12,B21,B22,b1,b2
+    return B11,B12,B22,b1,b2,i1,i2
 end
 
+"""
+Obtain Bhat used to eliminate w1.
+"""
 function return_Bhat(
     B11::Array{Float64,2},
     B12::Array{Float64,2},
@@ -142,31 +183,48 @@ function return_Bhat(
     b1::Vector{Float64},
     b2::Vector{Float64}
     )
-    Bhat = B22 - (B12'/B11)*B12
-    bhat = b2 - (B12'/B11)*b1
+    temp = B12'/B11
+    Bhat = B22 - temp*B12
+    bhat = b2 - temp*b1
     return Bhat,bhat
 end
 
-"""
-Reverse rotations and translations to map
-secular equation solution back to original problem
-space.
-"""
-function return_xopt(
-    w2opt::Vector{Float64},
-    B11::Array{Float64,2},
-    B12::Array{Float64,2},
-    b1::Vector{Float64},
-    N::SparseMatrixCSC{Float64,Int64},#Array{Float64,2},
-    U::Array{Float64,2},
-    K::SparseMatrixCSC{Float64,Int64},#Array{Float64,2},
-    x_star::Vector{Float64}
-    )
-    w1opt = -B11\(B12*w2opt + b1/2)
-    wopt = [w1opt;w2opt]
-    xopt = N*sparse(U)*spdiagm(1./diag(K))*wopt + x_star
-    return xopt
-end
+# """
+# Eliminate w2
+# """
+# function return_Bhat(
+#     B11::Array{Float64,2},
+#     B12::Array{Float64,2},
+#     B22::Array{Float64,2},
+#     b1::Vector{Float64},
+#     b2::Vector{Float64}
+#     )
+#     temp = B12/B22
+#     Bhat = B11 - temp*(B12')
+#     bhat = -(b1 - temp*b2)/2
+#     return Bhat,bhat
+# end
+
+# """
+# Reverse rotations and translations to map
+# secular equation solution back to original problem
+# space.
+# """
+# function return_xopt(
+#     w2opt::Vector{Float64},
+#     B11::Array{Float64,2},
+#     B12::Array{Float64,2},
+#     b1::Vector{Float64},
+#     N::SparseMatrixCSC{Float64,Int64},#Array{Float64,2},
+#     U::Array{Float64,2},
+#     K::SparseMatrixCSC{Float64,Int64},#Array{Float64,2},
+#     x_star::Vector{Float64}
+#     )
+#     w1opt = -B11\(B12*w2opt + b1/2)
+#     wopt = [w1opt;w2opt]
+#     xopt = N*sparse(U)*spdiagm(1./diag(K))*wopt + x_star
+#     return xopt
+# end
 
 """
     v,w = solvesecular(d,D,s2)
@@ -193,23 +251,22 @@ function solvesecular(
     D::Vector{Float64},
     s2::Float64
     )
-
     # sort eigenvalues by magnitude:
     p = sortperm(D)
     D = D[p]
     d = d[p]
-
     # explicit secular eq
     f(v::Float64) = sumabs2(d./(D-v)) - s2
-
-    # derivative:
     fprime(v::Float64) = sum((2*d.^2)./((D-v).^3))
-
     # vector in terms of v
     w(v::Float64) = float(d./(v - D))[invperm(p)]
 
+    if isempty(find(d))
+        println("d = $d, no secular equation solution!")
+        return 0., w(0.)
+    end
     # index of first nonzero of d
-    k = minimum(find(d))
+    k = findfirst(d)
 
     iterates = Vector{Float64}()
     v0 = D[k] - abs(d[k])/sqrt(s2)
@@ -224,4 +281,59 @@ function solvesecular(
     end
     v = iterates[end]
     return v, w(v)
+end
+
+"""
+Return A[i2,i2] - A[i2,i1] x inv(A[i1,i1]) x A[i1,i2].
+
+Uses block LU decomposition.
+"""
+function schurcomp(A,i1,i2)
+    A11 = lufact(A[i1,i1])
+    if issparse(A)
+        L11,U11,p,q,Rs = A11[:(:)]
+        P = pvec2mat(p)
+        Q = pvec2mat(q)
+        Rs = diagm(Rs)
+
+        L21 = (A[i2,i1]*Q)/UpperTriangular(U11)
+        U12 = LowerTriangular(L11)\(P*Rs*A[i1,i2])
+
+        S = A[i2,i2] - L21*U12
+        return S,(P,Q,Rs)
+    else
+        P = pvec2mat(A11[:p])
+        println(A11[:p])
+        L11 = A11[:L]
+        U11 = A11[:U]
+
+        L21 = A[i2,i1]/UpperTriangular(U11)
+        U12 = LowerTriangular(L11)\(P*A[i1,i2])
+
+        S = A[i2,i2] - L21*U12
+        return S
+    end
+end
+
+"""
+Given a permutation vector, return the corresponding permutation matrix such that
+`A[p,:] = P*A`.
+See [Wikipedia](https://en.wikipedia.org/wiki/Permutation_matrix#Definition).
+"""
+function pvec2mat(p)
+    n = length(p)
+    P = zeros(n,n)
+    for i in 1:n
+        P[i,:] = ej(n,p[i])
+    end
+    return sparse(P)
+end
+
+"""
+Return the j-th standard basis vector with length n.
+"""
+function ej(n,j)
+    v = zeros(n)
+    v[j] = 1.0
+    return v
 end
