@@ -1,5 +1,7 @@
 using MatpowerCases, HDF5, JLD
 
+include("PowerFlow.jl")
+
 """ 20150-09-06. Modified version of mat2tmpinst.
 Load (and generate) everything needed to perform temporal
 instanton analysis for any network supported by MatpowerCases.
@@ -13,7 +15,8 @@ function mat2tmpinst(
     name::ASCIIString,
     num_wind_farms::Int64,
     wind_penetration::Float64;
-    return_as_type::Bool = true
+    return_as_type::Bool = true,
+    fill_default = false
     )
     mpc = loadcase(name,describe=false)
 
@@ -85,9 +88,24 @@ function mat2tmpinst(
 
     # temporary (re-use rts-96 line conductor parameters)
     line_conductors = fill("waxwing",length(line_lengths))
+
     if return_as_type
-        return InstantonInputData(Ridx,Y,Gp,Dp,Rp,Sb,ref,lines,r,x,k,
+        d = InstantonInputData(Ridx,Y,Gp,Dp,Rp,Sb,ref,lines,r,x,k,
         line_lengths,line_conductors,NaN,NaN,NaN,0.0:0.0,Array{Float64,2}())
+
+        if fill_default
+            d.Tamb = 35. # C
+            d.T0 = 60. #46. # initial line steady-state temp
+            d.time_values = 0:30:300 # five minutes in 30-sec steps
+            d.int_length = 300. # seconds = 5 min
+
+            # 6 time steps
+            Gp,Dp,Rp = (d.G0, d.D0, d.R0)
+            d.G0 = [Gp;Gp;Gp;Gp;Gp;Gp]
+            d.D0 = [Dp;Dp;Dp;Dp;Dp;Dp]
+            d.R0 = [Rp;Rp;Rp;Rp;Rp;Rp]
+        end
+        return d
     else
         return Ridx,Y,Gp,Dp,Rp,Sb,ref,lines,r,x,k,line_lengths,line_conductors
     end
