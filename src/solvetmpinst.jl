@@ -35,8 +35,11 @@ function solve_instanton_qcqp(
     b::Vector{Float64},
     T::Int64
     )
+    opt = Array(Vector{Float64},0)
+
     m,n = size(A)
-    Qobj_orig = Qobj[1]
+    objidx = find(diag(Qobj[1]))
+    Qobj_orig = Qobj[1][objidx,objidx]
 
     ###### October 13, 2015
     # Timing analysis
@@ -49,85 +52,78 @@ function solve_instanton_qcqp(
     # tMap      = [ti[6] for ti in t]
     ######
 
-    opt = Array(Vector{Float64},0)
-
-    # Partition A:
-    A1,A2,idx1,idx2,idx3 = partition_A(A,Qobj[1],T)
-
     tic()
-    # Find translation point:
-    x_star = find_x_star(A1,A2,idx1,idx2,n,b)
-
-    # Translate quadratics:
+    A1,A2,idx1,idx2 = partition_A(A,Qobj[1],T)
+    x_star = translation_point(A1,A2,idx1,idx2,n,b)
     Qobj = translate_quadratic(Qobj,x_star)
-    Qconstr = translate_quadratic(Qconstr,x_star)
+    # (Qconstr is invariant under translation by x_star.)
     tTrans = toq()
 
-    # store for Eig:
-    Qc = Qconstr[1]
-
     tic()
-    N = kernel_rotation(A) # take only cols spanning N(A)
+    # N = sparse(kernel_backsubs(full(A))) # take only cols spanning N(A)
+    # save("../data/A.jld","A",A)
+    colorder = [setdiff(1:n,idx1);idx1]
+    N = kernel_backsubs(A,colorder)
     tKern = toq()
 
     tic()
-    Qobj = rotate_quadratic(Qobj,N')
-    Qconstr = rotate_quadratic(Qconstr,N')
-    tRot = toq()
-
-    tic()
-    # D,U = eig(full(Qconstr[1]))
-
-    ################## Nov. 9, 2015
     N3 = N[end-T+1:end,:]
 
-    # eig of N3'N3
-    # D,U = eig(full(N3'*N3))
-
-    # svd option:
-    U,Sn,Vn = svd(full(N3'),thin=false)
-    K = ones(size(U,1))
-    K[end-T+1:end] = reverse(Sn)
-    K = spdiagm(K)
-    Kinv = spdiagm(1./diag(K))
-    ###########################
-
-    # eigs won't work because nev cannot be size(Q,1):
-    # D,U = eigs(Q_of_z[1],nev=size(Q_of_z[1],1))
-    # save("Qeig.jld","D",D,"U",U,"Qc",Qc,"N",N,"A",A,"Qconstr",Qconstr[1])
-
+    # eig method: slowest
+    # D,U = eig(full(N3'N3))
     # D = round(D,10)
-
     # K = return_K(D)
-    # Kinv = diagm(1./diag(K))
+    # Kinv = 1./diag(K)
+    # U = sparse(round(U,10))
 
-    Qobj = rotate_quadratic(Qobj,(U*Kinv)')
-    Qconstr = rotate_quadratic(Qconstr,(U*Kinv)')
+    # svd method: slower
+    # U,Sn,Vn = svd(full(N3'),thin=false)
+    # U = sparse(round(U,10))
+    # K = [Sn;ones(n-m-T)]
+    # Kinv = 1./K
+    # D = zeros(size(U,1))
+    # D[1:length(Sn)] = 1
+
+    # eigs method: second-fastest
+    # D,U = eigs(N3'N3,nev=T)
+    # # augment with zeros, take qr:
+    # U = qrfact([sparse(round(U,10)) spzeros(n-m,n-m-T)])
+    # # extract Q to obtain complete orthogonal basis:
+    # U = sparse(SparseMatrix.SPQR.qmult(SparseMatrix.SPQR.QX, U, SparseMatrix.CHOLMOD.Dense(eye(size(U)...))))
+    # # U = sparse(round(U,10)) # expensive!
+    # K = [sqrt(D);ones(n-m-T)]
+    # Kinv = 1./K
+    # D = [ones(T);zeros(size(U,1)-T)]
+
+    # svds method: fastest
+    U,Sn,Vn = svds(N3',nsv=T)
+    # augment with zeros, take qr:
+    U = qrfact([sparse(round(U,10)) spzeros(n-m,n-m-T)])
+    # extract Q to obtain complete orthogonal basis:
+    U = sparse(SparseMatrix.SPQR.qmult(SparseMatrix.SPQR.QX, U, SparseMatrix.CHOLMOD.Dense(eye(size(U)...))))
+    # U = sparse(round(U,13))
+    # save("../data/U.jld","U",U)
+    K = [Sn;ones(n-m-T)]
+    Kinv = 1./K
+    D = [ones(T);zeros(size(U,1)-T)]
 
     tEig = toq()
 
-    ####### November 3, 2015
-    # Alternative to computing Eig:
-    # re-use existing decomposition.
-    # replaces section commented out above.
-    #
-    # tic()
-    # # D,U = eig(full(Qconstr[1]))
-    # # D = round(D,10)
-    # D = diag(Qc)[m+1:n]
-    # U = (N')[:,m+1:n]
-    #
-    # K = return_K(D)
-    # Kinv = diagm(1./diag(K))
-    #
-    # Qobj = rotate_quadratic(Qobj,(U*Kinv)')
-    # Qconstr = rotate_quadratic(Qconstr,(U*Kinv)')
-    # save("Qconstr.jld","Qconstr",Qconstr)
-    # tEig = toq()
-    ####### End alternative Eig
+    tic()
+    map_mat = N*(U.*Kinv')
+    tMap = toq()
 
-    B11,B12,B21,B22,b1,b2 = partition_B(Qobj,Qconstr)
-    Bhat,bhat = return_Bhat(B11,B12,B22,b1,b2)
+    tic()
+    Qobj = rotate_quadratic(Qobj,map_mat')
+    tRot = toq()
+
+    B11,B12,B22,b1,b2,i1,i2 = partition_B(Qobj,D)
+    temp = full(B12')/Symmetric(full(B11))
+    Bhat = B22 - temp*B12
+    bhat = b2 - temp*b1
+
+    # works, but still need to find bhat somehow:
+    # Bhat = schurcomp(full(Qobj[1]),i1,i2)
 
     # tinynumber = 1e-8
     # w0 = find_w(0.0,Bhat,bhat/2)
@@ -136,35 +132,33 @@ function solve_instanton_qcqp(
     #     println("v=0 works!")
     # end
 
+    tic()
     num = bhat/2
     poles = unique(round(diag(Bhat),10))
     c = -Qconstr[3]
-    # if maxabs(num) > 1/tinynumber
-    #     warn("No solution for secular equation; num elements too large")
-    #     return [],NaN
-    # end
 
     # solve secular equation
-    tic()
     v, w2 = solvesecular(num,poles,c)
     tSec = toq()
 
     # map back to original problem space
     tic()
-    # used to map w back to x space:
-    map_mat = N*sparse(U)*spdiagm(1./diag(K))
+    # w1opt = -B11\(B12*w2 + b1/2)
+    # re-use temp once more here (saves time)
+    w1opt = -temp'*w2 - Symmetric(B11)\(b1/2)
 
-    w1opt = -B11\(B12*w2 + b1/2)
-    wopt = [w1opt;w2]
+    wopt = zeros(n-m)
+    wopt[i1] = w1opt
+    wopt[i2] = w2
+
     xvec = map_mat*wopt + x_star
-
-    objVal = (xvec'*Qobj_orig*xvec)[1]
-    tMap = toq()
+    xobjonly = xvec[objidx]
+    objVal = (xobjonly'*(Qobj_orig*xobjonly))[1]
+    tMap += toq()
 
     # concatenate times
     times = [tTrans;tKern;tEig;tRot;tSec;tMap]
 
-    # return xvec, sol, times
     return xvec,objVal,times
 end
 
@@ -193,7 +187,8 @@ function solve_temporal_instanton(
     T0::Float64,
     int_length::Float64,
     corr::Array{Float64,2} = Array{Float64,2}();
-    maxlines::Int64 = 0
+    maxlines::Int64 = 0,
+    silent::Bool = false
     )
 
     # aggregate timing results:
@@ -225,7 +220,9 @@ function solve_temporal_instanton(
     ##########################################
     # Exclude lines with zero length or zero resistance:
     analytic_lines = intersect(find(line_lengths),find(res))
-    println("r=0 check: \tremoving $(length(find(res.==0))) lines")
+    if length(find(res.==0)) != 0 && !silent
+        println("r=0 check: \tremoving $(length(find(res.==0))) lines")
+    end
 
     ##########################################
     ##        Shift Factor Check            ##
@@ -234,7 +231,9 @@ function solve_temporal_instanton(
     ISF = isf(Y,lines,ref,k)[:,Ridx]
     small = 1e-8
     singular_line_idx = find(1 - [maxabs(ISF[i,:])>small for i in 1:size(ISF,1)])
-    println("ISF pre-check: \tremoving lines $singular_line_idx")
+    if !isempty(singular_line_idx) && !silent
+        println("ISF pre-check: \tremoving $(length(singular_line_idx)) lines")
+    end
     analytic_lines = setdiff(analytic_lines,singular_line_idx)
 
     # truncate to go through subset of remaining lines (testing only):
@@ -291,7 +290,10 @@ end
 Convenience method for performing temporal instanton analysis
 on an instance of `InstantonInputData`.
 """
-solve_temporal_instanton(d::InstantonInputData,maxlines::Int64 = 0) = solve_temporal_instanton(
+solve_temporal_instanton(
+    d::InstantonInputData;
+    maxlines::Int64 = 0,
+    silent::Bool = false) = solve_temporal_instanton(
     d.Ridx,
     d.Y,
     d.G0,
@@ -309,7 +311,8 @@ solve_temporal_instanton(d::InstantonInputData,maxlines::Int64 = 0) = solve_temp
     d.T0,
     d.int_length,
     d.corr,
-    maxlines = maxlines
+    maxlines=maxlines,
+    silent=silent
 )
 
 """
