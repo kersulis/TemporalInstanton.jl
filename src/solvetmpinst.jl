@@ -33,7 +33,8 @@ function solve_instanton_qcqp(
     Qconstr::Tuple{SparseMatrixCSC{Float64,Int64},Vector{Float64},Float64},
     A::SparseMatrixCSC{Float64,Int64},
     b::Vector{Float64},
-    T::Int64
+    T::Int64,
+    B1 = spzeros(1,1)::SparseMatrixCSC{Float64,Int64}
     )
     opt = Array(Vector{Float64},0)
 
@@ -60,42 +61,16 @@ function solve_instanton_qcqp(
     tTrans = toq()
 
     tic()
-    # N = sparse(kernel_backsubs(full(A))) # take only cols spanning N(A)
-    # save("../data/A.jld","A",A)
-    colorder = [setdiff(1:n,idx1);idx1]
-    N = kernel_backsubs(A,colorder)
+    # most of null basis N has been computed and was passed
+    # in as B1. The bottom part of B, B2, is:
+    B2 = -A[end-T+1:end,1:end-T]*B1
+    # stack B1 and B2 to obtain null basis N
+    N = [B1;B2]::SparseMatrixCSC{Float64,Int64}
     tKern = toq()
 
     tic()
     N3 = N[end-T+1:end,:]
-
-    # eig method: slowest
-    # D,U = eig(full(N3'N3))
-    # D = round(D,10)
-    # K = return_K(D)
-    # Kinv = 1./diag(K)
-    # U = sparse(round(U,10))
-
-    # svd method: slower
-    # U,Sn,Vn = svd(full(N3'),thin=false)
-    # U = sparse(round(U,10))
-    # K = [Sn;ones(n-m-T)]
-    # Kinv = 1./K
-    # D = zeros(size(U,1))
-    # D[1:length(Sn)] = 1
-
-    # eigs method: second-fastest
-    # D,U = eigs(N3'N3,nev=T)
-    # # augment with zeros, take qr:
-    # U = qrfact([sparse(round(U,10)) spzeros(n-m,n-m-T)])
-    # # extract Q to obtain complete orthogonal basis:
-    # U = sparse(SparseMatrix.SPQR.qmult(SparseMatrix.SPQR.QX, U, SparseMatrix.CHOLMOD.Dense(eye(size(U)...))))
-    # # U = sparse(round(U,10)) # expensive!
-    # K = [sqrt(D);ones(n-m-T)]
-    # Kinv = 1./K
-    # D = [ones(T);zeros(size(U,1)-T)]
-
-    # svds method: fastest
+    # svds method: faster than eig, svd, and eigs
     U,Sn,Vn = svds(N3',nsv=T)
     # augment with zeros, take qr:
     U = qrfact([sparse(round(U,10)) spzeros(n-m,n-m-T)])
@@ -106,7 +81,6 @@ function solve_instanton_qcqp(
     K = [Sn;ones(n-m-T)]
     Kinv = 1./K
     D = [ones(T);zeros(size(U,1)-T)]
-
     tEig = toq()
 
     tic()
@@ -133,11 +107,10 @@ function solve_instanton_qcqp(
     # end
 
     tic()
+    # solve secular equation
     num = bhat/2
     poles = unique(round(diag(Bhat),10))
     c = -Qconstr[3]
-
-    # solve secular equation
     v, w2 = solvesecular(num,poles,c)
     tSec = toq()
 
@@ -146,7 +119,6 @@ function solve_instanton_qcqp(
     # w1opt = -B11\(B12*w2 + b1/2)
     # re-use temp once more here (saves time)
     w1opt = -temp'*w2 - Symmetric(B11)\(b1/2)
-
     wopt = zeros(n-m)
     wopt[i1] = w1opt
     wopt[i2] = w2
@@ -243,6 +215,11 @@ function solve_temporal_instanton(
     tBuild = toq()
     push!(timeVecs,[tBuild])
 
+
+    # Find top part of null basis using A1.
+    # reuse for remaining lines.
+    B1 = kernel_basis(A1[:,1:end-T])
+
     ##########################################
     ##        Begin Line Loop               ##
     ##########################################
@@ -274,7 +251,7 @@ function solve_temporal_instanton(
         A = [A1; A2]::SparseMatrixCSC{Float64,Int64}
 
         # Computationally expensive part: solving QCQP
-        xvec,sol,times = solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T)
+        xvec,sol,times = solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T,B1)
         if isempty(xvec)
             xvec,sol = zeros(size(Qobj,1)),sol
         end
