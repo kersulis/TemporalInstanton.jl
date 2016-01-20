@@ -34,7 +34,7 @@ function solve_instanton_qcqp(
     A::SparseMatrixCSC{Float64,Int64},
     b::Vector{Float64},
     T::Int64,
-    B1 = spzeros(1,1)::SparseMatrixCSC{Float64,Int64}
+    N1 = spzeros(1,1)::SparseMatrixCSC{Float64,Int64}
     )
     opt = Array(Vector{Float64},0)
 
@@ -61,30 +61,28 @@ function solve_instanton_qcqp(
     tTrans = toq()
 
     tic()
-    # most of null basis N has been computed and was passed
-    # in as B1. The bottom part of B, B2, is:
-    B2 = -A[end-T+1:end,1:end-T]*B1
+    # most of null basis B has been computed and was passed
+    # in as N1. The bottom part of N, N2, is:
+    N2 = (-A[end-T+1:end,1:end-T]*N1)
     # stack B1 and B2 to obtain null basis N
-    N = [B1;B2]::SparseMatrixCSC{Float64,Int64}
+    N = [N1;N2]::SparseMatrixCSC{Float64,Int64}
     tKern = toq()
 
     tic()
-    N3 = N[end-T+1:end,:]
     # svds method: faster than eig, svd, and eigs
-    U,Sn,Vn = svds(N3',nsv=T)
+    U,Sn,Vn = svds(N2',nsv=T)
     # augment with zeros, take qr:
     U = qrfact([sparse(round(U,10)) spzeros(n-m,n-m-T)])
     # extract Q to obtain complete orthogonal basis:
     U = sparse(SparseMatrix.SPQR.qmult(SparseMatrix.SPQR.QX, U, SparseMatrix.CHOLMOD.Dense(eye(size(U)...))))
-    # U = sparse(round(U,13))
-    # save("../data/U.jld","U",U)
+    # U = sparse(round(U,13)) # round sparse is expensive!
     K = [Sn;ones(n-m-T)]
     Kinv = 1./K
     D = [ones(T);zeros(size(U,1)-T)]
     tEig = toq()
 
     tic()
-    map_mat = N*(U.*Kinv')
+    map_mat = N*(U.*Kinv')::SparseMatrixCSC{Float64,Int64}
     tMap = toq()
 
     tic()
@@ -98,13 +96,6 @@ function solve_instanton_qcqp(
 
     # works, but still need to find bhat somehow:
     # Bhat = schurcomp(full(Qobj[1]),i1,i2)
-
-    # tinynumber = 1e-8
-    # w0 = find_w(0.0,Bhat,bhat/2)
-    # c = -Qconstr[3]
-    # if abs((w0'*w0) - c)[1] < tinynumber
-    #     println("v=0 works!")
-    # end
 
     tic()
     # solve secular equation
@@ -218,7 +209,7 @@ function solve_temporal_instanton(
 
     # Find top part of null basis using A1.
     # reuse for remaining lines.
-    B1 = kernel_basis(A1[:,1:end-T])
+    N1 = kernel_basis(A1[:,1:end-T])
 
     ##########################################
     ##        Begin Line Loop               ##
@@ -251,7 +242,7 @@ function solve_temporal_instanton(
         A = [A1; A2]::SparseMatrixCSC{Float64,Int64}
 
         # Computationally expensive part: solving QCQP
-        xvec,sol,times = solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T,B1)
+        xvec,sol,times = solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T,N1)
         if isempty(xvec)
             xvec,sol = zeros(size(Qobj,1)),sol
         end
