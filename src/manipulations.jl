@@ -140,11 +140,11 @@ Rotate quadratic `G_of_x` by
 rotation matrix `R`. Sparse or dense.
 """
 function rotate_quadratic{T<:AbstractArray}(
-    G_of_x::Tuple{T,Vector{Float64},Float64},
+    G::Tuple{T,Vector{Float64},Float64},
     R::Union{Array{Float64,2},SparseMatrixCSC{Float64,Int64}}
     )
-    G,g,kg = G_of_x
-    return (R*(G*R'),R*g,kg)
+    # G,g,kg = G_of_x
+    return (R*(G[1]*R'),R*G[2],G[3])
 end
 
 """
