@@ -64,7 +64,7 @@ function solve_instanton_qcqp(
     # most of null basis B has been computed and was passed
     # in as N1. The bottom part of N, N2, is:
     N2 = (-A[end-T+1:end,1:end-T]*N1)
-    # stack B1 and B2 to obtain null basis N
+    # stack N1 and N2 to obtain null basis N
     N = [N1;N2]::SparseMatrixCSC{Float64,Int64}
     tKern = toq()
 
