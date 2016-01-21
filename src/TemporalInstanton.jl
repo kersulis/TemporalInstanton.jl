@@ -16,7 +16,6 @@ include("QCQPMatrixBuilding.jl")
 include("manipulations.jl")
 # include("plot.jl")
 include("solvetmpinst.jl")
-include("testcases.jl")
 end
 
 @doc """
