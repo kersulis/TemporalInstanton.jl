@@ -34,7 +34,7 @@ function solve_instanton_qcqp(
     A::SparseMatrixCSC{Float64,Int64},
     b::Vector{Float64},
     T::Int64,
-    N1 = spzeros(1,1)::SparseMatrixCSC{Float64,Int64}
+    N1::SparseMatrixCSC{Float64,Int64}
     )
     opt = Array(Vector{Float64},0)
 
@@ -61,11 +61,14 @@ function solve_instanton_qcqp(
     tTrans = toq()
 
     tic()
-    # most of null basis B has been computed and was passed
-    # in as N1. The bottom part of N, N2, is:
+    # most of null basis N has been computed and was passed
+    # in as N1. The bottom part, N2, is:
     N2 = (-A[end-T+1:end,1:end-T]*N1)
     # stack N1 and N2 to obtain null basis N
     N = [N1;N2]::SparseMatrixCSC{Float64,Int64}
+
+    # N = kernel_basis(A)
+    # N2 = N[end-T+1:end,:]
     tKern = toq()
 
     tic()
@@ -184,7 +187,7 @@ function solve_temporal_instanton(
     # Exclude lines with zero length or zero resistance:
     analytic_lines = intersect(find(line_lengths),find(res))
     if length(find(res.==0)) != 0 && !silent
-        println("r=0 check: \tremoving $(length(find(res.==0))) lines")
+        info("r=0 check: \tremoving $(length(find(res.==0))) lines")
     end
 
     ##########################################
@@ -195,7 +198,7 @@ function solve_temporal_instanton(
     small = 1e-8
     singular_line_idx = find(1 - [maxabs(ISF[i,:])>small for i in 1:size(ISF,1)])
     if !isempty(singular_line_idx) && !silent
-        println("ISF pre-check: \tremoving $(length(singular_line_idx)) lines")
+        info("ISF pre-check: \tremoving $(length(singular_line_idx)) lines")
     end
     analytic_lines = setdiff(analytic_lines,singular_line_idx)
 
@@ -210,6 +213,7 @@ function solve_temporal_instanton(
     # Find top part of null basis using A1.
     # reuse for remaining lines.
     N1 = kernel_basis(A1[:,1:end-T])
+    # N1 = spzeros(1,1)
 
     ##########################################
     ##        Begin Line Loop               ##
