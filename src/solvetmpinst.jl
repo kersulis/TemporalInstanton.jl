@@ -66,9 +66,6 @@ function solve_instanton_qcqp(
     N2 = (-A[end-T+1:end,1:end-T]*N1)
     # stack N1 and N2 to obtain null basis N
     N = [N1;N2]::SparseMatrixCSC{Float64,Int64}
-
-    # N = kernel_basis(A)
-    # N2 = N[end-T+1:end,:]
     tKern = toq()
 
     tic()
@@ -85,7 +82,7 @@ function solve_instanton_qcqp(
     tEig = toq()
 
     tic()
-    map_mat = N*(U.*Kinv')::SparseMatrixCSC{Float64,Int64}
+    map_mat = (N*(U.*Kinv'))::SparseMatrixCSC{Float64,Int64}
     tMap = toq()
 
     tic()
@@ -93,6 +90,9 @@ function solve_instanton_qcqp(
     tRot = toq()
 
     B11,B12,B22,b1,b2,i1,i2 = partition_B(Qobj,D)
+    # temp = full(B12')/Symmetric(full(B11))
+    # B11 = lufact(full(B11))
+    # temp = B12'/B11
     temp = full(B12')/Symmetric(full(B11))
     Bhat = B22 - temp*B12
     bhat = b2 - temp*b1
@@ -243,7 +243,7 @@ function solve_temporal_instanton(
         # Create A2 based on chosen line:
         A2 = tmp_inst_A2(n,Ridx,T,line,t_a,int_length)
         # Stack A1 and A2:
-        A = [A1; A2]::SparseMatrixCSC{Float64,Int64}
+        A = [A1;A2]::SparseMatrixCSC{Float64,Int64}
 
         # Computationally expensive part: solving QCQP
         xvec,sol,times = solve_instanton_qcqp(G_of_x,Q_of_x,A,b,T,N1)
@@ -318,7 +318,7 @@ function process_instanton_results(
     xopt    = Vector{Vector{Float64}}()
     linetimes = Vector{Float64}()
     timeVecs = [ri[4] for ri in results]
-    save("../data/timing.jld","timeVecs",timeVecs)
+    # save("../data/timing.jld","timeVecs",timeVecs)
 
     for i in 1:size(results,1)
         xvec,sol,linetime = results[i][1:3]
