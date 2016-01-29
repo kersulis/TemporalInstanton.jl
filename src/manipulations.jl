@@ -47,28 +47,27 @@ end
 
 """
 This function performs the change of variables from x to z,
-where z = x - x_star. (For translating a quadratic problem.)
+where z = x - xt. (For translating a quadratic problem.)
 Returns triple `H_of_x` consisting of matrix H, vector h, constant kh.
 
 Arguments:
 
 * `G_of_x` consists of matrix G, vector g, constant kg.
-* `x_star` is translation.
+* `xt` is translation.
 
 Used to perform second step of temporal instanton solution method,
-assuming `x_star` is min-norm solution of Ax=b.
+assuming `xt` is min-norm solution of Ax=b.
 
 To save time, this method does not check for dimension mismatches.
 """
 function translate_quadratic(
     G_of_x::Tuple{SparseMatrixCSC{Float64,Int64},Vector{Float64},Float64},
-    x_star::Vector{Float64}
+    xt::Vector{Float64}
     )
     G,g,kg = G_of_x
-    H = G
-    h = g + 2*G*x_star
-    kh = kg + x_star'*(G*x_star) + g'*x_star
-    return (H,h,kh[1])
+    h = g + 2*G*xt
+    kh = kg + xt'*(G*xt) + g'*xt
+    return (G,h,kh[1])
 end
 
 """
