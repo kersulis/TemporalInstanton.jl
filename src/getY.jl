@@ -1,31 +1,48 @@
 """
     (Y,Yf,Yt) = getY(lineOut,f,t,r,x,b,tap,ysh)
 This function builds admittance matrices.
+
 INPUTS:
+
 *  `lineOut`: [nline x 1, logical] which lines are out of service
-*  `f`: [nline x 1, double] from buses (range 1 to nbus)
-*  `t`: [nline x 1, double] to buses (range 1 to nbus)
-*  `r`: [nline x 1, double] series resistance (pu)
-*  `x`: [nline x 1, double] series reactance (pu)
-*  `b`: [nline x 1, double] line charging shunt susceptance (pu)
-*  `tap`: [nline x 1, double] complex tap ratio (pu)
-*  `ysh`: [nbus x 1, double] complex bus shunt admittance (pu)
-Matpower version
+*  `f`: nline Vector of from buses (range 1 to nbus)
+*  `t`: nline Vector of to buses (range 1 to nbus)
+*  `r`: nline Vector of series resistances (pu)
+*  `x`: nline Vector of series reactances (pu)
+*  `b`: nline Vector of line charging shunt susceptances (pu)
+*  `tap`: nline vector of complex tap ratios (pu)
+*  `ysh`: nbus vector of complex bus shunt admittances (pu)
+
 for each branch, compute the elements of the branch admittance matrix where
+```
   | If |   | Yff  Yft |   | Vf |
   |    | = |          | * |    |
   | It |   | Ytf  Ytt |   | Vt |
+```
+*Assumes the grid is connected (i.e. no island nodes).*
 """
 function getY(
     lineOut::Vector{Bool},
-    f::Vector{Int64},
-    t::Vector{Int64},
+    from::Vector{Int64},
+    to::Vector{Int64},
     r::Vector{Float64},
     x::Vector{Float64},
     b::Vector{Float64},
     tap=fill(Complex(1.),length(f))::Vector{Complex{Float64}},
     ysh=fill(0.im,length(unique([f;t])))::Vector{Complex{Float64}}
     )
+    # remap bus tags to 1:nbus indices
+    tags = sort(unique([from;to]))
+    indices = collect(1:length(tags))
+    f = Vector{Int64}()
+    for fi in from
+        push!(f,indices[findfirst(tags,fi)])
+    end
+    t = Vector{Int64}()
+    for ti in to
+        push!(t,indices[findfirst(tags,ti)])
+    end
+
     inService = find(!lineOut)
     tap = tap[inService]
     fis = f[inService]
