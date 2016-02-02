@@ -14,6 +14,7 @@ include("PowerFlow.jl")
 include("ThermalModel.jl")
 include("QCQPMatrixBuilding.jl")
 include("manipulations.jl")
+include("PowerSystem.jl")
 # include("plot.jl")
 include("solvetmpinst.jl")
 end
