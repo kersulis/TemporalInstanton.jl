@@ -9,9 +9,7 @@ constrained quadratic program:
     s.t. A*x = b
     Q_of_x = 0
 
-where
-    G_of_x = x'\*Qobj\*x,
-    Q_of_x = x'\*Qtheta\*x - c
+where `G_of_x = x'\*Qobj\*x` and `Q_of_x = x'\*Qtheta\*x - c`.
 
 Thus, an equivalent problem expression is:
 

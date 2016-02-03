@@ -76,7 +76,7 @@ type ThermalModel
     "ampacity-limited steady-state temperature [C] (related to sLim and I_max)"
     T_max::Float64
     "conductive heat factor (varies w/ temp) [W/m-C]"
-    eta_c::Vector{Float64}
+    eta_c::Float64
     "radiative heat factor [W/m-C^4]"
     eta_r::Float64
     "linear solar heat gain rate [W/m]"
@@ -442,12 +442,12 @@ function dict2type(sys::Dict{ASCIIString,Any})
     for i in 1:length(t)
         if sys["Line"]["ty"][i] == 1
             push!(thermalmodel,ThermalModel(
-            NaN,NaN,[NaN],NaN,NaN,NaN,NaN,NaN,NaN,NaN))
+            NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN))
         else
             push!(thermalmodel,ThermalModel(
             t[i]["T_amb"],
             t[i]["T_max"],
-            t[i]["eta_c"][:],
+            t[i]["eta_c"],
             t[i]["eta_r"],
             t[i]["eta_s"],
             t[i]["mCp"],
