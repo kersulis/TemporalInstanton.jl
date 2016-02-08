@@ -32,11 +32,11 @@ type InstantonInputData
     "Lengths of all lines in `lines`; meters"
     line_lengths::Vector{Float64}
     "Conductor type for all lines in `lines`"
-    line_conductors::Vector{ASCIIString}
+    line_conductors::Union{Vector{ASCIIString},Tuple{Vector{LineParams},Vector{ConductorParams}}}
     "System ambient temperature in degrees C"
     Tamb::Float64
     "Initial transmission line temperature in degrees C"
-    T0::Float64
+    T0::Union{Float64,Vector{Float64}}
     "Length of optimization horizon in seconds"
     int_length::Float64
     "Times at which generator dispatch, demand, and wind forecast are updated"
@@ -161,7 +161,7 @@ function load_rts96_data(; return_as_type::Bool = true)
     from = convert(Vector{Int64},mpc["branch"][:,1])
     to = convert(Vector{Int64},mpc["branch"][:,2])
     bus_voltages = mpc["bus"][:,10]
-    line_conductors = return_line_conductors(round(Int64,bus_i),bus_voltages,from,to)
+    line_conductors = return_line_conductors(round(Int64,bus_i),bus_voltages,from,to)::Vector{ASCIIString}
 
     if return_as_type
         return  InstantonInputData(
@@ -304,8 +304,8 @@ function return_line_conductors(
         Vline = max(Vfrom,Vto)
         push!(line_voltages, Vline)
     end
-    line_conductors = [volt2cond(volt) for volt in line_voltages]
-    convert(Array{ASCIIString},line_conductors)
+    line_conductors = [ASCIIString(volt2cond(volt)) for volt in line_voltages]
+    # convert(Array{ASCIIString},line_conductors)
     return line_conductors
 end
 
