@@ -56,6 +56,9 @@ function mat2tmpinst(
     Dp = mpc["bus"][:,3]./Sb
 
     # convert generators into wind farms:
+    if num_wind_farms == 0
+        num_wind_farms = length(find(Gp))
+    end
     windsize = sum(Gp)*wind_penetration/num_wind_farms
 #     Ridx = rand(1:length(Gp),num_wind_farms)
     # Ridx = rand(bus_simple,num_wind_farms)#sortperm(Dp)[1:num_wind_farms]
@@ -64,9 +67,7 @@ function mat2tmpinst(
     Rp[Ridx] = windsize
 
     Sb = Sb*1e6 # convert from MW to W
-
     ref = 1
-
     lines = [(f[i],t[i]) for i in 1:length(f)]
     lines = convert(Array{Tuple{Int64,Int64},1},lines)
 
