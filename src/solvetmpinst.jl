@@ -91,6 +91,7 @@ function solve_instanton_qcqp(
     # temp = full(B12')/Symmetric(full(B11))
     # B11 = lufact(full(B11))
     # temp = B12'/B11
+    # save("../data/B.jld","B11",B11)
     temp = full(B12')/Symmetric(full(B11))
     Bhat = B22 - temp*B12
     bhat = b2 - temp*b1
@@ -146,9 +147,9 @@ function solve_temporal_instanton(
     reac::Vector{Float64},
     k::Vector{Float64},
     line_lengths::Vector{Float64},
-    line_conductors::Vector{ASCIIString},
+    line_conductors::Union{Vector{ASCIIString},Tuple{Vector{LineParams},Vector{ConductorParams}}},
     Tamb::Float64,
-    T0::Float64,
+    T0::Union{Float64,Vector{Float64}},
     int_length::Float64,
     corr::Array{Float64,2} = Array{Float64,2}();
     maxlines::Int64 = 0,
@@ -220,19 +221,20 @@ function solve_temporal_instanton(
     results = @parallel (vcat) for idx in analytic_lines
         tic()
         line = lines[idx]
-        conductor_name = line_conductors[idx]
-        conductor_params = return_conductor_params(conductor_name)
-        # if current line uses a different conductor than previous,
-        # re-compute conductor_params:
-        # if line_conductors[idx] != conductor_name
-        #     conductor_name = line_conductors[idx]
-        #     conductor_params = return_conductor_params(conductor_name)
-        # end
-        # compute line_params based on current line:
-        line_params = LineParams(line[1],line[2],res[idx],reac[idx],line_lengths[idx])
+        if isa(line_conductors,Vector{ASCIIString})
+            conductor_name = line_conductors[idx]
+            conductor_params = return_conductor_params(conductor_name)
+            # compute line_params based on current line:
+            line_params = LineParams(line[1],line[2],res[idx],reac[idx],line_lengths[idx])
+            Tinit = T0
+        else
+            line_params = line_conductors[1][idx]
+            conductor_params = line_conductors[2][idx]
+            Tinit = T0[idx]
+        end
 
         (t_a,t_c,t_d,t_f) = return_thermal_constants(line_params,conductor_params
-                                ,Tamb,Sb,int_length,T,T0)
+                                ,Tamb,Sb,int_length,T,Tinit)
 
         # thermal constraint, Q(z) = 0:
         kQtheta = (t_a/t_c)*(conductor_params.Tlim - t_f)
