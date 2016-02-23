@@ -23,16 +23,15 @@ NOTE: If this table is edited, conductors must be sorted by increasing
 ampacity ratings in order for this function to work correctly.
 
 The data is organized as follows:
-Code Word: naming convention of ACSR conductor
-Stranding: aluminum / steel strand count
 Diameter: of complete cable [inches] (then converted to [mm])
 Aluminum weight: [lbs/1000ft] (then converted to [kg/m])
 Steel weight: [lbs/1000ft] (then converted to [kg/m])
 Resistance: [ohms/1000ft] (then converted to [ohms/m]) (Assumes an AC current and a conductor temp of 75 degrees C)
 Rated Ampacity: [amps] (Assumes a conductor temp of 75 C, ambient temp 25 C, emissivity 0.5, wind 2ft/sec, in sun)
+Code Word: naming convention of ACSR conductor
+Stranding: aluminum / steel strand count
 """
 function ACSR_assignment(I_lim,V_base)
-
     ACSR = [
     0.198   24  12  0.806  105 #'Turkey'   ,   '6/1'
     0.250   39  18  0.515  140 #'Swan'     ,   '6/1'
@@ -82,8 +81,17 @@ function ACSR_assignment(I_lim,V_base)
     1.762 2040 468 0.0105 1623 #'Bluebird' , '84/19'
         ];
 
-    # Convert diameter from [inches] to [mm] (1 in = 25.4 mm)
-    ACSR[:,1] = ACSR[:,1]*25.4
+	labels = [ "Turkey"; "Swan"; "Sparrow"; "Robin"; "Raven"; 
+				"Quail"; "Pigeon"; "Penguin"; "Waxwing"; "Partridge";
+				"Ostrich"; "Merlin"; "Linnet"; "Oriole"; "Chickadee";
+				"Brant"; "Ibis"; "Lark"; "Pelican"; "Flicker"; "Hen";
+				"Osprey"; "Parakeet"; "Eagle"; "Peacock"; "Wood Duck";
+				"Rook"; "Scoter"; "Gannet"; "Starling"; "Redwing";
+				"Coot"; "Drake"; "Mallard"; "Canary"; "Cardinal";
+				"Curlew"; "Finch"; "Bunting"; "Bittern"; "Dipper";
+				"Bobolink"; "Lapwing"; "Chukar"; "Kiwi"; "Bluebird"]
+    # Convert diameter from [inches] to [m] (1 in = 25.4 mm)
+    ACSR[:,1] = ACSR[:,1]*25.4e-3
 
     # Convert weights from [lbs/1000ft] to [kg/m] (1 lb = 0.453592 kg and 1000 ft = 304.8 m)
     ACSR[:,2:3] = ACSR[:,2:3]*0.453592/304.8
@@ -132,9 +140,7 @@ function ACSR_assignment(I_lim,V_base)
         if I_lim <= ACSR[row,5]*bundle
             found = true
             row -= 1
-            if row < 1
-                row = 1
-            end
+            row < 1 && (row = 1)
         else
             row += 1
         end
@@ -147,12 +153,13 @@ function ACSR_assignment(I_lim,V_base)
         Al_m = NaN
         St_m = NaN
         R = NaN
+	label = "none"
     else
         D = ACSR[row,1]
         Al_m = ACSR[row,2]
         St_m = ACSR[row,3]
         R = ACSR[row,4]
     end
-
-    return D, Al_m, St_m, R, bundle
+    return D,Al_m,St_m,R,bundle
 end
+
