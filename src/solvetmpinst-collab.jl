@@ -1,3 +1,5 @@
+include("PowerSystem.jl")
+
 """
 Convenience method for converting an instance of PowerSystem to InstantonInputData format.
 """
