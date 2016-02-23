@@ -1,3 +1,5 @@
+using MAT
+
 """
 Translation of Jonathon Martin's `Bus` MATLAB structure.
 """
@@ -602,3 +604,8 @@ function dict2type(sys::Dict{ASCIIString,Any})
     optimize,
     pstime)
 end
+
+function load_power_system(fpath::ASCIIString)
+    return dict2type(matread(fpath)["System"])
+end
+
