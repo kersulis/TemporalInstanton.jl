@@ -153,7 +153,6 @@ function ACSR_assignment(I_lim,V_base)
         Al_m = NaN
         St_m = NaN
         R = NaN
-	label = "none"
     else
         D = ACSR[row,1]
         Al_m = ACSR[row,2]
