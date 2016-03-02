@@ -79,17 +79,17 @@ function ACSR_assignment(I_lim,V_base)
     1.602 1685 386 0.0125 1453 #'Chukar'   , '84/19'
     1.735 2051 249 0.0106 1607 #'Kiwi'     ,  '72/7'
     1.762 2040 468 0.0105 1623 #'Bluebird' , '84/19'
-        ];
+        ]
 
-	labels = [ "Turkey"; "Swan"; "Sparrow"; "Robin"; "Raven"; 
-				"Quail"; "Pigeon"; "Penguin"; "Waxwing"; "Partridge";
-				"Ostrich"; "Merlin"; "Linnet"; "Oriole"; "Chickadee";
-				"Brant"; "Ibis"; "Lark"; "Pelican"; "Flicker"; "Hen";
-				"Osprey"; "Parakeet"; "Eagle"; "Peacock"; "Wood Duck";
-				"Rook"; "Scoter"; "Gannet"; "Starling"; "Redwing";
-				"Coot"; "Drake"; "Mallard"; "Canary"; "Cardinal";
-				"Curlew"; "Finch"; "Bunting"; "Bittern"; "Dipper";
-				"Bobolink"; "Lapwing"; "Chukar"; "Kiwi"; "Bluebird"]
+    labels = [ "Turkey"; "Swan"; "Sparrow"; "Robin"; "Raven"; 
+        "Quail"; "Pigeon"; "Penguin"; "Waxwing"; "Partridge";
+        "Ostrich"; "Merlin"; "Linnet"; "Oriole"; "Chickadee";
+        "Brant"; "Ibis"; "Lark"; "Pelican"; "Flicker"; "Hen";
+        "Osprey"; "Parakeet"; "Eagle"; "Peacock"; "Wood Duck";
+        "Rook"; "Scoter"; "Gannet"; "Starling"; "Redwing";
+        "Coot"; "Drake"; "Mallard"; "Canary"; "Cardinal";
+        "Curlew"; "Finch"; "Bunting"; "Bittern"; "Dipper";
+        "Bobolink"; "Lapwing"; "Chukar"; "Kiwi"; "Bluebird"]
     # Convert diameter from [inches] to [m] (1 in = 25.4 mm)
     ACSR[:,1] = ACSR[:,1]*25.4e-3
 
