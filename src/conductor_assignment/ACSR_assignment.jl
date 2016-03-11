@@ -4,23 +4,24 @@ Steel Reinforced) bare overhead conductor which most closely fits the
 current limit of a transmission line.
 
 Input:
-`I_lim`: The specified current limit of the transmission line in amps.
-`V_base`: The nominal voltage rating of the transmission line in kV.
+
+* `I_lim` [A], The specified current limit of the transmission line.
+* `V_base` [kV], The nominal voltage rating of the transmission line
 
 Outputs:
-`D`: Diameter of entire conductor [mm]
-`Al_m`: Mass of aluminum portion of conductor [kg/m]
-`St_m`: Mass of the steel portion of the conductor [kg/m]
-`R`: Resistance of conductor [ohms/m]
-`bundle`: Number of conductors per phase
 
-Define ACSR conductor lookup table
-Information contained in this table is pulled from
-ACSR_datasheet_southwire.pdf which was downloaded from the website of
-http://www.southwire.com/ on May 27, 2014
+* `D` [mm], Diameter of entire conductor
+* `Al_m` [kg/m] Mass of aluminum portion of conductor
+* `St_m` [kg/m] Mass of the steel portion of the conductor
+* `R` [ohms/m] Resistance of conductor
+* `bundle`: Number of conductors per phase
 
-NOTE: If this table is edited, conductors must be sorted by increasing
-ampacity ratings in order for this function to work correctly.
+Information contained in ACSR lookup table is pulled from
+ACSR_datasheet_southwire.pdf which was downloaded from 
+[this website](http://www.southwire.com/) on May 27, 2014.
+
+> NOTE: If this table is edited, conductors must be sorted by increasing
+> ampacity ratings in order for this function to work correctly.
 
 The data is organized as follows:
 Diameter: of complete cable [inches] (then converted to [mm])
