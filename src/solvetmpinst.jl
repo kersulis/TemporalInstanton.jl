@@ -54,7 +54,12 @@ function solve_instanton_qcqp(
     tic()
     A1,A2,idx1,idx2 = partition_A(A,Qobj[1],T)
     x_star = translation_point(A1,A2,idx1,idx2,n,b)
+    ## testing: add a column of the null basis of A. Shouldn't change solution.
+    # nullbasis = full(kernel_basis(A[:,1:end-6]))
+    # x_star[1:end-6] += nullbasis*rand(size(nullbasis,2))
+
     Qobj = translate_quadratic(Qobj,x_star)
+
     # (Qconstr is invariant under translation by x_star.)
     tTrans = toq()
 
