@@ -80,7 +80,39 @@ n = network_data("data.mat")
 Of course, the third option is to come up with your own means of building `d`. As long as you pay attention to units and all the vectors are the right length, you shouldn't have too much trouble.
 
 #### 2. Thermal data
-The heart of the fast temporal scanning algorithm its line temperature model, which maps temperature changes to active power flows on the line at each time step. This thermal model is based on the IEEE 738 standard, and is summarized briefly here. To a close approximation, line temperature may be represented as the solution to the initial value problem
+The heart of the fast temporal scanning algorithm is its line temperature model, which maps temperature changes to active power flows on the line at each time step. This thermal model is based on the IEEE 738 standard, whose equations are expressed in Julia [here][1]. The following list of parameters is sufficient to model a line's temperature:
+
+* `I_lim`           , Line current in Amps.
+* `V_base`          , Line base voltage in Volts.
+* `emm`             , Emissivity; dimensionless constant between 0.23 and 0.91.
+* `T_s`             , Conductor surface temperature in Celsius.
+* `T_a`             , Ambient temperature in Celsius.
+* `phi`             , Wind-line angle in degrees. 90 degress implies wind is perpendicular to line.
+* `H_e`             , Height above sea level in m. Average PJM elevation is 61 m for reference.
+* `V_w`             , Wind speed in m/s.
+* `alpha`           , Solar absorptivity; dimensionless constant between 0.23 and 0.91.
+* `lat`             , Latitude in deg. 40 degrees is an appropriate value for PJM.
+* `N`               , Day of year. Example: N = 10 for for January 10.
+* `Z_l`             , Line azimuth; 90 degrees implies West-to-East.
+* `hours_from_noon` , E.g. `hours_from_noon` = -1 for 11 AM.
+
+| Parameter         | Description                                                                   |
+|-------------------|-------------------------------------------------------------------------------|
+| `I_lim`           | Line current in Amps.                                                         |
+| `V_base`          | Line base voltage in Volts.                                                   |
+| `emm`             | Emissivity; dimensionless constant between 0.23 and 0.91.                     |
+| `T_s`             | Conductor surface temperature in Celsius.                                     |
+| `T_a`             | Ambient temperature in Celsius.                                               |
+| `phi`             | Wind-line angle in degrees. 90 degress implies wind is perpendicular to line. |
+| `H_e`             | Height above sea level in m. Average PJM elevation is 61 m for reference.     |
+| `V_w`             | Wind speed in m/s.                                                            |
+| `alpha`           | Solar absorptivity; dimensionless constant between 0.23 and 0.91.             |
+| `lat`             | Latitude in deg. 40 degrees is an appropriate value for PJM.                  |
+| `N`               | Day of year. Example: N = 10 for for January 10.                              |
+| `Z_l`             | Line azimuth; 90 degrees implies West-to-East.                                |
+| `hours_from_noon` | E.g. `hours_from_noon` = -1 for 11 AM.                                        |
+
+To a close approximation, line temperature may be represented as the solution to the initial value problem
 
 $$
 \begin{align}
@@ -181,3 +213,5 @@ I copied the nbs directory. I will now combine all the information into single n
 * 2015-02-28. Getting started. Early versions of a few matrix-building functions. Typeset description of how things are kept track of in matrix form.
 
 * 2016-02-17. Understanding conductor assignment. Limit current and base voltage go in. Diameter, aluminum and steel masses, resistance [Ohms/m], and bundle info come out. This function is called by `ConductorModel_setup`. I combined the two files since their separation was more an artifact of MATLAB than logic.
+
+[1]: https://github.com/kersulis/LineThermalModel.jl
