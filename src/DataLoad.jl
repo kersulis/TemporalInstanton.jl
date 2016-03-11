@@ -73,7 +73,7 @@ conductor type and line length information, and returns as
 an instance of `InstantonInputData`.
 """
 function load_rts96_data(; return_as_type::Bool = true)
-    path="../src/caseRTS96.mat" # Assumes current dir is nbs
+    path="../data/caseRTS96.mat" # Assumes current dir is nbs
     caseRTS96 = matread(path) # import MATLAB workspace
 
     # Connect relevant MATLAB variables to Julia
