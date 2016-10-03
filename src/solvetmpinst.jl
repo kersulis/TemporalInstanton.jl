@@ -84,7 +84,7 @@ function solve_instanton_qcqp(
     # augment with zeros, take qr:
     U = qrfact([sparse(round(U,10)) spzeros(n-m,n-m-T)])
     # extract Q to obtain complete orthogonal basis:
-    U = sparse(SparseMatrix.SPQR.qmult(SparseMatrix.SPQR.QX, U, SparseMatrix.CHOLMOD.Dense(eye(size(U)...))))
+    U = sparse(SparseArrays.SPQR.qmult(SparseArrays.SPQR.QX, U, SparseArrays.CHOLMOD.Dense(eye(size(U)...))))
     # U = sparse(round(U,13)) # round sparse is expensive!
     K = [Sn;ones(n-m-T)]
     Kinv = 1./K

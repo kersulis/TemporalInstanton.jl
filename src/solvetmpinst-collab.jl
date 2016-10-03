@@ -178,7 +178,7 @@ function getY(
     x::Vector{Float64},
     b::Vector{Float64},
     tap=fill(Complex(1.),length(f))::Vector{Complex{Float64}},
-    ysh=fill(0.im,length(unique([f;t])))::Vector{Complex{Float64}}
+    ysh=fill(0.0im,length(unique([f;t])))::Vector{Complex{Float64}}
     )
     # remap bus tags to 1:nbus indices
     tags = sort(unique([from;to]))

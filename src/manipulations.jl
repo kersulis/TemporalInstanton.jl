@@ -95,7 +95,7 @@ function kernel_basis(A::SparseMatrixCSC{Float64,Int64})
     F = qrfact(A')
     # B selects last dim_N cols of Q:
     B = [zeros(n-dim_N,dim_N); eye(dim_N)]
-    N = sparse(SparseMatrix.SPQR.qmult(SparseMatrix.SPQR.QX, F, SparseMatrix.CHOLMOD.Dense(B)))
+    N = sparse(SparseArrays.SPQR.qmult(SparseArrays.SPQR.QX, F, SparseArrays.CHOLMOD.Dense(B)))
     return N
 end
 
