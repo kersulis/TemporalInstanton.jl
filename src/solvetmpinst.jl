@@ -80,7 +80,10 @@ function solve_instanton_qcqp(
 
     tic()
     # svds method: faster than eig, svd, and eigs
-    U,Sn,Vn = svds(N2',nsv=T)
+    # U,Sn,Vn = svds(N2',nsv=T)
+    USnVn = svds(N2', nsv=T)[1]
+    U, Sn = USnVn.U, USnVn.S
+    
     # augment with zeros, take qr:
     U = qrfact([sparse(round(U,10)) spzeros(n-m,n-m-T)])
     # extract Q to obtain complete orthogonal basis:
