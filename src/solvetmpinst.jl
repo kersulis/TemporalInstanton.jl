@@ -54,6 +54,13 @@ function solve_instanton_qcqp(
     tic()
     A1,A2,idx1,idx2 = partition_A(A,Qobj[1],T)
     x_star = translation_point(A1,A2,idx1,idx2,n,b)
+
+    # nb = Int64(m/T - 2)
+    # nd = Int64(size(Qobj_orig,1)/T)
+    # nt = T
+    # x_star = translation_point_new(A,b,nb,nd,nt)
+    # save("../data/trans.jld","A",A,"b",b,"idx1",idx1,"idx2",idx2,"x_star",x_star)
+
     ## testing: add a column of the null basis of A. Shouldn't change solution.
     # nullbasis = full(kernel_basis(A[:,1:end-6]))
     # x_star[1:end-6] += nullbasis*rand(size(nullbasis,2))
@@ -213,11 +220,9 @@ function solve_temporal_instanton(
     tBuild = toq()
     push!(timeVecs,[tBuild])
 
-
     # Find top part of null basis using A1.
     # reuse for remaining lines.
     N1 = kernel_basis(A1[:,1:end-T])
-    # N1 = spzeros(1,1)
 
     ##########################################
     ##        Begin Line Loop               ##
@@ -323,7 +328,7 @@ function process_instanton_results(
     xopt    = Vector{Vector{Float64}}()
     linetimes = Vector{Float64}()
     timeVecs = [ri[4] for ri in results]
-    # save("../data/timing.jld","timeVecs",timeVecs)
+    save("../data/timing.jld","timeVecs",timeVecs)
 
     for i in 1:size(results,1)
         xvec,sol,linetime = results[i][1:3]

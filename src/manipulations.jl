@@ -45,6 +45,19 @@ function translation_point(
     return x_star
 end
 
+function translation_point_new(
+    A,
+    b,
+    nb,
+    nd,
+    nt
+    )
+    q = permutecols(nb,nd,nt)
+    z = zeros(size(A,2))
+    z[q] = lufact(A[:,q])\b
+    return z
+end
+
 """
 This function performs the change of variables from x to z,
 where z = x - xt. (For translating a quadratic problem.)
@@ -114,23 +127,42 @@ function kernel_backsubs(
     # pre-multiplying by pvec2mat(invperm(q))
 end
 
+# """
+# Return a column permutation q for a temporal instanton
+# A matrix such that the first m columns of A form a square,
+# nonsingular matrix. Useful for finding a null space basis
+# matrix via the back substitution method.
+# """
+# function permutecols(nb,nd,nt)
+#     m = (nb+2)*nt
+#     n = (nd+nb+2)*nt
+#     q = Vector{Int64}()
+#     # take non-decision-var cols across all time steps
+#     for t in 1:nt
+#         append!(q,collect(nd+1:nd+nb+1)+(t-1)*(nd+nb+1))
+#     end
+#     # append aux. angle variable cols
+#     append!(q,collect(n-nt+1:n))
+#     q = [q;setdiff(1:n,q)]
+#     return q
+# end
+
 """
-Return a column permutation q for a temporal instanton
-A matrix such that the first m columns of A form a square,
-nonsingular matrix. Useful for finding a null space basis
-matrix via the back substitution method.
+Return m column indices q for a fast temporal scanning
+A matrix such that A[:,q] is a square, nonsingular matrix.
+Useful for finding a translation point via LU factorization.
+
+Effectively selects non-decision-var cols across all time steps,
+including the last deviation site's nt vars.
 """
-function permutecols(nr,nb,nt)
-    m = (nb+2)*nt
-    n = (nr+nb+2)*nt
-    q = Vector{Int64}()
-    # take non-decision-var cols across all time steps
+function permutecols(nb,nd,nt)
+    q = Vector{Int64}((nb + 2)*nt)
+    temp = range(nd,nb+2)
+    b = 1
     for t in 1:nt
-        append!(q,collect(nr+1:nr+nb+1)+(t-1)*(nr+nb+1))
+        q[range(b,nb+2)] = temp + (t - 1)*(nd + nb + 1)
+        b += nb + 2
     end
-    # append aux. angle variable cols
-    append!(q,collect(n-nt+1:n))
-    q = [q;setdiff(1:n,q)]
     return q
 end
 
