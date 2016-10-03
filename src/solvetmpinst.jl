@@ -159,7 +159,7 @@ function solve_temporal_instanton(
     reac::Vector{Float64},
     k::Vector{Float64},
     line_lengths::Vector{Float64},
-    line_conductors::Union{Vector{ASCIIString},Tuple{Vector{LineParams},Vector{ConductorParams}}},
+    line_conductors::Union{Vector{String},Tuple{Vector{LineParams},Vector{ConductorParams}}},
     Tamb::Float64,
     T0::Union{Float64,Vector{Float64}},
     int_length::Float64,
@@ -231,7 +231,7 @@ function solve_temporal_instanton(
     results = @parallel (vcat) for idx in analytic_lines
         tic()
         line = lines[idx]
-        if isa(line_conductors,Vector{ASCIIString})
+        if isa(line_conductors,Vector{String})
             conductor_name = line_conductors[idx]
             conductor_params = return_conductor_params(conductor_name)
             # compute line_params based on current line:

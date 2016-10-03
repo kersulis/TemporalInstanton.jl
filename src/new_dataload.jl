@@ -2,7 +2,7 @@ using MatpowerCases, MAT
 include("PowerSystem.jl")
 include("solvetmpinst-collab.jl")
 
-function network_data(casename::ASCIIString)
+function network_data(casename::String)
 	if !in(casename,casenames())
 		error("Argument is not a Matpower case name or path to .mat file")
 	end
@@ -111,7 +111,7 @@ function network_data(ps::PowerSystem)
 	return n
 end
 
-function thermal_data(casename::ASCIIString)
+function thermal_data(casename::String)
 	
 end
 

@@ -10,7 +10,7 @@ instanton analysis for any network supported by MatpowerCases.
 Note: each wind farm's output is sum(Gp)*wind_penetration/num_wind_farms
 """
 function mat2tmpinst(
-    name::ASCIIString,
+    name::String,
     wind_penetration::Float64,
     num_wind_farms::Int64 = 0;
     return_as_type::Bool = true,

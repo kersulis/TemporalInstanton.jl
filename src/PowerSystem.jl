@@ -400,7 +400,7 @@ end
 Convert one of Jon's MATLAB structs (dict in Julia) into an
 instance of the PowerSystem type.
 """
-function dict2type(sys::Dict{ASCIIString,Any})
+function dict2type(sys::Dict{String,Any})
     b = sys["Bus"]
     bus = [Bus(b["num"][i],
         b["ty"][i],
@@ -605,7 +605,7 @@ function dict2type(sys::Dict{ASCIIString,Any})
     pstime)
 end
 
-function load_power_system(fpath::ASCIIString)
+function load_power_system(fpath::String)
     return dict2type(matread(fpath)["System"])
 end
 
