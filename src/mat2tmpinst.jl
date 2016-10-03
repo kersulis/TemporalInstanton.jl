@@ -1,7 +1,5 @@
 using MatpowerCases, HDF5, JLD
 
-include("PowerFlow.jl")
-
 """ 20150-09-06. Modified version of mat2tmpinst.
 Load (and generate) everything needed to perform temporal
 instanton analysis for any network supported by MatpowerCases.
@@ -13,8 +11,8 @@ Note: each wind farm's output is sum(Gp)*wind_penetration/num_wind_farms
 """
 function mat2tmpinst(
     name::ASCIIString,
-    num_wind_farms::Int64,
-    wind_penetration::Float64;
+    wind_penetration::Float64,
+    num_wind_farms::Int64 = 0;
     return_as_type::Bool = true,
     fill_default = false
     )

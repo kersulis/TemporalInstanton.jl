@@ -1,11 +1,11 @@
 module TemporalInstanton
 export
     solve_instanton_qcqp, solve_temporal_instanton, LineParams,
-    ConductorParams, load_rts96_data, InstantonInputData, InstantonOutputData, mat2tmpinst, process_instanton_results,
+    ConductorParams, load_rts96_data, InstantonInputData, InstantonOutputData, mat2tmpinst, process_instanton_results, permutecols,
 
     # power flow:
     expand_renewable_vector,fixed_wind_A,fixed_wind_b,return_angles,
-    return_angle_diffs,
+    return_angle_diffs,createY,
 
     # collab:
     dict2type,ps2instantoninput,
