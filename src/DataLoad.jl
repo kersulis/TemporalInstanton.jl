@@ -32,11 +32,13 @@ type InstantonInputData
     "Lengths of all lines in `lines`; meters"
     line_lengths::Vector{Float64}
     "Conductor type for all lines in `lines`"
-    line_conductors::Union{Vector{ASCIIString},Tuple{Vector{LineParams},Vector{ConductorParams}}}
+    line_conductors::Vector{String}
+    #line_conductors::Union{Vector{String},Tuple{Vector{LineParams},Vector{ConductorParams}}}
     "System ambient temperature in degrees C"
     Tamb::Float64
     "Initial transmission line temperature in degrees C"
-    T0::Union{Float64,Vector{Float64}}
+    T0::Float64
+    #T0::Union{Float64,Vector{Float64}}
     "Length of optimization horizon in seconds"
     int_length::Float64
     "Times at which generator dispatch, demand, and wind forecast are updated"
@@ -161,7 +163,7 @@ function load_rts96_data(; return_as_type::Bool = true)
     from = convert(Vector{Int64},mpc["branch"][:,1])
     to = convert(Vector{Int64},mpc["branch"][:,2])
     bus_voltages = mpc["bus"][:,10]
-    line_conductors = return_line_conductors(round(Int64,bus_i),bus_voltages,from,to)::Vector{ASCIIString}
+    line_conductors = return_line_conductors(round(Int64,bus_i),bus_voltages,from,to)::Vector{String}
 
     if return_as_type
         return  InstantonInputData(
@@ -200,7 +202,7 @@ temporal instanton analysis for any network supported by
 
 Output `d` is an instance of `InstantonOutputData`.
 """
-function mat2tmpinst(name::ASCIIString)
+function mat2tmpinst(name::String)
     mpc = loadcase(name,describe=false)
 
     bus_orig = mpc["bus"][:,1]
@@ -304,14 +306,14 @@ function return_line_conductors(
         Vline = max(Vfrom,Vto)
         push!(line_voltages, Vline)
     end
-    line_conductors = [ASCIIString(volt2cond(volt)) for volt in line_voltages]
-    # convert(Array{ASCIIString},line_conductors)
+    line_conductors = [String(volt2cond(volt)) for volt in line_voltages]
+    # convert(Array{String},line_conductors)
     return line_conductors
 end
 
 include("mat2tmpinst.jl")
 "Test case used for timing analysis"
-function testcase(name::ASCIIString)
+function testcase(name::String)
     if name == "timing"
         d = load_rts96_data(return_as_type=true);
         # Thermal model parameters:

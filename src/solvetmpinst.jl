@@ -83,7 +83,7 @@ function solve_instanton_qcqp(
     # U,Sn,Vn = svds(N2',nsv=T)
     USnVn = svds(N2', nsv=T)[1]
     U, Sn = USnVn.U, USnVn.S
-    
+
     # augment with zeros, take qr:
     U = qrfact([sparse(round(U,10)) spzeros(n-m,n-m-T)])
     # extract Q to obtain complete orthogonal basis:
@@ -126,7 +126,7 @@ function solve_instanton_qcqp(
     tic()
     # w1opt = -B11\(B12*w2 + b1/2)
     # re-use temp once more here (saves time)
-    w1opt = -temp'*w2 - Symmetric(B11)\(b1/2)
+    w1opt = -temp'*w2 - B11\(b1/2)
     wopt = zeros(n-m)
     wopt[i1] = w1opt
     wopt[i2] = w2
