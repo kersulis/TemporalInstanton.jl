@@ -1,4 +1,2 @@
-julia 0.4
-JLD
-MAT
-MatpowerCases
+julia 0.6
+PowerModels
