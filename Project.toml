@@ -1,6 +1,13 @@
-authors = ["kersulis <kersulis@umich.edu>"]
 name = "TemporalInstanton"
 uuid = "3f3d81c4-ffe4-11e8-0af5-b3082c30915e"
+authors = ["kersulis <kersulis@umich.edu>"]
 version = "0.1.0"
 
 [deps]
+JLD = "4138dd39-2aa7-5051-a626-17a0bb65d9c8"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
