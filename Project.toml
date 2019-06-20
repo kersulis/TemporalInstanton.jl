@@ -4,7 +4,13 @@ authors = ["kersulis <kersulis@umich.edu>"]
 version = "0.1.0"
 
 [deps]
+Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 JLD = "4138dd39-2aa7-5051-a626-17a0bb65d9c8"
+LineThermalModel = "e258a45a-0233-11e9-1d97-41b4182cabc6"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+PowerModels = "c36e90e8-916a-50a6-bd94-075b64ef4655"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

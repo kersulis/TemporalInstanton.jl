@@ -1,6 +1,8 @@
 using JLD
 using SparseArrays: SparseMatrixCSC
-# using MatpowerCases
+using PowerModels: parse_file
+using Statistics: mean
+using LineThermalModel
 
 """
 Contains fields for all data required to perform
@@ -8,7 +10,7 @@ temporal instanton analysis. Rather than passing a
 list of arguments to `solve_temporal_instanton`,
 one can simply pass an instance of this type.
 """
-struct InstantonInputData
+mutable struct InstantonInput
     "Bus indices having variable (renewable) generation"
     Ridx::Vector{Int64}
     "Admittance matrix, entries in pu"
@@ -19,7 +21,7 @@ struct InstantonInputData
     D0::Vector{Float64}
     "Wind injection forecasts for all nodes and time steps; pu"
     R0::Vector{Float64}
-    "System base MVA, in VA"
+    "System base in VA"
     Sb::Float64
     "Index of system angle reference bus (need not be slack bus)"
     ref::Int64
@@ -34,19 +36,19 @@ struct InstantonInputData
     "Lengths of all lines in `lines`; meters"
     line_lengths::Vector{Float64}
     "Conductor type for all lines in `lines`"
-    line_conductors::Vector{String}
-    #line_conductors::Union{Vector{String},Tuple{Vector{LineParams},Vector{ConductorParams}}}
+    line_conductors::Vector{ACSRSpecsMetric}
+    "Current limits for all lines, in Amps"
+    current_limits::Vector{Float64}
     "System ambient temperature in degrees C"
     Tamb::Float64
-    "Initial transmission line temperature in degrees C"
-    T0::Float64
-    #T0::Union{Float64,Vector{Float64}}
-    "Length of optimization horizon in seconds"
-    int_length::Float64
+    "Initial transmission line temperatures in degrees C"
+    T0::Vector{Float64}
+    "Limit temperatures for transmission lines in degrees C"
+    Tlim::Vector{Float64}
     "Times at which generator dispatch, demand, and wind forecast are updated"
-    time_values::StepRangeLen{Float64}
-    "Variable (renewable) generation correlation matrix"
-    corr::Matrix{Float64}
+    time_values::StepRangeLen{Int64}
+    "Precision coefficient for temporal auto-correlation"
+    auto_prec::Float64
 end
 
 """
@@ -54,9 +56,11 @@ Contains all data coming out of temporal instanton analysis.
 `process_instanton_results` returns an instance of this type
 by default to keep the workspace clean.
 """
-struct InstantonOutputData
+struct InstantonOutput
     "Score vector; each entry corresponds to entry of `lines`"
     score::Vector{Tuple{Float64, Int64}}
+    "Indices of lines for which instanton analysis was performed"
+    analytic_lines::Vector{Int64}
     "Variable (renewable) generation forecast deviation vectors"
     x::Vector{Vector{Vector{Float64}}}
     "Voltage angles at all nodes and time steps"
@@ -71,248 +75,6 @@ struct InstantonOutputData
     linetimes::Vector{Float64}
 end
 
-"""
-Loads RTS-96 data from Jenny's ARPA-E data, supplements with
-conductor type and line length information, and returns as
-an instance of `InstantonInputData`.
-"""
-function load_rts96_data(; return_as_type::Bool=true)
-    modulepath = abspath(joinpath(@__DIR__, ".."))
-    path=joinpath(modulepath, "test", "data", "caseRTS96.jld") # Assumes current dir is nbs
-    caseRTS96 = JLD.load(path)
-
-    # Connect relevant data variables
-    bus_i = caseRTS96["bus_i"][:, 1] # vector of unique bus indices (73)
-    bus = caseRTS96["bus"][:, 1] # vector of generator bus indices (99)
-    Sb = float(caseRTS96["Sb"]) # base MVA
-    bustype = round.(Int64, caseRTS96["type"][:, 1])::Vector{Int64}
-
-    Gp_long = caseRTS96["Pg"] # conventional active power output, divide by Sb later
-    Gq_long = caseRTS96["Qg"] # conventional reactive power output, divide by Sb later
-
-    Rp = (caseRTS96["Wind"] ./ Sb)[:, 1] # renewable active generation, has zero where no farm exists
-
-    Dp = caseRTS96["Pd"] ./ Sb + Rp # I previously subtracted wind from active demand
-    Dp = Dp[:, 1]
-    f = round.(Int64, caseRTS96["fbus"][:, 1])::Vector{Int64} # "from bus" ...
-    t = round.(Int64, caseRTS96["tbus"][:, 1])::Vector{Int64} # ... "to bus"
-    r = caseRTS96["r"][:, 1]::Vector{Float64} # resistance, pu
-    x = caseRTS96["x"][:, 1]::Vector{Float64} # reactance, pu
-
-    # map bus numbers to 1:73
-    for i = 1:length(f)
-        if f[i] < 201
-            f[i] -= 100
-        elseif f[i] < 301
-            f[i] -= 176
-        else
-            f[i] -= 252
-        end
-    end
-    for i = 1:length(t)
-        if t[i] < 201
-            t[i] -= 100
-        elseif t[i] < 301
-            t[i] -= 176
-        else
-            t[i] -= 252
-        end
-    end
-
-    busidx = Int64[1]
-    for i = 2:length(bus)
-        if bus[i] < 201
-            push!(busidx, bus[i] - 100)
-        elseif bus[i] < 301
-            push!(busidx, bus[i] - 176)
-        else
-            push!(busidx, bus[i] - 252)
-        end
-    end
-    busidx = convert(Vector{Int64}, busidx)
-
-    # area 1: buses 1-24
-    # area 2: buses 25-48
-    # area 3: buses 49-73
-
-    Gp = zeros(length(bus_i))
-
-    for i in unique(busidx)
-        Gp[i] = sum(Gp_long[findall(busidx .== i)]) / Sb
-    end
-    # Now Gp and Gq reflect active and reactive generation at buses 1:73 consecutively.
-
-    Ridx = findall(Rp .> 0)
-    Y = createY(f, t, x)::SparseMatrixCSC{Float64, Int64}
-
-    # Allow each generator to participate equally in droop response.
-    # Note: this only applies to analysis types with droop response!
-    k = Vector{Float64}()
-    for i in 1:length(Gp)
-        if Gp[i] != 0.0
-            push!(k, 1 / length(findall(Gp .> 0)))
-        else
-            push!(k, 0.0)
-        end
-    end
-
-    ref = 1 # index of reference node
-    lines = [(f[i], t[i]) for i in 1:length(f)]
-    line_lengths = JLD.load(joinpath(modulepath, "test", "data", "line_lengths.jld"), "line_lengths")
-    Sb = 100e6 # overwrite "100.0"
-
-    mpc = loadcase("case96"; describe=false)
-    from = convert(Vector{Int64}, mpc["branch"][:, 1])
-    to = convert(Vector{Int64}, mpc["branch"][:, 2])
-    bus_voltages = mpc["bus"][:, 10]
-    line_conductors = return_line_conductors(round(Int64, bus_i), bus_voltages, from, to)::Vector{String}
-
-    if return_as_type
-        return InstantonInputData(
-            Ridx,
-            Y,
-            Gp,
-            Dp,
-            Rp,
-            Sb,
-            ref,
-            lines,
-            r,
-            x,
-            k,
-            line_lengths,
-            line_conductors,
-            NaN,
-            NaN,
-            NaN,
-            0.0:0.0,
-            Array{Float64,2}()
-            )
-        else
-            return Ridx, Y, Gp, Dp, Rp, Sb, ref, lines,
-                r, x, k, line_lengths, line_conductors
-    end
-end
-
-"""
-    d = mat2tmpinst(name)
-
-Loads (and generates) everything needed to perform
-temporal instanton analysis for any network supported by
-[MatpowerCases.jl](https://github.com/kersulis/MatpowerCases.jl).
-
-Output `d` is an instance of `InstantonOutputData`.
-"""
-function mat2tmpinst(name::String)
-    mpc = loadcase(name, describe=false)
-
-    bus_orig = mpc["bus"][:,1]
-    bus_simple = collect(1:length(bus_orig))
-
-    genBus = mpc["gen"][:,1]
-    for i in bus_simple
-        genBus[genBus.==bus_orig[i]] = bus_simple[i]
-    end
-
-    try
-        Sb = mpc["baseMVA"]
-    catch
-        warn("Base MVA missing from mpc data. Setting to 100.0")
-        Sb = 100.0
-    end
-    Gp_long = mpc["gen"][:,2]
-
-    f = round.(Int64, mpc["branch"][:,1]) # "from bus" ...
-    t = round.(Int64, mpc["branch"][:,2]) # ... "to bus"
-    for i in bus_simple
-        f[f .== bus_orig[i]] = bus_simple[i]
-        t[t .== bus_orig[i]] = bus_simple[i]
-    end
-    r = mpc["branch"][:, 3] # resistance, pu
-    x = mpc["branch"][:, 4] # reactance, pu
-    b = mpc["branch"][:, 5] # susceptance, pu
-
-    Y = createY(f, t, x)
-
-    Gp = zeros(length(bus_simple))
-    for i in bus_simple
-        Gp[convert(Int64, i)] = sum(Gp_long[find(genBus .==i )]) / Sb
-    end
-
-    Dp = mpc["bus"][:, 3] ./ Sb
-
-    # convert generators into wind farms:
-    Rp = zeros(length(Gp))
-    for i in 1:length(Gp)
-        if Gp[i] < mean(Gp[findall(Gp .> 0)])
-            Rp[i] = Gp[i]
-            Gp[i] = 0
-        end
-    end
-
-    Ridx = findall(Rp .> 0)
-
-    Sb = Sb * 1e6 # convert from MW to W
-
-    ref = 1
-
-    lines = [(f[i], t[i]) for i in 1:length(f)]
-
-    res = r
-    reac = x
-
-    # Allow each generator to participate equally in droop response.
-    k = Float64[]
-    for i in 1:length(Gp)
-        if Gp[i] != 0
-            push!(k, 1 / length(findall(Gp .> 0)))
-        else
-            push!(k, 0.0)
-        end
-    end
-
-    # use RTS-96 line lengths to generate similar line lengths
-    line_lengths = load("../data/polish_line_lengths.jld","line_lengths")[1:length(lines)]
-
-    # temporary (re-use rts-96 line conductor parameters)
-    line_conductors = fill("waxwing", length(line_lengths))
-
-    return InstantonInputData(Ridx, Y, Gp, Dp, Rp, Sb, ref,
-            lines, res, reac, k,
-            line_lengths, line_conductors,
-            NaN, NaN, NaN, NaN:NaN:NaN, Array{Float64,2}()
-            )
-end
-
-"""
-Use bus voltage level to determine appropriate conductor type.
-TODO: replace with Jon's conductor interpolation code.
-"""
-function return_line_conductors(
-    bus_names::Vector{Int64},
-    bus_voltages::Vector{Float64},
-    from::Vector{Int64},
-    to::Vector{Int64}
-    )
-    numLines = length(from)
-    function node2voltage(node, bus_names, bus_voltages)
-        return bus_voltages[findall(bus_names .== node)][1]
-    end
-    volt2cond(volt) = volt < 300 ? "waxwing" : "dove"
-    line_voltages = Float64[]
-
-    for i in 1:numLines
-        Vfrom = node2voltage(from[i], bus_names, bus_voltages)
-        Vto = node2voltage(to[i], bus_names, bus_voltages)
-        Vline = max(Vfrom, Vto)
-        push!(line_voltages, Vline)
-    end
-    line_conductors = [String(volt2cond(volt)) for volt in line_voltages]
-    # convert(Array{String},line_conductors)
-    return line_conductors
-end
-
-include("mat2tmpinst.jl")
 "Test case used for timing analysis"
 function testcase(name::String)
     if name == "timing"
@@ -323,14 +85,178 @@ function testcase(name::String)
 
         d.time_values = 0:30:300 # five minutes in 30-sec steps
         d.int_length = 300. # seconds = 5 min
-        Gp,Dp,Rp = d.G0, d.D0, d.R0
+        Gp, Dp, Rp = d.G0, d.D0, d.R0
         d.G0 = [0.7 * Gp; 0.7 * Gp; 0.7 * Gp; 0.7 * Gp; 0.7 * Gp; 0.7 * Gp]
         d.D0 = [0.9 * Dp; 0.9 * Dp; 0.9 * Dp; 0.9 * Dp; 0.9 * Dp; 0.9 * Dp]
-        d.R0 = [Rp;       1.1 * Rp; 1.2 * Rp; 1.3 * Rp; 1.4 * Rp; 1.5 * Rp]
+        d.R0 = [Rp; 1.1 * Rp; 1.2 * Rp; 1.3 * Rp; 1.4 * Rp; 1.5 * Rp]
         return d
     elseif name == "polish200"
         d = load("../data/polish200.jld","d")
     else
         error("No match.")
     end
+end
+
+"""
+    d = build_instanton_input(fpath)
+
+Given a path to a .m file, return an instance of InstantonInput.
+"""
+function build_instanton_input(fpath::String)
+    network_data = parse_file(fpath)
+    @assert network_data["per_unit"]
+
+    nb = length(network_data["bus"])
+
+    bus_orig = sort([b["bus_i"] for b in values(network_data["bus"])])
+    bus_simple = collect(1:length(bus_orig))
+    bus_orig2simple = Dict(zip(bus_orig, bus_simple))
+
+    Sb = network_data["baseMVA"] * 1e6
+
+    # branch key => orig_bus
+    f = Dict((k => br["f_bus"] for (k, br) in network_data["branch"]))
+    t = Dict((k => br["t_bus"] for (k, br) in network_data["branch"]))
+
+    r = Dict((k => br["br_r"] for (k, br) in network_data["branch"]))
+    x = Dict((k => br["br_x"] for (k, br) in network_data["branch"]))
+    b = Dict((k => (br["b_fr"] + br["b_to"]) for (k, br) in network_data["branch"]))
+
+    current_limits = return_current_limits(network_data)
+    line_lengths = estimate_length(network_data)
+    line_conductors = acsr_interpolation(network_data)
+
+    f_vec = Int64[]
+    t_vec = Int64[]
+    r_vec = Float64[]
+    x_vec = Float64[]
+    b_vec = Float64[]
+    line_lengths_vec = Float64[]
+    line_conductors_vec = ACSRSpecsMetric[]
+    current_limits_vec = Float64[]
+
+    # f, t, r, x, b all aligned
+    for k in keys(f)
+        push!(f_vec, bus_orig2simple[f[k]])
+        push!(t_vec, bus_orig2simple[t[k]])
+        push!(r_vec, r[k])
+        push!(x_vec, x[k])
+        push!(b_vec, b[k])
+        push!(line_lengths_vec, line_lengths[k])
+        push!(line_conductors_vec, line_conductors[k])
+        push!(current_limits_vec, current_limits[k])
+    end
+
+    lines = collect(zip(f_vec, t_vec))
+
+    # Y = createY(f, t, x)
+    Y = real(createY(f_vec, t_vec, r_vec, x_vec, b_vec))
+
+    # aggregate generation by bus
+    Gp = Dict((b["bus_i"] => 0.0 for b in values(network_data["bus"])))
+    for g in values(network_data["gen"])
+        Gp[g["gen_bus"]] += g["pg"]
+    end
+
+    # convert gen dict to vec
+    Gp_vec = zeros(nb)
+    for (k, v) in Gp
+        Gp_vec[bus_orig2simple[k]] = v
+    end
+
+    ng = length(findall(collect(values(Gp)) .> 0))
+    participation = zeros(nb)
+    participation[findall(Gp_vec .> 0)] .= 1 / ng
+
+    Dp = zeros(nb)
+    for l in values(network_data["load"])
+        Dp[bus_orig2simple[l["load_bus"]]] = l["pd"]
+    end
+
+    ref = 1
+
+    ## TODO: does any of the above code break if these are strings?
+
+    Ridx = Int64[]
+
+    Tamb = NaN
+    T0 = Float64[]
+    Tlim = Float64[]
+    time_values = 0:1:0
+    auto_prec = 0.0
+
+    return InstantonInput(
+        Ridx, Y, Gp_vec, Dp, Float64[], Sb, ref, lines, r_vec, x_vec,
+        participation, line_lengths_vec, line_conductors_vec, current_limits_vec,
+        Tamb, T0, Tlim, time_values, auto_prec
+    )
+end
+
+function conventional_to_renewable!(d::InstantonInput, Ridx::Vector{Int64}=Int64[])
+    Gp = d.G0
+
+    # if idx passed in, convert those generators to renewable
+
+    # default behavior: convert generators with below-average output
+    # to renewable
+    if isempty(Ridx)
+        indices = findall(Gp .> 0)
+        mean_gen = mean(Gp[indices])
+
+        Ridx = findall(0 .< Gp .< mean_gen)
+    end
+
+    Rp = zeros(length(Gp))
+    Rp[Ridx] = Gp[Ridx]
+    for idx in Ridx
+        Gp[idx] = 0.0
+    end
+    # Gp[Ridx] = 0.0
+
+    d.G0 = Gp
+    d.Ridx = Ridx
+    d.R0 = Rp
+    return d
+end
+
+function set_temperatures!(inst_input::InstantonInput; Tamb::Float64=NaN, T0::Vector{Float64}=Float64[], Tlim::Vector{Float64}=Float64[])
+
+    if isnan(Tamb)
+        @warn "Tamb empty; filling with 40.0"
+        inst_input.Tamb = 40.0
+    else
+        inst_input.Tamb = Tamb
+    end
+
+    if isempty(Tlim)
+        @warn "Tlim empty; filling with 100.0"
+        inst_input.Tlim = fill(100.0, length(inst_input.lines))
+    else
+        inst_input.Tlim = Tlim
+    end
+
+    if isempty(T0)
+        inst_input.T0 = steady_state_temps(inst_input)
+    else
+        inst_input.T0 = T0
+    end
+    return inst_input
+end
+
+function set_timing!(inst_input::InstantonInput, time_values::StepRange{Int64})
+    inst_input.time_values = time_values
+    return inst_input
+end
+
+function set_injections!(
+    inst_input::InstantonInput;
+    G0::Vector{Float64}=inst_input.G0,
+    D0::Vector{Float64}=inst_input.D0,
+    R0::Vector{Float64}=inst_input.R0
+    )
+
+    inst_input.G0 = G0
+    inst_input.D0 = D0
+    inst_input.R0 = R0
+    return inst_input
 end
