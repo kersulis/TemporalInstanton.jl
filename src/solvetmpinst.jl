@@ -2,6 +2,7 @@ using JLD
 using SparseArrays: spzeros, sparse
 using Distributed: @distributed
 using LinearAlgebra: diag, svd, qr
+using Random: randperm
 
 """
     solve_instanton_qcqp(Qobj, Qconstr, A, b, T) -> (optVec, minObj)
