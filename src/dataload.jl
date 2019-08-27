@@ -150,7 +150,7 @@ function build_instanton_input(fpath::String)
     lines = collect(zip(f_vec, t_vec))
 
     # Y = createY(f, t, x)
-    Y = real(createY(f_vec, t_vec, r_vec, x_vec, b_vec))
+    Y = real(createY(f_vec, t_vec, x_vec, r_vec, b_vec))
 
     # aggregate generation by bus
     Gp = Dict((b["bus_i"] => 0.0 for b in values(network_data["bus"])))
