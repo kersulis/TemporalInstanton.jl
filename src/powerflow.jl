@@ -166,7 +166,7 @@ function createY(
     r=0.0::Union{Vector{Float64},Float64},
     b=0.0::Union{Vector{Float64},Float64}
     )
-    z = r + x * 1im
+    z = r .+ x * 1im
     y = 1 ./ z
     b = b * 1im
     Y = sparse(
