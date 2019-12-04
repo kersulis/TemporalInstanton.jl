@@ -240,9 +240,7 @@ Return temperature trajectory corresponding to instance of
 `idx` is the event index, with 1 denoting the first set of data in o.
 (With default sorting, this will be the instanton.)
 
-This function is useful mostly as a means of validating the temporal deviation
-scanning algorithm. The first value of temp_values should match the line's
-initial temperature in i. The final value should match the temperature limit.
+This function is useful mostly as a means of validating the temporal deviation scanning algorithm. The first value of temp_values should match the line's initial temperature in i. The final value should match the temperature limit.
 """
 function temperature_trajectory(
     i::InstantonInput,
@@ -366,17 +364,20 @@ function steady_state_temps(i::InstantonInput, fixed_wind=[])
 end
 
 """
-Return temperature trajectories for all lines in a power system, given instances
-of InstantonInput and InstantonOutput, and an event index (which indexes
-into o).
+    temp_trajectories = temperature_trajectories(i, o, event_idx[, time_steps=10])
 
-Only one line (the one corresponding to the event index) should reach its limit
-temperature.
+Inputs:
+- `i::InstantonInput`
+- `d::Vector{Vector{Float64}}`, a deviation pattern similar to an element of the `x` field of `InstantonOutput`
+- `time_steps`: number of evenly-spaced points at which to evaluate the line temperature equation per time step.
+
+Output: dictionary mapping line tuples to temperature trajectories.
+
+*Return temperature trajectories for all lines in a power system, given an instance of InstantonInput and a deviation pattern.
 """
 function temperature_trajectories(
     i::InstantonInput,
-    o::InstantonOutput,
-    event_idx::Int64;
+    d::Vector{Vector{Float64}},
     time_steps::Int64=10
     )
 
@@ -392,7 +393,7 @@ function temperature_trajectories(
     Sb = i.Sb
 
     # i_idx = o.analytic_lines[event_idx]
-    fixed_wind = vcat(o.x[event_idx]...)
+    fixed_wind = vcat(d...)
 
     # DC power flow: obtain all angles
     fixed_A = fixed_wind_A(numSteps, i.Y, i.ref, i.k)
@@ -434,4 +435,27 @@ function temperature_trajectories(
         temp_trajectories[line] = traj
     end
     return temp_trajectories
+end
+
+"""
+    temp_trajectories = temperature_trajectories(i, o, event_idx[, time_steps=10])
+
+Inputs:
+- `i::InstantonInput`
+- `o::InstantonOutput`
+- `event_idx`: 1 indicates lowest deviation scanning objective score, and so on
+- `time_steps`: number of evenly-spaced points at which to evaluate the line temperature equation per time step.
+
+Output: dictionary mapping line tuples to temperature trajectories.
+
+*Return temperature trajectories for all lines in a power system, given instances of InstantonInput and InstantonOutput, and an event index (which indexes into o). Only one line (the one corresponding to the event index) should reach its limit temperature.*
+"""
+function temperature_trajectories(
+    i::InstantonInput,
+    o::InstantonOutput,
+    event_idx::Int64;
+    time_steps::Int64=10
+    )
+    d = o.x[event_idx]
+    return temperature_trajectories(i, d, time_steps)
 end
