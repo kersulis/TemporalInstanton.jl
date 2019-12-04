@@ -1,4 +1,4 @@
-using PowerModels: parse_file
+using PowerModels
 using Random: MersenneTwister
 using Memento
 
@@ -18,7 +18,7 @@ function testcase_118(
     )
     rng = MersenneTwister(1)
 
-    nd = parse_file(casepath)
+    nd = PowerModels.parse_file(casepath)
     i = build_instanton_input(casepath)
 
     Ridx = [1; 4; 6; 8; 10; 11; 15; 18; 19; 25; 31; 32; 36; 114]
