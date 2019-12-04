@@ -172,7 +172,7 @@ function createY(
     Y = sparse(
         [f; t; t; f],
         [t; f; t; f],
-        [-y; -y; (y + b ./ 2); (y + b ./ 2)])
+        [-y; -y; (y .+ b ./ 2); (y .+ b ./ 2)])
 
     # for DC power flow, we typically want a matrix with real entries:
     if r == 0
@@ -180,4 +180,58 @@ function createY(
     else
         return Y
     end
+end
+
+"""
+    d = return_B(network_data)
+
+Return B matrix for use in DC power flow (P = B x theta)
+"""
+function return_B(network_data::Dict)
+    @assert network_data["per_unit"]
+
+    nb = length(network_data["bus"])
+
+    bus_orig = sort([b["bus_i"] for b in values(network_data["bus"])])
+    bus_simple = collect(1:length(bus_orig))
+    bus_orig2simple = Dict(zip(bus_orig, bus_simple))
+
+    Sb = network_data["baseMVA"] * 1e6
+
+    # branch key => orig_bus
+    f = Dict((k => br["f_bus"] for (k, br) in network_data["branch"]))
+    t = Dict((k => br["t_bus"] for (k, br) in network_data["branch"]))
+
+    r = Dict((k => br["br_r"] for (k, br) in network_data["branch"]))
+    x = Dict((k => br["br_x"] for (k, br) in network_data["branch"]))
+    b = Dict((k => (br["b_fr"] + br["b_to"]) for (k, br) in network_data["branch"]))
+
+    current_limits = return_current_limits(network_data)
+    line_lengths = estimate_length(network_data)
+    line_conductors = acsr_interpolation(network_data)
+
+    f_vec = Int64[]
+    t_vec = Int64[]
+    r_vec = Float64[]
+    x_vec = Float64[]
+    b_vec = Float64[]
+    line_lengths_vec = Float64[]
+    line_conductors_vec = ACSRSpecsMetric[]
+    current_limits_vec = Float64[]
+
+    # f, t, r, x, b all aligned
+    for k in keys(f)
+        push!(f_vec, bus_orig2simple[f[k]])
+        push!(t_vec, bus_orig2simple[t[k]])
+        push!(r_vec, r[k])
+        push!(x_vec, x[k])
+        push!(b_vec, b[k])
+        push!(line_lengths_vec, line_lengths[k])
+        push!(line_conductors_vec, line_conductors[k])
+        push!(current_limits_vec, current_limits[k])
+    end
+
+    lines = collect(zip(f_vec, t_vec))
+
+    return createY(f_vec, t_vec, x_vec)
 end
