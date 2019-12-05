@@ -193,7 +193,8 @@ function solve_temporal_instanton(
     time_values::StepRangeLen{Int64,Int64,Int64},
     auto_prec::Float64=0.0;
     maxlines::Int64=0,
-    silent::Bool=false
+    silent::Bool=false,
+    analyze_overheated_only::Bool=false
     )
 
     # aggregate timing results:
@@ -242,6 +243,14 @@ function solve_temporal_instanton(
         @info "ISF pre-check: \tremoving $(length(singular_line_idx)) lines"
     end
     analytic_lines = setdiff(analytic_lines, singular_line_idx)
+
+    ##########################################
+    ##    Analyze overheated lines only     ##
+    ##########################################
+    if analyze_overheated_only
+        underheated_lines = findall(T0 .< Tlim)
+        analytic_lines = setdiff(analytic_lines, underheated_lines)
+    end
 
     # truncate to go through subset of remaining lines (testing only):
     if maxlines > 0 && maxlines < length(analytic_lines)
@@ -316,7 +325,8 @@ on an instance of `InstantonInput`.
 solve_temporal_instanton(
     d::InstantonInput;
     maxlines::Int64=0,
-    silent::Bool=false) = solve_temporal_instanton(
+    silent::Bool=false,
+    analyze_overheated_only::Bool=false) = solve_temporal_instanton(
     d.Ridx,
     d.Y,
     d.G0,
@@ -337,7 +347,8 @@ solve_temporal_instanton(
     d.time_values,
     d.auto_prec;
     maxlines=maxlines,
-    silent=silent
+    silent=silent,
+    analyze_overheated_only=analyze_overheated_only
 )
 
 """
