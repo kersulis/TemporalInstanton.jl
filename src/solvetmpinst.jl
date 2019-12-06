@@ -252,12 +252,14 @@ function solve_temporal_instanton(
         analytic_lines = setdiff(analytic_lines, underheated_lines)
     end
 
+    if isempty(analytic_lines)
+        return nothing
+    end
+
     # truncate to go through subset of remaining lines (testing only):
     if maxlines > 0 && maxlines < length(analytic_lines)
         analytic_lines = analytic_lines[randperm(length(analytic_lines))[1:maxlines]]
     end
-
-    isempty(analytic_lines) && return
 
     tBuild = time() - tBuild
     # @show tBuild
@@ -315,6 +317,9 @@ function solve_temporal_instanton(
         # this is what will be concatenated into `results`:
         # xvec, (sol, idx), toq(), times
         xvec, (sol, idx), line_time, times
+    end
+    if length(analytic_lines) == 1
+        results = [results]
     end
     process_instanton_results(results, analytic_lines, n, nr, T)
 end
