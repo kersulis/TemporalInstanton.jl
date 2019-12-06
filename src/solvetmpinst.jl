@@ -257,6 +257,8 @@ function solve_temporal_instanton(
         analytic_lines = analytic_lines[randperm(length(analytic_lines))[1:maxlines]]
     end
 
+    isempty(analytic_lines) && return
+
     tBuild = time() - tBuild
     # @show tBuild
 
