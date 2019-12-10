@@ -191,7 +191,8 @@ function solve_temporal_instanton(
     T0::Vector{Float64},
     Tlim::Vector{Float64},
     time_values::StepRangeLen{Int64,Int64,Int64},
-    auto_prec::Float64=0.0;
+    auto_prec::Float64=0.0,
+    analytic_lines::Vector{Int64}=collect(1:length(lines));
     maxlines::Int64=0,
     silent::Bool=false,
     analyze_overheated_only::Bool=false
@@ -227,7 +228,7 @@ function solve_temporal_instanton(
     ##           r = 0 Check                ##
     ##########################################
     # Exclude lines with zero length or zero resistance:
-    analytic_lines = intersect(findall(line_lengths .> 0), findall(res .> 0))
+    analytic_lines = intersect(analytic_lines, findall(line_lengths .> 0), findall(res .> 0))
     if length(findall(res .== 0)) != 0 && !silent
         @info "r=0 check: \tremoving $(length(findall(res .== 0))) lines"
     end
@@ -253,6 +254,7 @@ function solve_temporal_instanton(
     end
 
     if isempty(analytic_lines)
+        @warn "No lines to analyze."
         return nothing
     end
 
@@ -330,7 +332,8 @@ Convenience method for performing temporal instanton analysis
 on an instance of `InstantonInput`.
 """
 solve_temporal_instanton(
-    d::InstantonInput;
+    d::InstantonInput,
+    analytic_lines::Vector{Int64}=collect(1:length(d.lines));
     maxlines::Int64=0,
     silent::Bool=false,
     analyze_overheated_only::Bool=false) = solve_temporal_instanton(
@@ -352,7 +355,8 @@ solve_temporal_instanton(
     d.T0,
     d.Tlim,
     d.time_values,
-    d.auto_prec;
+    d.auto_prec,
+    analytic_lines;
     maxlines=maxlines,
     silent=silent,
     analyze_overheated_only=analyze_overheated_only
