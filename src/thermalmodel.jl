@@ -384,7 +384,7 @@ function temperature_trajectories(
     "Solution to approx. heat balance IVP"
     temp_eq(t, T0, a, b) = (T0 + b / a) * exp(a * t) - b / a
 
-    eval_times = range(0; stop=i.time_values.step, length=time_steps)
+    eval_times = range(0; stop=i.time_values.step, length=(time_steps + 1))
 
     n = size(i.Y, 1)
     nr = length(i.Ridx)
@@ -406,7 +406,6 @@ function temperature_trajectories(
     temp_trajectories = Vector{Vector{Float64}}()
     for (idx, line) in enumerate(i.lines)
         # Line parameters
-        from, to = line
         r_ij = i.res[idx]
         x_ij = i.reac[idx]
         L_ij = i.line_lengths[idx]
@@ -422,15 +421,16 @@ function temperature_trajectories(
         # Angle differences
         angle_diffs = return_angle_diffs(angles, line)
 
-        traj = []
+        traj = [T0]
         for θij in angle_diffs
             f_loss_pu = r_ij * (θij / x_ij)^2 # pu
             f_loss_si = f_loss_pu * Sb / (3 * L_ij) # W/m
             # push!(power_flow, (Sb / 1e6) * θij / x_ij) # MW
             therm_b = mCp \ (f_loss_si + ηc * Tamb - ηr * ((Tmid + 273)^4 -
                 (Tamb + 273)^4) + 4 * ηr * Tmid * (Tmid + 273)^3 + qs)
-            append!(traj, temp_eq.(eval_times, T0, therm_a, therm_b))
-            T0 = traj[end]
+            new_vals = temp_eq.(eval_times, T0, therm_a, therm_b)
+            append!(traj, new_vals[2:end])
+            T0 = new_vals[end]
         end
         push!(temp_trajectories, traj)
     end
