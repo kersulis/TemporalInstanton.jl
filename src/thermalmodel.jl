@@ -403,7 +403,7 @@ function temperature_trajectories(
     angles, alpha = return_angles(fixed_x, n, numSteps)
 
     # loop over all lines
-    temp_trajectories = Dict{Tuple, Vector{Float64}}()
+    temp_trajectories = Vector{Vector{Float64}}()
     for (idx, line) in enumerate(i.lines)
         # Line parameters
         from, to = line
@@ -432,7 +432,7 @@ function temperature_trajectories(
             append!(traj, temp_eq.(eval_times, T0, therm_a, therm_b)[2:end])
             T0 = traj[end]
         end
-        temp_trajectories[line] = traj
+        push!(temp_trajectories, traj)
     end
     return temp_trajectories
 end
