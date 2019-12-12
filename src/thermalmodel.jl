@@ -410,7 +410,7 @@ function temperature_trajectories(
         r_ij = i.res[idx]
         x_ij = i.reac[idx]
         L_ij = i.line_lengths[idx]
-        T0 = i.T0[idx]
+        T0 = copy(i.T0[idx])
         Tlim = i.Tlim[idx]
 
         # Thermal parameters
@@ -422,14 +422,14 @@ function temperature_trajectories(
         # Angle differences
         angle_diffs = return_angle_diffs(angles, line)
 
-        traj = [T0]
+        traj = []
         for θij in angle_diffs
             f_loss_pu = r_ij * (θij / x_ij)^2 # pu
             f_loss_si = f_loss_pu * Sb / (3 * L_ij) # W/m
             # push!(power_flow, (Sb / 1e6) * θij / x_ij) # MW
             therm_b = mCp \ (f_loss_si + ηc * Tamb - ηr * ((Tmid + 273)^4 -
                 (Tamb + 273)^4) + 4 * ηr * Tmid * (Tmid + 273)^3 + qs)
-            append!(traj, temp_eq.(eval_times, T0, therm_a, therm_b)[2:end])
+            append!(traj, temp_eq.(eval_times, T0, therm_a, therm_b))
             T0 = traj[end]
         end
         push!(temp_trajectories, traj)
