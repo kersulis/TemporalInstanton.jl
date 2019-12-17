@@ -34,9 +34,8 @@ function power_transfer_distance(ISF::Matrix, ref::Integer)
             if i == j
                 D[i, j] = 0
             else
-                P = zeros(n) # ref element will be deleted
+                P = zeros(n)
                 P[i], P[j] = 1, -1
-                P[ref] = 0
                 D[i, j] = sum(abs, ISF * P)
             end
         end
