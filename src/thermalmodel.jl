@@ -325,17 +325,14 @@ function steady_state_temps(i::InstantonInput, fixed_wind=[])
 
     ss_temps = Float64[]
     for (line_idx, line) in enumerate(i.lines)
-        from, to = line
         r_ij = i.res[line_idx]
         x_ij = i.reac[line_idx]
         L_ij = i.line_lengths[line_idx]
         Tlim = i.Tlim[line_idx]
 
-        cond_params = return_conductor_params(i.line_conductors[line_idx], i.current_limits[line_idx], Tamb, T0, Tlim)
-        mCp, ηc, ηr, qs, Tlim = cond_params.mCp, cond_params.ηc, cond_params.ηr, cond_params.qs, cond_params.Tlim
+        cp = return_conductor_params(i.line_conductors[line_idx], i.current_limits[line_idx], Tamb, T0, Tlim)
+        mCp, ηc, ηr, qs, Tlim = cp.mCp, cp.ηc, cp.ηr, cp.qs, cp.Tlim
         Tmid = (Tamb + Tlim) / 2
-
-        # Fixed wrt power flow
         therm_a = mCp \ (-ηc - 4 * ηr * (Tmid + 273)^3)
 
         if isempty(fixed_wind)
@@ -343,19 +340,19 @@ function steady_state_temps(i::InstantonInput, fixed_wind=[])
             fixed_wind = zeros(nr)
         end
 
-        fixed_A = fixed_wind_A(1, i.Y, i.ref, i.k)
-        fixed_P = expand_renewable_vector(fixed_wind, i.Ridx, n, 1)
+        numSteps = 1
+        fixed_A = fixed_wind_A(numSteps, i.Y, i.ref, i.k)
+        fixed_P = expand_renewable_vector(fixed_wind, i.Ridx, n, numSteps)
 
         # Use initial injections to compute steady-state temps
-        fixed_b = fixed_wind_b(n, 1, i.G0[1:n], i.R0[1:n] + fixed_P, i.D0[1:n])
+        fixed_b = fixed_wind_b(n, numSteps, i.G0[1:n], i.R0[1:n] + fixed_P, i.D0[1:n])
         fixed_x = fixed_A \ fixed_b
-        angles, alpha = return_angles(fixed_x, n, 1)
+        angles, alpha = return_angles(fixed_x, n, numSteps)
         fixed_diffs = return_angle_diffs(angles, line)
 
         θij = fixed_diffs[1]
         f_loss_pu = r_ij * (θij / x_ij)^2 # pu
         f_loss_si = f_loss_pu * Sb / (3 * L_ij) # W/m
-        # push!(power_flow, (Sb / 1e6) * θij / x_ij)
         therm_b = mCp \ (f_loss_si + ηc * Tamb - ηr * ((Tmid + 273)^4 -
             (Tamb + 273)^4) + 4 * ηr * Tmid * (Tmid + 273)^3 + qs)
         push!(ss_temps, -therm_b / therm_a)
