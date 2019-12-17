@@ -148,6 +148,7 @@ function isf(
     end
     return Bflow / B
 end
+isf(i::InstantonInput) = isf(i.Y, i.lines, i.ref, i.k)
 
 """
     createY(f,t,x [,r,b]) -> Y
